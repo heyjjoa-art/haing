@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스펠링 맞추기 게임 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/hangman.css">
+<link rel="stylesheet" href="css/card-popup.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Haing 🐣</h1>
+  <p class="subtitle">4. 스펠링 맞추기 게임</p>
+</header>
+
+<main class="hangman-main">
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="easyTab" data-stage="easy">🟢 쉬운 단계</button>
+    <button type="button" class="stage-tab" id="mediumTab" data-stage="medium">🟡 중간 단계</button>
+    <button type="button" class="stage-tab" id="hardTab" data-stage="hard">🔴 어려운 단계</button>
+  </div>
+
+  <div class="progress-line">
+    이 단계 진행 <strong id="stageProgress">0</strong> / <strong id="stageTotal">0</strong> 단어
+  </div>
+
+  <div class="hangman-card">
+    <svg viewBox="0 0 200 200" class="hangman-svg" id="hangmanSvg">
+      <line x1="15" y1="185" x2="130" y2="185" stroke="#3a2e26" stroke-width="4" stroke-linecap="round"/>
+      <line x1="50" y1="185" x2="50" y2="15" stroke="#3a2e26" stroke-width="4" stroke-linecap="round"/>
+      <line x1="50" y1="15" x2="130" y2="15" stroke="#3a2e26" stroke-width="4" stroke-linecap="round"/>
+      <line x1="130" y1="15" x2="130" y2="35" stroke="#3a2e26" stroke-width="4" stroke-linecap="round"/>
+
+      <circle class="part p1" cx="130" cy="52" r="16" stroke="#d3691e" stroke-width="4" fill="none"/>
+      <line class="part p2" x1="130" y1="68" x2="130" y2="120" stroke="#d3691e" stroke-width="4" stroke-linecap="round"/>
+      <line class="part p3" x1="130" y1="85" x2="108" y2="105" stroke="#d3691e" stroke-width="4" stroke-linecap="round"/>
+      <line class="part p4" x1="130" y1="85" x2="152" y2="105" stroke="#d3691e" stroke-width="4" stroke-linecap="round"/>
+      <line class="part p5" x1="130" y1="120" x2="110" y2="155" stroke="#d3691e" stroke-width="4" stroke-linecap="round"/>
+      <line class="part p6" x1="130" y1="120" x2="150" y2="155" stroke="#d3691e" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+
+    <p class="lives-line">남은 기회 <strong id="livesLeft">6</strong>번</p>
+
+    <p class="hint-text" id="hintText"></p>
+    <button type="button" class="secondary-btn tts-replay-btn" id="hintReplayBtn">🔊 다시 듣기</button>
+
+    <p class="word-blanks" id="wordBlanks"></p>
+
+    <div class="keyboard" id="keyboard"></div>
+
+    <div class="result-banner" id="resultBanner" hidden>
+      <p id="resultText"></p>
+      <button type="button" id="nextWordBtn" class="secondary-btn">다음 단어 ▶</button>
+    </div>
+  </div>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+
+</main>
+
+<script src="js/words-data.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/progress-store.js"></script>
+<script src="js/card-data.js"></script>
+<script src="js/card-store.js"></script>
+<script src="js/card-popup.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/hangman.js"></script>
+</body>
+</html>

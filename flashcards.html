@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 학습 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/flashcards.css">
+<link rel="stylesheet" href="css/card-popup.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Haing 🐣</h1>
+  <p class="subtitle">2. 단어 학습 · 그림 → 영영 설명 → 한글 뜻</p>
+</header>
+
+<main class="flashcards-main">
+
+  <div class="progress-line">
+    학습 진행 <strong id="progressCount">0</strong> / <strong id="progressTotal">0</strong> 단어
+  </div>
+
+  <label class="speed-toggle">
+    <input type="checkbox" id="speedModeToggle">
+    ⚡ 스피드 모드 (자동으로 넘어가기)
+  </label>
+
+  <div class="flash-card">
+    <div class="stage-dots">
+      <span class="dot" id="dot1"></span>
+      <span class="dot" id="dot2"></span>
+      <span class="dot" id="dot3"></span>
+    </div>
+
+    <div class="flash-emoji" id="flashEmoji"></div>
+
+    <p class="flash-question" id="flashQuestion"></p>
+
+    <p class="flash-definition" id="flashDefinition" hidden></p>
+
+    <p class="flash-word" id="flashWord" hidden></p>
+
+    <p class="flash-meaning" id="flashMeaning" hidden></p>
+
+    <button type="button" id="replayBtn" class="secondary-btn tts-replay-btn" hidden>🔊 다시 듣기</button>
+
+    <button type="button" id="nextStageBtn" class="secondary-btn"></button>
+  </div>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+
+</main>
+
+<script src="js/words-data.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/progress-store.js"></script>
+<script src="js/card-data.js"></script>
+<script src="js/card-store.js"></script>
+<script src="js/card-popup.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/flashcards.js"></script>
+</body>
+</html>

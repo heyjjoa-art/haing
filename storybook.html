@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스토리북 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/storybook.css">
+<link rel="stylesheet" href="css/card-popup.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Haing 🐣</h1>
+  <p class="subtitle">하정 하진이의 영어 · 1. 스토리북</p>
+</header>
+
+<main class="storybook-main">
+
+  <section class="story-page">
+    <h2 class="story-title" id="storyTitle"></h2>
+
+    <div class="story-page-layout">
+      <div class="story-image-col">
+        <img src="" alt="이야기 삽화" id="bookPageImg">
+      </div>
+
+      <div class="story-content-col">
+        <div class="listen-actions" id="listenActions"></div>
+        <div class="story-text" id="storyTextArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+
+</main>
+
+<script src="js/words-data.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/progress-store.js"></script>
+<script src="js/card-data.js"></script>
+<script src="js/card-store.js"></script>
+<script src="js/card-popup.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/storybook.js"></script>
+</body>
+</html>

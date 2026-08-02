@@ -1,0 +1,70 @@
+.card-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(58, 46, 38, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.card-popup-box {
+  background: #fff4e0;
+  border: 3px solid #ffb454;
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  max-width: 340px;
+}
+
+.card-popup-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #a85d2b;
+  margin: 0 0 6px;
+}
+
+.card-popup-subtitle {
+  font-size: 0.85rem;
+  color: #6b5544;
+  margin: 0 0 14px;
+}
+
+.card-popup-cards {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.card-popup-item {
+  flex: 0 1 140px;
+}
+
+.card-popup-img {
+  width: 100%;
+  max-width: 140px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  margin-bottom: 8px;
+}
+
+.card-popup-name {
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #3a2e26;
+  margin: 0;
+}
+
+.card-popup-btn {
+  background: #ffb454;
+  color: #3a2e26;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+}

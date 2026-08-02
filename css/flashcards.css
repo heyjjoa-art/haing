@@ -1,0 +1,108 @@
+.flashcards-main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.progress-line {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #8a7969;
+  margin-bottom: 10px;
+}
+
+.speed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #6b5544;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.flash-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.stage-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e4d6c3;
+}
+
+.dot.active {
+  background: #ffb454;
+}
+
+.flash-emoji {
+  font-size: 4.5rem;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+
+.flash-question {
+  font-size: 1rem;
+  color: #8a7969;
+  margin: 0 0 18px;
+}
+
+.flash-definition {
+  font-size: 1.05rem;
+  color: #3a2e26;
+  background: #fbf3e8;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+}
+
+.flash-word {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #d3691e;
+  margin: 0 0 10px;
+}
+
+.flash-meaning {
+  font-size: 1.2rem;
+  color: #2f7a48;
+  font-weight: bold;
+  margin: 0 0 18px;
+}
+
+#nextStageBtn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+}
+
+.tts-replay-btn {
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  padding: 8px;
+}
+
+.back-link {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.back-link a {
+  color: #8a7969;
+  text-decoration: none;
+  font-size: 0.9rem;
+}

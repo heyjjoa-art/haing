@@ -1,0 +1,162 @@
+.hangman-main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.stage-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stage-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #e4d6c3;
+  background: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #6b5544;
+}
+
+.stage-tab.active {
+  border-color: #ffb454;
+  background: #fff4e0;
+  color: #a85d2b;
+}
+
+.progress-line {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #8a7969;
+  margin-bottom: 12px;
+}
+
+.hangman-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.hangman-svg {
+  width: 180px;
+  height: 180px;
+}
+
+.hangman-svg .part {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.hangman-svg .part.show {
+  opacity: 1;
+}
+
+.lives-line {
+  margin: 4px 0 10px;
+  font-size: 0.9rem;
+  color: #6b5544;
+}
+
+.hint-text {
+  background: #fbf3e8;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: #3a2e26;
+  margin: 0 0 10px;
+}
+
+.tts-replay-btn {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+}
+
+.word-blanks {
+  font-size: 1.8rem;
+  letter-spacing: 8px;
+  font-weight: bold;
+  margin: 0 0 18px;
+  font-family: monospace;
+  color: #3a2e26;
+}
+
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.keyboard-row {
+  display: flex;
+  gap: 6px;
+}
+
+.keyboard-row-2 {
+  margin-left: 16px;
+}
+
+.keyboard-row-3 {
+  margin-left: 32px;
+}
+
+.key-btn {
+  width: 34px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #e4d6c3;
+  background: #fdf6ec;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #3a2e26;
+}
+
+.key-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.key-btn.correct {
+  background: #e3f6e8;
+  border-color: #8fd3a3;
+  color: #2f7a48;
+}
+
+.key-btn.wrong {
+  background: #fdeaea;
+  border-color: #f3c8c6;
+  color: #b3261e;
+}
+
+.result-banner {
+  margin-top: 16px;
+  background: #fff4e0;
+  border: 2px solid #ffb454;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.result-banner p {
+  margin: 0 0 10px;
+  font-weight: bold;
+  color: #a85d2b;
+}
+
+.back-link {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.back-link a {
+  color: #8a7969;
+  text-decoration: none;
+  font-size: 0.9rem;
+}

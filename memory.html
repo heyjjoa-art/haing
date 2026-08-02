@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 매칭 게임 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/memory.css">
+<link rel="stylesheet" href="css/card-popup.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Haing 🐣</h1>
+  <p class="subtitle">3. 단어 매칭 게임 · 영어 ↔ 한글 뜻</p>
+</header>
+
+<main class="memory-main">
+
+  <div class="progress-line">
+    전체 진행 <strong id="overallProgress">0</strong> / <strong id="overallTotal">20</strong> 단어
+  </div>
+
+  <div class="memory-toolbar">
+    <div class="memory-stats">
+      <span>시도 <strong id="moveCount">0</strong></span>
+      <span>맞춘 짝 <strong id="matchCount">0</strong> / <strong id="totalPairs">0</strong></span>
+    </div>
+    <button type="button" id="restartBtn" class="secondary-btn">🔄 처음부터 다시</button>
+  </div>
+
+  <div class="memory-grid" id="memoryGrid"></div>
+
+  <div class="win-banner" id="winBanner" hidden>
+    <p id="roundWinText"></p>
+    <button type="button" id="nextRoundBtn" class="secondary-btn">다음 세트 ▶</button>
+  </div>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+
+</main>
+
+<template id="cardTemplate">
+  <button type="button" class="memory-card">
+    <div class="card-inner">
+      <div class="card-face card-back">?</div>
+      <div class="card-face card-front"></div>
+    </div>
+  </button>
+</template>
+
+<script src="js/words-data.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/progress-store.js"></script>
+<script src="js/card-data.js"></script>
+<script src="js/card-store.js"></script>
+<script src="js/card-popup.js"></script>
+<script src="js/memory.js"></script>
+</body>
+</html>
