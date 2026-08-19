@@ -46,7 +46,7 @@ var JourneysStore = (function () {
     var merged = Object.assign({}, existing, unit, { id: id, updatedAt: Date.now() });
     units[id] = merged;
     saveAll(units);
-    syncUnitToCloud(id, merged);
+    merged.cloudSyncPromise = syncUnitToCloud(id, merged);
     return merged;
   }
 
@@ -118,17 +118,41 @@ var JourneysStore = (function () {
     return tryFit();
   }
 
+  // 쓰기가 실제로 클라우드에 도착할 때까지 기다릴 수 있도록 Promise를 그대로 돌려준다 -
+  // 호출부(add.js)가 이 Promise를 기다린 뒤에 페이지를 이동해야, 저장 직후 다음 페이지의
+  // bootstrapCloudSync가 아직 도착하지 않은 이 쓰기를 예전 스냅샷으로 덮어써버리는 경쟁을 막을 수 있다.
   function syncUnitToCloud(id, unit) {
-    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return Promise.resolve();
     var cloudData = Object.assign({}, unit, { photos: (unit.photos || []).slice() });
-    fitUnitForCloud(cloudData).then(function (fitted) {
-      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + id, fitted);
+    return fitUnitForCloud(cloudData).then(function (fitted) {
+      return HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + id, fitted);
     });
   }
 
   // 클라우드 컬렉션 전체를 그대로 로컬 맵으로 바꿔 반영하고, 열려있는 목록 화면을 다시 그린다.
+  // watchCollection의 실시간 콜백에서만 쓴다 - 그쪽은 이 기기가 방금 쓴 내용의 echo는
+  // 건너뛰므로(hasPendingWrites) 여기 오는 스냅샷은 항상 서버가 확인해준 최신 상태다.
   function applyCloudUnits(remoteDocs) {
     saveAll(remoteDocs || {});
+    if (window.__journeysRenderHome) window.__journeysRenderHome();
+  }
+
+  // bootstrap 시점의 1회성 스냅샷은 위와 다르게 "덮어쓰기"가 아니라 "병합"해야 한다 -
+  // 방금 다른 페이지에서 저장한 유닛의 클라우드 쓰기가 아직 도착하기 전일 수 있어서,
+  // 그대로 덮어쓰면 막 저장한 내용이 사라진다. 로컬에만 있는(=아직 못 올라간) 유닛이나
+  // 로컬이 더 최신인 유닛은 살려두고, 클라우드에 없던 것은 다시 밀어올린다.
+  function mergeCloudSnapshotIntoLocal(remoteDocs) {
+    var local = loadAll();
+    var merged = Object.assign({}, remoteDocs);
+    Object.keys(local).forEach(function (id) {
+      var remote = remoteDocs[id];
+      var localUnit = local[id];
+      if (!remote || (localUnit.updatedAt || 0) > (remote.updatedAt || 0)) {
+        merged[id] = localUnit;
+        if (!remote) syncUnitToCloud(id, localUnit);
+      }
+    });
+    saveAll(merged);
     if (window.__journeysRenderHome) window.__journeysRenderHome();
   }
 
@@ -138,7 +162,7 @@ var JourneysStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     HaingCloud.getCollectionOnce(CLOUD_COLLECTION).then(function (remoteDocs) {
       if (remoteDocs && Object.keys(remoteDocs).length > 0) {
-        applyCloudUnits(remoteDocs);
+        mergeCloudSnapshotIntoLocal(remoteDocs);
       } else {
         var localUnits = loadAll();
         Object.keys(localUnits).forEach(function (id) {

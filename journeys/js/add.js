@@ -302,9 +302,21 @@
       if (editUnit) payload.id = editUnit.id;
       var unit = JourneysStore.saveUnit(payload);
       saveStatus.style.color = "";
-      saveStatus.textContent = "✅ 저장했어요!";
-      // 수정한 경우엔 목록으로, 새로 만든 경우엔 방금 만든 유닛을 바로 미리보기.
-      window.location.href = editUnit ? listHref : "reader.html?id=" + encodeURIComponent(unit.id);
+      saveStatus.textContent = "☁️ 클라우드에 저장 중...";
+      saveBtn.disabled = true;
+
+      // 클라우드 쓰기가 끝나기 전에 페이지를 이동하면 다음 페이지가 아직 이 쓰기를
+      // 못 받은 예전 클라우드 스냅샷으로 로컬 데이터를 덮어써서 방금 저장한 내용이
+      // 사라질 수 있다. 그래서 쓰기를 기다렸다가 이동한다 - 단, 오프라인 등으로 계속
+      // 안 끝나면 로컬 저장은 이미 끝난 뒤이니 무한정 기다리지 않고 넘어간다.
+      var cloudWaitTimeout = new Promise(function (resolve) {
+        setTimeout(resolve, 5000);
+      });
+      Promise.race([Promise.resolve(unit.cloudSyncPromise), cloudWaitTimeout]).then(function () {
+        saveStatus.textContent = "✅ 저장했어요!";
+        // 수정한 경우엔 목록으로, 새로 만든 경우엔 방금 만든 유닛을 바로 미리보기.
+        window.location.href = editUnit ? listHref : "reader.html?id=" + encodeURIComponent(unit.id);
+      });
     } catch (e) {
       saveStatus.style.color = "#b3261e";
       saveStatus.textContent = "❌ 저장 실패 (용량 초과 가능성): " + e.message;
