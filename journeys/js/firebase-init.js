@@ -14,14 +14,12 @@ var HaingCloud = (function () {
   };
 
   var db = null;
-  var storage = null;
   var enabled = false;
 
   try {
     if (typeof firebase !== "undefined") {
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      storage = firebase.storage();
       enabled = true;
     }
   } catch (e) {
@@ -122,21 +120,6 @@ var HaingCloud = (function () {
       });
   }
 
-  // data: URL 사진 한 장을 Storage에 올리고 다운로드 URL을 돌려준다. 실패/미지원이면 null.
-  function uploadDataUrl(storagePath, dataUrl) {
-    if (!enabled || !dataUrl || dataUrl.indexOf("data:") !== 0) return Promise.resolve(null);
-    return storage
-      .ref(storagePath)
-      .putString(dataUrl, "data_url")
-      .then(function (snapshot) {
-        return snapshot.ref.getDownloadURL();
-      })
-      .catch(function (err) {
-        console.warn("[HaingCloud] uploadDataUrl 실패", storagePath, err);
-        return null;
-      });
-  }
-
   return {
     enabled: enabled,
     watchDoc: watchDoc,
@@ -144,7 +127,6 @@ var HaingCloud = (function () {
     getDocOnce: getDocOnce,
     getCollectionOnce: getCollectionOnce,
     writeDoc: writeDoc,
-    deleteDoc: deleteDoc,
-    uploadDataUrl: uploadDataUrl
+    deleteDoc: deleteDoc
   };
 })();

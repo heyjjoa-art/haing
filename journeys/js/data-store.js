@@ -63,32 +63,66 @@ var JourneysStore = (function () {
 
   var CLOUD_COLLECTION = "journeysUnits";
 
-  // 여러 페이지 사진(data: URL 배열)을 각각 Storage에 올려 다운로드 URL 배열로 바꾼 뒤
-  // Firestore에 쓴다. localStorage에도 URL로 갱신해서 큰 base64를 계속 들고 있지 않게 한다.
+  function compressDataUrlForCloud(dataUrl, maxDim, quality) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = function () {
+        resolve(dataUrl);
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  // Firebase Storage(유료 Blaze 요금제 필요) 없이, 여러 페이지 사진을 Firestore 문서에
+  // base64 배열로 그대로 넣는다. 문서 하나는 1MB를 못 넘어서, 넘으면(페이지가 많을 때)
+  // 화질을 단계적으로 낮춰가며 다시 압축한다 - 이 기기의 로컬 저장 화질은 그대로 둔다.
+  var CLOUD_SIZE_LIMIT = 900000;
+  var CLOUD_COMPRESSION_TIERS = [
+    { maxDim: 900, quality: 0.55 },
+    { maxDim: 600, quality: 0.4 },
+    { maxDim: 420, quality: 0.3 }
+  ];
+
+  function jsonByteSize(obj) {
+    return JSON.stringify(obj).length;
+  }
+
+  function fitUnitForCloud(cloudData) {
+    var tierIdx = 0;
+    function tryFit() {
+      if (jsonByteSize(cloudData) <= CLOUD_SIZE_LIMIT || tierIdx >= CLOUD_COMPRESSION_TIERS.length) {
+        return Promise.resolve(cloudData);
+      }
+      var tier = CLOUD_COMPRESSION_TIERS[tierIdx++];
+      var photos = cloudData.photos || [];
+      return Promise.all(
+        photos.map(function (src, idx) {
+          if (!src || src.indexOf("data:") !== 0) return Promise.resolve();
+          return compressDataUrlForCloud(src, tier.maxDim, tier.quality).then(function (u) {
+            photos[idx] = u;
+          });
+        })
+      ).then(function () {
+        cloudData.photos = photos;
+        return tryFit();
+      });
+    }
+    return tryFit();
+  }
+
   function syncUnitToCloud(id, unit) {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
-    var photos = unit.photos || [];
-    var uploads = photos.map(function (src, idx) {
-      if (!src || src.indexOf("data:") !== 0) return Promise.resolve(src);
-      return HaingCloud.uploadDataUrl("journeys-photos/" + id + "/" + idx + ".jpg", src).then(function (url) {
-        return url || src;
-      });
-    });
-
-    Promise.all(uploads).then(function (photoUrls) {
-      var cloudData = Object.assign({}, unit, { photos: photoUrls });
-      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + id, cloudData);
-
-      var changed = photoUrls.some(function (url, idx) {
-        return url !== photos[idx];
-      });
-      if (changed) {
-        var units = loadAll();
-        if (units[id]) {
-          units[id].photos = photoUrls;
-          saveAll(units);
-        }
-      }
+    var cloudData = Object.assign({}, unit, { photos: (unit.photos || []).slice() });
+    fitUnitForCloud(cloudData).then(function (fitted) {
+      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + id, fitted);
     });
   }
 

@@ -61,45 +61,70 @@ var DataStore = (function () {
 
   var CLOUD_COLLECTION = "wordUnits";
 
-  // 사진(data: URL)은 Storage에 올려 짧은 다운로드 URL로 바꾼 뒤에 Firestore에 쓴다.
-  // localStorage에도 그 URL로 갱신해서, 매번 큰 base64 문자열을 들고 있지 않게 한다.
+  function compressDataUrlForCloud(dataUrl, maxDim, quality) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = function () {
+        resolve(dataUrl);
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  // Firebase Storage(유료 Blaze 요금제 필요) 없이, 사진을 Firestore 문서에 base64로
+  // 그대로 넣는다. 문서 하나는 1MB를 못 넘어서, 넘으면 화질을 단계적으로 낮춰가며
+  // 다시 압축한다 - 이 기기의 로컬 저장 화질(원본 압축본)은 그대로 둔다.
+  var CLOUD_SIZE_LIMIT = 900000;
+  var CLOUD_COMPRESSION_TIERS = [
+    { maxDim: 1000, quality: 0.6 },
+    { maxDim: 700, quality: 0.45 },
+    { maxDim: 500, quality: 0.35 }
+  ];
+
+  function jsonByteSize(obj) {
+    return JSON.stringify(obj).length;
+  }
+
+  function fitUnitForCloud(cloudData) {
+    var tierIdx = 0;
+    function tryFit() {
+      if (jsonByteSize(cloudData) <= CLOUD_SIZE_LIMIT || tierIdx >= CLOUD_COMPRESSION_TIERS.length) {
+        return Promise.resolve(cloudData);
+      }
+      var tier = CLOUD_COMPRESSION_TIERS[tierIdx++];
+      var jobs = [];
+      if (cloudData.storyPhotoDataUrl && cloudData.storyPhotoDataUrl.indexOf("data:") === 0) {
+        jobs.push(
+          compressDataUrlForCloud(cloudData.storyPhotoDataUrl, tier.maxDim, tier.quality).then(function (u) {
+            cloudData.storyPhotoDataUrl = u;
+          })
+        );
+      }
+      if (cloudData.wordsPhotoDataUrl && cloudData.wordsPhotoDataUrl.indexOf("data:") === 0) {
+        jobs.push(
+          compressDataUrlForCloud(cloudData.wordsPhotoDataUrl, tier.maxDim, tier.quality).then(function (u) {
+            cloudData.wordsPhotoDataUrl = u;
+          })
+        );
+      }
+      return Promise.all(jobs).then(tryFit);
+    }
+    return tryFit();
+  }
+
   function syncUnitToCloud(unitKey, data) {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
-
-    var storyUrl = data.storyPhotoDataUrl;
-    var wordsUrl = data.wordsPhotoDataUrl;
-    var uploads = [];
-
-    if (storyUrl && storyUrl.indexOf("data:") === 0) {
-      uploads.push(
-        HaingCloud.uploadDataUrl("word-photos/" + unitKey + "/story.jpg", storyUrl).then(function (url) {
-          if (url) storyUrl = url;
-        })
-      );
-    }
-    if (wordsUrl && wordsUrl.indexOf("data:") === 0) {
-      uploads.push(
-        HaingCloud.uploadDataUrl("word-photos/" + unitKey + "/words.jpg", wordsUrl).then(function (url) {
-          if (url) wordsUrl = url;
-        })
-      );
-    }
-
-    Promise.all(uploads).then(function () {
-      var cloudData = Object.assign({}, data, {
-        storyPhotoDataUrl: storyUrl,
-        wordsPhotoDataUrl: wordsUrl
-      });
-      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + unitKey, cloudData);
-
-      if (storyUrl !== data.storyPhotoDataUrl || wordsUrl !== data.wordsPhotoDataUrl) {
-        var units = loadAllUnits();
-        if (units[unitKey]) {
-          units[unitKey].storyPhotoDataUrl = storyUrl;
-          units[unitKey].wordsPhotoDataUrl = wordsUrl;
-          saveAllUnits(units);
-        }
-      }
+    var cloudData = Object.assign({}, data);
+    fitUnitForCloud(cloudData).then(function (fitted) {
+      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + unitKey, fitted);
     });
   }
 
