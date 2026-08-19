@@ -88,37 +88,66 @@
     });
   }
 
-  // 휴대폰으로 찍은 책 사진은 그림자·저대비 때문에 그대로 OCR을 돌리면 인식률이
-  // 뚝 떨어진다. 흑백으로 바꾸고 명암 범위를 0~255로 늘려 펴주면(히스토그램 스트레치)
-  // 배경 잡음이 줄고 글자 대비가 살아나서 인식률이 눈에 띄게 좋아진다.
+  // 휴대폰으로 찍은 책 사진은 대개 한쪽에 그림자가 져서 조명이 고르지 않다. 사진 전체에
+  // 같은 밝기 기준(min-max 스트레치)을 적용하면 그림자 쪽 글자는 여전히 흐릿하게 남는다.
+  // 대신 각 픽셀을 "자기 주변 지역의 평균 밝기"와 비교해 흑/백으로 나누는 지역 적응형
+  // 이진화(Bradley's adaptive thresholding)를 쓰면, 그림자가 진 부분도 그 지역 기준으로
+  // 판단하기 때문에 조명이 고르지 않아도 글자 대비가 살아난다. integral image로 지역
+  // 평균을 O(1)에 구해서 2000px 이미지도 빠르게 처리한다.
   function preprocessForOcr(dataUrl) {
     return new Promise(function (resolve) {
       var img = new Image();
       img.onload = function () {
         var maxDim = 2000;
         var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale);
+        var h = Math.round(img.height * scale);
         var canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
+        canvas.width = w;
+        canvas.height = h;
         var ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, w, h);
 
-        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var imgData = ctx.getImageData(0, 0, w, h);
         var d = imgData.data;
-        var pixelCount = d.length / 4;
-        var grays = new Uint8ClampedArray(pixelCount);
-        var min = 255;
-        var max = 0;
+        var n = w * h;
+        var gray = new Float64Array(n);
         for (var i = 0, j = 0; i < d.length; i += 4, j++) {
-          var gray = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
-          grays[j] = gray;
-          if (gray < min) min = gray;
-          if (gray > max) max = gray;
+          gray[j] = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
         }
-        var range = max - min || 1;
-        for (var i2 = 0, j2 = 0; i2 < d.length; i2 += 4, j2++) {
-          var stretched = ((grays[j2] - min) / range) * 255;
-          d[i2] = d[i2 + 1] = d[i2 + 2] = stretched;
+
+        // 행 단위 누적합을 쌓아 2차원 integral image를 만든다 - 이후 임의 사각형
+        // 영역의 합을 덧셈/뺄셈 네 번으로 바로 구할 수 있다.
+        var integral = new Float64Array(n);
+        for (var y = 0; y < h; y++) {
+          var rowSum = 0;
+          for (var x = 0; x < w; x++) {
+            rowSum += gray[y * w + x];
+            integral[y * w + x] = rowSum + (y > 0 ? integral[(y - 1) * w + x] : 0);
+          }
+        }
+
+        var half = Math.max(w, h) >> 4; // 지역 평균을 낼 창 크기(이미지의 약 1/8)의 절반
+        var t = 0.85; // 주변 평균의 85% 미만으로 어두우면 글자(검정)로 본다
+        var out = new Uint8ClampedArray(n);
+        for (var y2 = 0; y2 < h; y2++) {
+          var y1 = Math.max(0, y2 - half);
+          var yb = Math.min(h - 1, y2 + half);
+          for (var x2 = 0; x2 < w; x2++) {
+            var x1 = Math.max(0, x2 - half);
+            var xb = Math.min(w - 1, x2 + half);
+            var count = (xb - x1 + 1) * (yb - y1 + 1);
+            var sum = integral[yb * w + xb]
+              - (x1 > 0 ? integral[yb * w + x1 - 1] : 0)
+              - (y1 > 0 ? integral[(y1 - 1) * w + xb] : 0)
+              + (x1 > 0 && y1 > 0 ? integral[(y1 - 1) * w + x1 - 1] : 0);
+            var mean = sum / count;
+            var idx = y2 * w + x2;
+            out[idx] = gray[idx] < mean * t ? 0 : 255;
+          }
+        }
+        for (var k = 0, p = 0; k < d.length; k += 4, p++) {
+          d[k] = d[k + 1] = d[k + 2] = out[p];
         }
         ctx.putImageData(imgData, 0, 0);
         resolve(canvas.toDataURL("image/jpeg", 0.92));
