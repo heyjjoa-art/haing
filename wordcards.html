@@ -10,16 +10,21 @@
 <body>
 
 <header class="app-header">
-  <h1>Haing 🐣</h1>
+  <h1><a href="index.html">Haing 🐣</a></h1>
   <p class="subtitle">📔 내가 배운 단어 도감</p>
 </header>
 
 <main class="wordcards-main">
-  <p class="wc-stat"><strong id="wcCount">0</strong>개 모았어요</p>
+  <nav class="wc-subtab-bar" role="tablist">
+    <button type="button" class="wc-subtab-btn" id="wcTabWords" role="tab" aria-selected="true" aria-controls="wcGrid">단어 카드</button>
+    <button type="button" class="wc-subtab-btn" id="wcTabTrophies" role="tab" aria-selected="false" aria-controls="wcGrid">트로피 카드</button>
+  </nav>
+
+  <p class="wc-stat"><strong id="wcCount">0</strong><span id="wcCountLabel">개 모았어요</span></p>
 
   <div class="wc-empty" id="wcEmpty" hidden>
-    <p>아직 모은 단어 카드가 없어요.</p>
-    <p>1~4번 공부를 끝내면 카드를 한 장씩 받아요!</p>
+    <p id="wcEmptyLine1">아직 모은 단어 카드가 없어요.</p>
+    <p id="wcEmptyLine2">1~4번 공부를 끝내면 카드를 한 장씩 받아요!</p>
   </div>
 
   <div class="wc-grid" id="wcGrid" hidden></div>
@@ -30,6 +35,14 @@
 <div class="wc-lightbox" id="wcLightbox">
   <button type="button" class="wc-lightbox-close" id="wcLightboxClose">✕ 닫기</button>
   <div id="wcLightboxBody"></div>
+</div>
+
+<div class="wc-lightbox" id="wcUnitLightbox">
+  <button type="button" class="wc-lightbox-close" id="wcUnitLightboxClose">✕ 닫기</button>
+  <div class="wc-unit-detail">
+    <p class="wc-unit-detail-title" id="wcUnitDetailTitle"></p>
+    <div class="wc-grid" id="wcUnitDetailGrid"></div>
+  </div>
 </div>
 
 <script src="js/child-store.js"></script>

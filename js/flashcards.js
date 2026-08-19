@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  var ACTIVE_WORDS = DataStore.getWords();
+  // 이미 카드로 모은(=완전히 외운) 단어는 복습에서 빼고, 아직 안 외운 단어 위주로 연습한다.
+  var ACTIVE_WORDS = WordCardStore.filterUncollected(DataStore.getWords());
   var TOTAL_WORDS = ACTIVE_WORDS.length;
 
   var progressCountEl = document.getElementById("progressCount");
@@ -115,13 +116,10 @@
       updateProgress();
       if (completedWords >= TOTAL_WORDS) {
         if (ProgressStore.markDone("flashcards")) {
-          var card = WordCardStore.awardRandomWordCard();
-          if (card) {
-            WordCardPopup.show(card, "memory.html", "다음 단계로 ▶");
-            return;
-          }
+          PraisePopup.show("memory.html", "다음 단계로 ▶");
+          return;
         }
-        location.href = WordCardPopup.withUnitParam("memory.html");
+        location.href = PraisePopup.withUnitParam("memory.html");
         return;
       }
       nextWord();

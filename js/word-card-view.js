@@ -23,8 +23,31 @@ var WordCardView = (function () {
     return "Unit " + unit;
   }
 
+  function trophyCardHtml(record, opts) {
+    var classes = "wc-card wc-card-trophy" + (opts.large ? " wc-card-lg" : "");
+    var label = unitLabel(record);
+
+    var html = '<article class="' + classes + '">';
+    if (opts.isNew) html += '<span class="wc-card-new">NEW</span>';
+    html +=
+      '<div class="wc-card-band"><span class="wc-card-emoji">🏆</span></div>' +
+      '<div class="wc-card-body">' +
+      '<strong class="wc-card-word">완전정복!</strong>' +
+      '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>단어를 다 모았어요</span>";
+    if (opts.large) {
+      html += '<p class="wc-card-def">이 유닛의 단어를 전부 완벽하게 외웠어요. 정말 대단해요!</p>';
+    }
+    html +=
+      "</div>" +
+      '<span class="wc-card-unit">' + escapeHtml(label) + "</span>" +
+      "</article>";
+    return html;
+  }
+
   function cardHtml(record, opts) {
     opts = opts || {};
+    if (record && record.isTrophy) return trophyCardHtml(record, opts);
+
     var tone = toneIndex(record);
     var classes = "wc-card wc-tone-" + tone + (opts.large ? " wc-card-lg" : "");
 

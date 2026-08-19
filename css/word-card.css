@@ -95,6 +95,27 @@
 .wc-tone-3 { border-color: #8fd3a3; }
 .wc-tone-3 .wc-card-band { background: #8fd3a3; }
 
+/* 유닛 완전정복 트로피 카드 - 일반 단어 카드와 확실히 구분되는 금색 톤 */
+.wc-card-trophy {
+  border-color: #e8b84b;
+  box-shadow: 0 2px 10px rgba(232, 184, 75, 0.35);
+}
+
+.wc-card-trophy .wc-card-band {
+  background: linear-gradient(135deg, #ffe6a8, #e8b84b);
+}
+
+.wc-card-trophy .wc-card-word {
+  color: #a85d2b;
+}
+
+.wc-card-trophy .wc-card-unit {
+  background: #fff8e6;
+  border-top-color: #e8b84b;
+  color: #a85d2b;
+  font-weight: bold;
+}
+
 .wc-card-lg {
   width: 220px;
 }
@@ -136,6 +157,11 @@
   color: #a85d2b;
 }
 
+.wc-popup-title-lg {
+  font-size: 1.6rem;
+  margin: 6px 0 18px;
+}
+
 .wc-popup-subtitle {
   margin: 0 0 14px;
   font-size: 0.85rem;
@@ -167,6 +193,30 @@
 }
 
 /* ── 도감 페이지 ───────────────────────────────────── */
+.wc-subtab-bar {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.wc-subtab-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e4d6c3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #8a7969;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.wc-subtab-btn.active {
+  background: #ffb454;
+  border-color: #ffb454;
+  color: #3a2e26;
+}
+
 .wc-stat {
   text-align: center;
   color: #a85d2b;
@@ -229,6 +279,35 @@
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
+}
+
+/* 트로피 카드를 눌렀을 때 - 그 유닛의 단어 카드 전체를 보여주는 패널 */
+.wc-unit-detail {
+  background: #fff4e0;
+  border-radius: 20px;
+  padding: 24px 20px;
+  max-width: 520px;
+  max-height: 85vh;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.wc-unit-detail-title {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #a85d2b;
+}
+
+.wc-unit-detail .wc-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 380px) {
+  .wc-unit-detail .wc-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 380px) {

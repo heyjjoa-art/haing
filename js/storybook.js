@@ -25,10 +25,7 @@
 
   function completeStorybook() {
     if (ProgressStore.markDone("storybook")) {
-      var card = WordCardStore.awardRandomWordCard();
-      if (card) {
-        WordCardPopup.show(card, "flashcards.html", "다음 단계로 ▶");
-      }
+      PraisePopup.show("flashcards.html", "다음 단계로 ▶");
     }
   }
 

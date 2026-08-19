@@ -117,11 +117,115 @@ var WordCardStore = (function () {
     return record;
   }
 
+  // 특정 단어 하나를 콕 집어 카드로 만든다(4번 게임에서 실제로 맞힌 단어용).
+  // 이미 모은 단어면 null - 중복으로 다시 주지 않는다.
+  function awardWordCard(word, unitKey) {
+    if (!word || !word.word) return null;
+    if (hasWord(word.word)) return null;
+    var collected = getCollected();
+    var record = toRecord(word, unitKey);
+    collected.push(record);
+    saveCollected(collected);
+    pushPending(record);
+    return record;
+  }
+
+  // 이 유닛 단어 중 아직 카드로 못 모은 것만 걸러준다(2~4번 복습에 사용).
+  // 전부 다 모았으면(완전정복) 복습 자체가 의미 없으니 원래 목록을 그대로 돌려준다.
+  function filterUncollected(words) {
+    var collected = getCollected();
+    var owned = {};
+    collected.forEach(function (r) {
+      owned[normalize(r.word)] = true;
+    });
+    var remaining = (words || []).filter(function (w) {
+      return w && w.word && !owned[normalize(w.word)];
+    });
+    return remaining.length > 0 ? remaining : words;
+  }
+
+  // 트로피 카드는 일반 단어 카드와 같은 배열에 저장하되, 진짜 단어와 절대 안 겹치도록
+  // "__trophy_유닛키" 형태의 가짜 word 값을 써서 구분한다(WordCardView가 isTrophy로 렌더링 분기).
+  function trophyWordKey(unitKey) {
+    return "__trophy_" + String(unitKey);
+  }
+
+  function hasTrophy(unitKey) {
+    var resolvedUnit = typeof DataStore !== "undefined" ? DataStore.resolveUnitKey(unitKey) : unitKey;
+    return hasWord(trophyWordKey(resolvedUnit));
+  }
+
+  function isUnitComplete(words) {
+    return !!words && words.length > 0 && words.every(function (w) {
+      return w && w.word && hasWord(w.word);
+    });
+  }
+
+  // 이 유닛의 단어를 전부 모았으면(완전정복) 트로피 카드를 한 장 준다. 유닛당 한 번만.
+  function awardTrophyIfComplete(unitKey) {
+    if (typeof DataStore === "undefined") return null;
+    var resolvedUnit = DataStore.resolveUnitKey(unitKey);
+    var words = DataStore.getWords(unitKey);
+    if (!isUnitComplete(words)) return null;
+    if (hasTrophy(resolvedUnit)) return null;
+
+    var record = {
+      word: trophyWordKey(resolvedUnit),
+      isTrophy: true,
+      unit: resolvedUnit,
+      collectedAt: Date.now()
+    };
+    var collected = getCollected();
+    collected.push(record);
+    saveCollected(collected);
+    pushPending(record);
+    return record;
+  }
+
+  // 도감 화면의 "단어 카드" / "트로피 카드" 탭에 쓰는 조회 함수들.
+  function getTrophyCards() {
+    return getCollected().filter(function (r) {
+      return r.isTrophy;
+    });
+  }
+
+  // 이미 트로피를 받은(=완전정복한) 유닛 키 집합. 그 유닛의 단어 카드는 트로피
+  // 안으로 "졸업"한 걸로 보고 단어 카드 탭에서는 더 이상 따로 보여주지 않는다.
+  function getCompletedUnitKeys() {
+    var keys = {};
+    getTrophyCards().forEach(function (r) {
+      keys[String(r.unit)] = true;
+    });
+    return keys;
+  }
+
+  // 단어 카드 탭용 - 아직 그 유닛을 완전정복하지 못한, 지금 모으는 중인 단어 카드만.
+  function getInProgressCards() {
+    var completedUnits = getCompletedUnitKeys();
+    return getCollected().filter(function (r) {
+      return !r.isTrophy && !completedUnits[String(r.unit)];
+    });
+  }
+
+  // 트로피 카드를 눌렀을 때 - 그 유닛에서 모은 단어 카드 전체(완전정복이니 유닛 단어 수만큼).
+  function getUnitWordCards(unitKey) {
+    return getCollected().filter(function (r) {
+      return !r.isTrophy && String(r.unit) === String(unitKey);
+    });
+  }
+
   return {
     getCollected: getCollected,
     getCount: getCount,
     hasWord: hasWord,
     awardRandomWordCard: awardRandomWordCard,
+    awardWordCard: awardWordCard,
+    filterUncollected: filterUncollected,
+    hasTrophy: hasTrophy,
+    awardTrophyIfComplete: awardTrophyIfComplete,
+    getTrophyCards: getTrophyCards,
+    getInProgressCards: getInProgressCards,
+    getUnitWordCards: getUnitWordCards,
     getPendingWords: getPendingWords,
     getPendingCards: getPendingCards,
     getPendingCard: getPendingCard,

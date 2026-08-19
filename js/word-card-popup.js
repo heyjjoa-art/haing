@@ -55,7 +55,11 @@ var WordCardPopup = (function () {
     confirmBtn.textContent = nextLabel || "확인";
     confirmBtn.addEventListener("click", function () {
       overlay.remove();
-      if (nextUrl) window.location.href = withUnitParam(nextUrl);
+      if (nextUrl) {
+        window.location.href = withUnitParam(nextUrl);
+      } else if (opts.onConfirm) {
+        opts.onConfirm();
+      }
     });
     box.appendChild(confirmBtn);
 

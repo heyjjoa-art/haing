@@ -2,7 +2,8 @@
   "use strict";
 
   var ROUND_SIZES = [4, 8, 8];
-  var ACTIVE_WORDS = DataStore.getWords();
+  // 이미 카드로 모은(=완전히 외운) 단어는 복습에서 빼고, 아직 안 외운 단어 위주로 연습한다.
+  var ACTIVE_WORDS = WordCardStore.filterUncollected(DataStore.getWords());
   var TOTAL_WORDS = ACTIVE_WORDS.length;
   var roundIndex = 0;
 
@@ -160,10 +161,7 @@
       nextRoundBtn.textContent = "처음부터 다시";
       nextRoundBtn.onclick = startNewCycle;
       if (ProgressStore.markDone("memory")) {
-        var card = WordCardStore.awardRandomWordCard();
-        if (card) {
-          WordCardPopup.show(card, "hangman.html", "다음 단계로 ▶");
-        }
+        PraisePopup.show("hangman.html", "다음 단계로 ▶");
       }
     } else {
       roundWinTextEl.textContent =

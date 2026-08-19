@@ -2,7 +2,10 @@
   "use strict";
 
   var MAX_WRONG = 6;
-  var ACTIVE_WORDS = DataStore.getWords();
+  // 트로피 문구용 - 이 유닛에 원래 단어가 몇 개였는지(필터링 전 진짜 총 개수).
+  var UNIT_TOTAL_WORDS = (DataStore.getWords() || []).length;
+  // 이미 카드로 모은(=완전히 외운) 단어는 복습에서 빼고, 아직 안 외운 단어 위주로 연습한다.
+  var ACTIVE_WORDS = WordCardStore.filterUncollected(DataStore.getWords());
 
   // 세 단계 모두 20개 단어 전부를 다루되, 직접 맞혀야 하는 글자 비율만 다르게 한다.
   // 쉬운 단계: 30%만 맞히면 됨(70% 미리 보여줌) / 중간: 70% / 어려운: 100%(전부 직접 맞혀야 함)
@@ -242,37 +245,46 @@
     updateProgress();
     ProgressStore.setStepProgress("hangman", Math.min(overallCompleted, TOTAL_ALL_WORDS), TOTAL_ALL_WORDS);
 
+    // 카드는 실제로 직접 맞힌 단어에만, 그 자리에서 바로 준다 - 찍어서 맞은 게 아니라
+    // 진짜 아는 단어만 도감에 들어가고, 결과도 기다리지 않고 바로 확인할 수 있다.
+    var wordCard = null;
     if (currentStageKey === "hard") {
       hardStageTotal++;
-      if (didWin) hardStageWins++;
+      if (didWin) {
+        hardStageWins++;
+        wordCard = WordCardStore.awardWordCard(currentWord);
+      }
     }
 
+    var trophy = null;
     if (completedCount === STAGES[currentStageKey].words.length) {
       stageCyclesDone[currentStageKey] = true;
       // 4번 게임은 어려운 단계까지 한 바퀴 마치면 완료로 친다.
       if (currentStageKey === "hard") {
         ProgressStore.markDone("hangman");
+        trophy = WordCardStore.awardTrophyIfComplete();
+      }
+    }
 
-        var score = hardStageTotal > 0 ? Math.round((hardStageWins / hardStageTotal) * 100) : 0;
-        var isBonus = score >= 90;
-        var cards = [];
-        var firstCard = WordCardStore.awardRandomWordCard();
-        if (firstCard) cards.push(firstCard);
-        if (isBonus) {
-          var bonusCard = WordCardStore.awardRandomWordCard();
-          if (bonusCard) cards.push(bonusCard);
-        }
-
-        if (cards.length > 0) {
-          WordCardPopup.show(cards, "index.html", "홈으로 🎉", {
-            subtitle:
-              "점수 " +
-              score +
-              "점" +
-              (isBonus ? " · 90점 이상이라 보너스 카드 한 장 더!" : "")
+    // 마지막 단어를 맞히면서 동시에 완전정복까지 달성했으면, 두 팝업이 겹쳐서 단어 카드가
+    // 가려지지 않도록 단어 카드를 먼저 보여주고, 확인을 누르면 이어서 트로피 카드를 보여준다.
+    // 트로피 문구는 이번 판 성적이 아니라 이 유닛 전체 단어 수 기준으로 축하해준다.
+    if (wordCard && trophy) {
+      WordCardPopup.show(wordCard, null, "확인", {
+        onConfirm: function () {
+          WordCardPopup.show(trophy, "index.html", "홈으로 🎉", {
+            title: "🎉 축하합니다!",
+            subtitle: UNIT_TOTAL_WORDS + "개 단어를 완벽하게 맞혔어요!"
           });
         }
-      }
+      });
+    } else if (trophy) {
+      WordCardPopup.show(trophy, "index.html", "홈으로 🎉", {
+        title: "🎉 축하합니다!",
+        subtitle: UNIT_TOTAL_WORDS + "개 단어를 완벽하게 맞혔어요!"
+      });
+    } else if (wordCard) {
+      WordCardPopup.show(wordCard, null, "확인");
     }
 
     disableAllKeys();

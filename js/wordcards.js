@@ -1,12 +1,26 @@
 (function () {
   "use strict";
 
+  var tabWordsBtn = document.getElementById("wcTabWords");
+  var tabTrophiesBtn = document.getElementById("wcTabTrophies");
+
   var countEl = document.getElementById("wcCount");
+  var countLabelEl = document.getElementById("wcCountLabel");
   var emptyEl = document.getElementById("wcEmpty");
+  var emptyLine1El = document.getElementById("wcEmptyLine1");
+  var emptyLine2El = document.getElementById("wcEmptyLine2");
   var gridEl = document.getElementById("wcGrid");
+
   var lightboxEl = document.getElementById("wcLightbox");
   var lightboxBodyEl = document.getElementById("wcLightboxBody");
   var lightboxCloseBtn = document.getElementById("wcLightboxClose");
+
+  var unitLightboxEl = document.getElementById("wcUnitLightbox");
+  var unitTitleEl = document.getElementById("wcUnitDetailTitle");
+  var unitGridEl = document.getElementById("wcUnitDetailGrid");
+  var unitLightboxCloseBtn = document.getElementById("wcUnitLightboxClose");
+
+  var currentTab = "words"; // "words" | "trophies"
 
   function openLightbox(record) {
     lightboxBodyEl.innerHTML = WordCardView.cardHtml(record, { large: true });
@@ -22,9 +36,45 @@
     if (e.target === lightboxEl) closeLightbox();
   });
 
+  // 트로피 카드를 누르면 그 유닛에서 모은 단어 카드 전체를 보여준다.
+  function openUnitDetail(trophyRecord) {
+    var words = WordCardStore.getUnitWordCards(trophyRecord.unit);
+    unitTitleEl.textContent = "🏆 " + WordCardView.unitLabel(trophyRecord) + " 완전정복!";
+    unitGridEl.innerHTML = "";
+    words.forEach(function (record) {
+      var el = WordCardView.cardEl(record);
+      el.addEventListener("click", function () {
+        openLightbox(record);
+      });
+      unitGridEl.appendChild(el);
+    });
+    unitLightboxEl.classList.add("open");
+  }
+
+  function closeUnitDetail() {
+    unitLightboxEl.classList.remove("open");
+  }
+
+  unitLightboxCloseBtn.addEventListener("click", closeUnitDetail);
+  unitLightboxEl.addEventListener("click", function (e) {
+    if (e.target === unitLightboxEl) closeUnitDetail();
+  });
+
   function render() {
     var pending = WordCardStore.getPendingWords();
-    var cards = WordCardStore.getCollected().slice().reverse();
+    var isTrophyTab = currentTab === "trophies";
+    var cards = (isTrophyTab ? WordCardStore.getTrophyCards() : WordCardStore.getInProgressCards())
+      .slice()
+      .reverse();
+
+    countLabelEl.textContent = isTrophyTab ? "개 유닛을 완전정복했어요" : "개 모았어요";
+    if (isTrophyTab) {
+      emptyLine1El.textContent = "아직 완전정복한 유닛이 없어요.";
+      emptyLine2El.textContent = "한 유닛의 단어를 모두 모으면 트로피 카드를 받아요!";
+    } else {
+      emptyLine1El.textContent = "아직 모으는 중인 단어 카드가 없어요.";
+      emptyLine2El.textContent = "1~4번 공부를 끝내면 카드를 한 장씩 받아요!";
+    }
 
     countEl.textContent = String(cards.length);
     emptyEl.hidden = cards.length > 0;
@@ -35,7 +85,11 @@
       var isNew = pending.indexOf(String(record.word || "").toLowerCase()) !== -1;
       var el = WordCardView.cardEl(record, { isNew: isNew });
       el.addEventListener("click", function () {
-        openLightbox(record);
+        if (record.isTrophy) {
+          openUnitDetail(record);
+        } else {
+          openLightbox(record);
+        }
       });
       gridEl.appendChild(el);
     });
@@ -43,5 +97,21 @@
     WordCardStore.clearPending();
   }
 
-  render();
+  function activateTab(tab) {
+    currentTab = tab;
+    tabWordsBtn.classList.toggle("active", tab === "words");
+    tabWordsBtn.setAttribute("aria-selected", tab === "words" ? "true" : "false");
+    tabTrophiesBtn.classList.toggle("active", tab === "trophies");
+    tabTrophiesBtn.setAttribute("aria-selected", tab === "trophies" ? "true" : "false");
+    render();
+  }
+
+  tabWordsBtn.addEventListener("click", function () {
+    activateTab("words");
+  });
+  tabTrophiesBtn.addEventListener("click", function () {
+    activateTab("trophies");
+  });
+
+  activateTab("words");
 })();
