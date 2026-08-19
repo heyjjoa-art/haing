@@ -27,6 +27,27 @@
       label.textContent = entry.unit === "unspecified" ? "이름 없는 자료" : "Unit " + entry.unit;
       row.appendChild(label);
 
+      var actions = document.createElement("div");
+      actions.className = "admin-unit-actions";
+
+      var editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "secondary-btn";
+      editBtn.textContent = "✏️ 번호 수정";
+      editBtn.addEventListener("click", function () {
+        var next = prompt("새 Unit 번호를 입력하세요.", entry.unit === "unspecified" ? "" : entry.unit);
+        if (next === null) return;
+        next = next.trim();
+        if (!next || next === entry.unit) return;
+        if (!DataStore.renameUnit(entry.unit, next)) {
+          alert("Unit " + next + "번은 이미 등록되어 있어요. 다른 번호를 입력해주세요.");
+          return;
+        }
+        render();
+        if (window.__haingRenderHome) window.__haingRenderHome();
+      });
+      actions.appendChild(editBtn);
+
       var delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = "danger-btn";
@@ -38,7 +59,9 @@
           if (window.__haingRenderHome) window.__haingRenderHome();
         }
       });
-      row.appendChild(delBtn);
+      actions.appendChild(delBtn);
+
+      row.appendChild(actions);
 
       listEl.appendChild(row);
     });

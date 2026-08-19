@@ -46,6 +46,7 @@ var JourneysStore = (function () {
     var merged = Object.assign({}, existing, unit, { id: id, updatedAt: Date.now() });
     units[id] = merged;
     saveAll(units);
+    syncUnitToCloud(id, merged);
     return merged;
   }
 
@@ -57,7 +58,64 @@ var JourneysStore = (function () {
     var units = loadAll();
     delete units[id];
     saveAll(units);
+    if (typeof HaingCloud !== "undefined") HaingCloud.deleteDoc(CLOUD_COLLECTION + "/" + id);
   }
+
+  var CLOUD_COLLECTION = "journeysUnits";
+
+  // 여러 페이지 사진(data: URL 배열)을 각각 Storage에 올려 다운로드 URL 배열로 바꾼 뒤
+  // Firestore에 쓴다. localStorage에도 URL로 갱신해서 큰 base64를 계속 들고 있지 않게 한다.
+  function syncUnitToCloud(id, unit) {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var photos = unit.photos || [];
+    var uploads = photos.map(function (src, idx) {
+      if (!src || src.indexOf("data:") !== 0) return Promise.resolve(src);
+      return HaingCloud.uploadDataUrl("journeys-photos/" + id + "/" + idx + ".jpg", src).then(function (url) {
+        return url || src;
+      });
+    });
+
+    Promise.all(uploads).then(function (photoUrls) {
+      var cloudData = Object.assign({}, unit, { photos: photoUrls });
+      HaingCloud.writeDoc(CLOUD_COLLECTION + "/" + id, cloudData);
+
+      var changed = photoUrls.some(function (url, idx) {
+        return url !== photos[idx];
+      });
+      if (changed) {
+        var units = loadAll();
+        if (units[id]) {
+          units[id].photos = photoUrls;
+          saveAll(units);
+        }
+      }
+    });
+  }
+
+  // 클라우드 컬렉션 전체를 그대로 로컬 맵으로 바꿔 반영하고, 열려있는 목록 화면을 다시 그린다.
+  function applyCloudUnits(remoteDocs) {
+    saveAll(remoteDocs || {});
+    if (window.__journeysRenderHome) window.__journeysRenderHome();
+  }
+
+  // 이 기기가 클라우드에 처음 연결될 때: 클라우드가 비어있으면 이 기기의 기존 로컬
+  // 데이터를 그대로 올려서 시작점으로 삼고, 이미 있으면 그걸 반영한다. 이후는 실시간 동기화.
+  function bootstrapCloudSync() {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    HaingCloud.getCollectionOnce(CLOUD_COLLECTION).then(function (remoteDocs) {
+      if (remoteDocs && Object.keys(remoteDocs).length > 0) {
+        applyCloudUnits(remoteDocs);
+      } else {
+        var localUnits = loadAll();
+        Object.keys(localUnits).forEach(function (id) {
+          syncUnitToCloud(id, localUnits[id]);
+        });
+      }
+      HaingCloud.watchCollection(CLOUD_COLLECTION, applyCloudUnits);
+    });
+  }
+
+  bootstrapCloudSync();
 
   // "1.1", "1.10", "2.1" 같은 레벨 문자열을 자릿수가 아니라 숫자값으로 비교한다.
   function levelSortKey(level) {

@@ -465,4 +465,9 @@
   });
 
   render();
+
+  window.__journeysRenderStamps = function () {
+    renderStampButtons();
+    renderStampBoard();
+  };
 })();

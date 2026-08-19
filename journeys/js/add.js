@@ -88,6 +88,48 @@
     });
   }
 
+  // 휴대폰으로 찍은 책 사진은 그림자·저대비 때문에 그대로 OCR을 돌리면 인식률이
+  // 뚝 떨어진다. 흑백으로 바꾸고 명암 범위를 0~255로 늘려 펴주면(히스토그램 스트레치)
+  // 배경 잡음이 줄고 글자 대비가 살아나서 인식률이 눈에 띄게 좋아진다.
+  function preprocessForOcr(dataUrl) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var maxDim = 2000;
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var d = imgData.data;
+        var pixelCount = d.length / 4;
+        var grays = new Uint8ClampedArray(pixelCount);
+        var min = 255;
+        var max = 0;
+        for (var i = 0, j = 0; i < d.length; i += 4, j++) {
+          var gray = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
+          grays[j] = gray;
+          if (gray < min) min = gray;
+          if (gray > max) max = gray;
+        }
+        var range = max - min || 1;
+        for (var i2 = 0, j2 = 0; i2 < d.length; i2 += 4, j2++) {
+          var stretched = ((grays[j2] - min) / range) * 255;
+          d[i2] = d[i2 + 1] = d[i2 + 2] = stretched;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.onerror = function () {
+        resolve(dataUrl);
+      };
+      img.src = dataUrl;
+    });
+  }
+
   function updateOcrBtnState() {
     ocrBtn.disabled = !pendingPhotos.some(function (p) {
       return !p.recognized;
@@ -195,11 +237,14 @@
 
     Tesseract.createWorker("eng")
       .then(function (worker) {
-        var chain = Promise.resolve();
+        var chain = worker.setParameters({ tessedit_pageseg_mode: "6" });
         targets.forEach(function (photo) {
           chain = chain
             .then(function () {
-              return worker.recognize(photo.originalDataUrl);
+              return preprocessForOcr(photo.originalDataUrl);
+            })
+            .then(function (processedDataUrl) {
+              return worker.recognize(processedDataUrl);
             })
             .then(function (result) {
               var text = (result && result.data && result.data.text) || "";

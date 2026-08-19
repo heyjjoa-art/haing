@@ -25,12 +25,23 @@ var ChildStore = (function () {
     return getInfo(getActive());
   }
 
+  var changeListeners = [];
+
   function setActive(id) {
     if (id) {
       localStorage.setItem(ACTIVE_KEY, id);
     } else {
       localStorage.removeItem(ACTIVE_KEY);
     }
+    changeListeners.forEach(function (fn) {
+      fn(id);
+    });
+  }
+
+  // 로그인한 아이가 바뀔 때(로그인/전환) 클라우드 동기화를 다시 걸어야 하는 스토어들이
+  // 여기에 등록해둔다 - 페이지가 새로고침되지 않고 같은 화면에서 바로 전환되기 때문.
+  function onChange(fn) {
+    changeListeners.push(fn);
   }
 
   return {
@@ -38,6 +49,7 @@ var ChildStore = (function () {
     getInfo: getInfo,
     getActive: getActive,
     getActiveInfo: getActiveInfo,
-    setActive: setActive
+    setActive: setActive,
+    onChange: onChange
   };
 })();

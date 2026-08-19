@@ -114,6 +114,7 @@ var WordCardStore = (function () {
     collected.push(record);
     saveCollected(collected);
     pushPending(record);
+    syncToCloud();
     return record;
   }
 
@@ -127,6 +128,7 @@ var WordCardStore = (function () {
     collected.push(record);
     saveCollected(collected);
     pushPending(record);
+    syncToCloud();
     return record;
   }
 
@@ -179,6 +181,7 @@ var WordCardStore = (function () {
     collected.push(record);
     saveCollected(collected);
     pushPending(record);
+    syncToCloud();
     return record;
   }
 
@@ -214,6 +217,89 @@ var WordCardStore = (function () {
     });
   }
 
+  // 유닛 번호를 바꿀 때, 모든 아이(로그인 안 한 guest 포함)가 이미 모은 카드의 unit
+  // 필드도 같이 옮겨준다. 안 옮기면 도감에서 카드가 예전 번호로 남아 트로피와 어긋난다.
+  function renameUnitInCards(oldUnit, newUnit) {
+    var prefixes = ["guest_"];
+    if (typeof ChildStore !== "undefined") {
+      ChildStore.CHILDREN.forEach(function (c) {
+        prefixes.push(c.id + "_");
+      });
+    }
+    prefixes.forEach(function (prefix) {
+      var key = "haingWordCards_" + prefix;
+      var raw = localStorage.getItem(key);
+      if (!raw) return;
+      var cards;
+      try {
+        cards = JSON.parse(raw) || [];
+      } catch (e) {
+        return;
+      }
+      var changed = false;
+      cards.forEach(function (r) {
+        if (String(r.unit) !== String(oldUnit)) return;
+        r.unit = newUnit;
+        if (r.isTrophy) r.word = trophyWordKey(newUnit);
+        changed = true;
+      });
+      if (changed) {
+        localStorage.setItem(key, JSON.stringify(cards));
+        if (prefix !== "guest_" && typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
+          var childId = prefix.slice(0, -1);
+          HaingCloud.writeDoc("wordCards/" + childId, { cards: cards });
+        }
+      }
+    });
+  }
+
+  // 지금 로그인한 아이의 카드만 클라우드와 맞춘다(guest 상태는 어느 아이 것인지 알 수
+  // 없어 동기화하지 않는다). 다른 아이로 로그인을 바꾸면 구독을 새로 건다.
+  function cloudPath() {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    return childId ? "wordCards/" + childId : null;
+  }
+
+  function syncToCloud() {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath();
+    if (!path) return;
+    HaingCloud.writeDoc(path, { cards: getCollected() });
+  }
+
+  function applyCloudCards(data) {
+    if (!data || !data.cards) return;
+    saveCollected(data.cards);
+    if (window.__haingRenderHome) window.__haingRenderHome();
+    if (window.__haingRenderWordCards) window.__haingRenderWordCards();
+  }
+
+  var unsubscribeCloud = null;
+  function setupCloudSyncForActiveChild() {
+    if (unsubscribeCloud) {
+      unsubscribeCloud();
+      unsubscribeCloud = null;
+    }
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath();
+    if (!path) return;
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      if (remote && remote.cards && remote.cards.length > 0) {
+        saveCollected(remote.cards);
+        if (window.__haingRenderHome) window.__haingRenderHome();
+        if (window.__haingRenderWordCards) window.__haingRenderWordCards();
+      } else {
+        syncToCloud();
+      }
+      unsubscribeCloud = HaingCloud.watchDoc(path, applyCloudCards);
+    });
+  }
+
+  setupCloudSyncForActiveChild();
+  if (typeof ChildStore !== "undefined" && ChildStore.onChange) {
+    ChildStore.onChange(setupCloudSyncForActiveChild);
+  }
+
   return {
     getCollected: getCollected,
     getCount: getCount,
@@ -226,6 +312,7 @@ var WordCardStore = (function () {
     getTrophyCards: getTrophyCards,
     getInProgressCards: getInProgressCards,
     getUnitWordCards: getUnitWordCards,
+    renameUnitInCards: renameUnitInCards,
     getPendingWords: getPendingWords,
     getPendingCards: getPendingCards,
     getPendingCard: getPendingCard,

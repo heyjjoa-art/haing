@@ -112,11 +112,11 @@
         </div>
       </div>
 
-      <p class="save-status" id="saveStatus"></p>
-      <div class="manual-unit-entry" id="manualUnitEntry" hidden>
-        <input type="text" id="manualUnitInput" class="unit-input" placeholder="Unit 번호를 직접 입력 (예: 15)" inputmode="numeric">
-        <button type="button" id="manualUnitApplyBtn" class="secondary-btn">적용</button>
+      <p class="field-label">Unit 번호</p>
+      <div class="manual-unit-entry" id="manualUnitEntry">
+        <input type="text" id="manualUnitInput" class="unit-input" placeholder="Unit 번호를 입력 (예: 15)" inputmode="numeric">
       </div>
+      <p class="save-status" id="saveStatus"></p>
       <div class="upload-actions">
         <button type="button" id="saveWeekBtn" class="file-btn">💾 저장하고 반영하기</button>
       </div>
@@ -188,6 +188,10 @@
 
 <script src="js/vendor/jsQR.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script src="js/firebase-init.js"></script>
 <script src="js/child-store.js"></script>
 <script src="js/words-data.js"></script>
 <script src="js/data-store.js"></script>

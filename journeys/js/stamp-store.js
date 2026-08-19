@@ -25,6 +25,42 @@ var StampStore = (function () {
     localStorage.setItem(key(childId), JSON.stringify(data));
   }
 
+  // 아이별 스탬프 기록을 클라우드 문서 하나(stamps/{아이})와 그대로 맞춘다. 이 스토어는
+  // ChildStore를 직접 들여다보지 않고 호출하는 쪽이 넘겨주는 childId만 쓰므로, 어떤
+  // 아이가 지금 활성인지는 신경 쓰지 않고 "이 childId는 한 번은 구독해봤는지"만 기억한다.
+  var watchedChildren = {};
+
+  function cloudPath(childId) {
+    return childId ? "stamps/" + childId : null;
+  }
+
+  function syncToCloud(childId) {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath(childId);
+    if (!path) return;
+    HaingCloud.writeDoc(path, loadAll(childId));
+  }
+
+  function ensureCloudSync(childId) {
+    if (!childId || watchedChildren[childId]) return;
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    watchedChildren[childId] = true;
+    var path = cloudPath(childId);
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      if (remote && Object.keys(remote).length > 0) {
+        saveAll(childId, remote);
+      } else {
+        syncToCloud(childId);
+      }
+      HaingCloud.watchDoc(path, function (data) {
+        if (!data) return;
+        saveAll(childId, data);
+        if (window.__journeysRenderStamps) window.__journeysRenderStamps();
+        if (window.__journeysRenderHome) window.__journeysRenderHome();
+      });
+    });
+  }
+
   function pad2(n) {
     return n < 10 ? "0" + n : String(n);
   }
@@ -51,12 +87,14 @@ var StampStore = (function () {
 
   function getTodayStamps(childId, unitId) {
     if (!childId) return { listen: false, follow: false, alone: false };
+    ensureCloudSync(childId);
     var entry = (loadAll(childId)[unitId] || {})[todayStr()] || {};
     return { listen: !!entry.listen, follow: !!entry.follow, alone: !!entry.alone };
   }
 
   // 반환값: 이번 호출로 "오늘의 미션"을 처음 다 채웠으면 justCompletedAll이 true.
   function markStageDone(childId, unitId, stage) {
+    ensureCloudSync(childId);
     var all = loadAll(childId);
     var unitRecords = all[unitId] || {};
     var today = todayStr();
@@ -69,6 +107,7 @@ var StampStore = (function () {
     saveAll(childId, all);
 
     var allDoneNow = isDayComplete(entry);
+    syncToCloud(childId);
     return {
       stamps: { listen: !!entry.listen, follow: !!entry.follow, alone: !!entry.alone },
       allDone: allDoneNow,
@@ -88,6 +127,7 @@ var StampStore = (function () {
   // 이 유닛의 기록이 시작된 주부터 이번 주까지, 월~금 5칸씩 주 단위로 묶어서 돌려준다.
   // 기록이 없으면 최소 이번 주 한 줄은 항상 보여준다.
   function getWeekGrid(childId, unitId) {
+    if (childId) ensureCloudSync(childId);
     var unitRecords = childId ? loadAll(childId)[unitId] || {} : {};
     var dateStrs = Object.keys(unitRecords);
     var today = todayDate();
@@ -126,6 +166,7 @@ var StampStore = (function () {
   // 홈 화면 유닛 카드에 쓸 간단한 누적 도장 개수.
   function getTotalStampedDays(childId, unitId) {
     if (!childId) return 0;
+    ensureCloudSync(childId);
     var unitRecords = loadAll(childId)[unitId] || {};
     return Object.keys(unitRecords).filter(function (dStr) {
       return isDayComplete(unitRecords[dStr]);

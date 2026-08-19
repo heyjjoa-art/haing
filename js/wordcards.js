@@ -114,4 +114,5 @@
   });
 
   activateTab("words");
+  window.__haingRenderWordCards = render;
 })();

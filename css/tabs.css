@@ -97,6 +97,16 @@
   color: var(--color-text);
 }
 
-.admin-unit-row .danger-btn {
+.admin-unit-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-unit-actions .secondary-btn,
+.admin-unit-actions .danger-btn {
   margin-top: 0;
+  margin-left: 0;
+  white-space: nowrap;
 }

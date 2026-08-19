@@ -37,6 +37,7 @@ var ProgressStore = (function () {
     if (data[step]) return false;
     data[step] = true;
     localStorage.setItem(progressKey(), JSON.stringify(data));
+    syncToCloud();
     return true;
   }
 
@@ -79,6 +80,7 @@ var ProgressStore = (function () {
     var data = loadStepProgress();
     data[step] = { done: done, total: total };
     localStorage.setItem(stepProgressKey(), JSON.stringify(data));
+    syncToCloud();
   }
 
   function getStepProgress(step) {
@@ -93,6 +95,7 @@ var ProgressStore = (function () {
 
   function setCustomState(name, value) {
     localStorage.setItem(customKey(name), JSON.stringify(value));
+    syncToCloud();
   }
 
   function getCustomState(name) {
@@ -103,6 +106,70 @@ var ProgressStore = (function () {
     } catch (e) {
       return null;
     }
+  }
+
+  // 진행 상황은 아이별로 하나의 클라우드 문서에 몰아 저장한다(유닛/종류별로 문서를
+  // 쪼개지 않고, 이 아이의 haingProgress_/haingStepProgress_/haingCustom_ 키를 통째로).
+  // 로그인 안 한(guest) 상태는 어느 아이 것인지 알 수 없어 동기화하지 않는다.
+  function cloudPath() {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    return childId ? "progress/" + childId : null;
+  }
+
+  function relevantLocalEntries() {
+    var prefix = childPrefix();
+    var entries = {};
+    Object.keys(localStorage).forEach(function (key) {
+      if (
+        key.indexOf("haingProgress_" + prefix) === 0 ||
+        key.indexOf("haingStepProgress_" + prefix) === 0 ||
+        (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1)
+      ) {
+        entries[key] = localStorage.getItem(key);
+      }
+    });
+    return entries;
+  }
+
+  function syncToCloud() {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath();
+    if (!path) return;
+    HaingCloud.writeDoc(path, { entries: relevantLocalEntries() });
+  }
+
+  function applyCloudEntries(data) {
+    if (!data || !data.entries) return;
+    Object.keys(data.entries).forEach(function (key) {
+      localStorage.setItem(key, data.entries[key]);
+    });
+    if (window.__haingRenderHome) window.__haingRenderHome();
+  }
+
+  // 지금 로그인한 아이의 진행 상황만 클라우드와 맞춘다. 다른 아이로 로그인을 바꾸면
+  // (페이지 새로고침 없이 같은 화면에서 전환되므로) 구독을 새로 걸어야 한다.
+  var unsubscribeCloud = null;
+  function setupCloudSyncForActiveChild() {
+    if (unsubscribeCloud) {
+      unsubscribeCloud();
+      unsubscribeCloud = null;
+    }
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath();
+    if (!path) return;
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      if (remote && remote.entries && Object.keys(remote.entries).length > 0) {
+        applyCloudEntries(remote);
+      } else {
+        syncToCloud();
+      }
+      unsubscribeCloud = HaingCloud.watchDoc(path, applyCloudEntries);
+    });
+  }
+
+  setupCloudSyncForActiveChild();
+  if (typeof ChildStore !== "undefined" && ChildStore.onChange) {
+    ChildStore.onChange(setupCloudSyncForActiveChild);
   }
 
   return {
