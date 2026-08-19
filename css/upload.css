@@ -47,6 +47,10 @@
   margin-top: 8px;
 }
 
+.manual-unit-entry[hidden] {
+  display: none;
+}
+
 .unit-input {
   flex: 1;
   padding: 10px;

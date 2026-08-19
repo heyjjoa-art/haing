@@ -282,6 +282,7 @@
       saveStatus.style.color = "";
       saveStatus.textContent = "✅ 저장했어요! 1~4번 기능에 바로 반영됩니다.";
       if (window.__haingRenderHome) window.__haingRenderHome();
+      if (window.__haingRenderAdminWordUnits) window.__haingRenderAdminWordUnits();
     } catch (e) {
       saveStatus.textContent = "❌ 저장 실패 (용량 초과 가능성): " + e.message;
       saveStatus.style.color = "#b3261e";

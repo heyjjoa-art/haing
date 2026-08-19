@@ -256,15 +256,15 @@
         var score = hardStageTotal > 0 ? Math.round((hardStageWins / hardStageTotal) * 100) : 0;
         var isBonus = score >= 90;
         var cards = [];
-        var firstCard = CardStore.awardRandomCard();
+        var firstCard = WordCardStore.awardRandomWordCard();
         if (firstCard) cards.push(firstCard);
         if (isBonus) {
-          var bonusCard = CardStore.awardRandomCard();
+          var bonusCard = WordCardStore.awardRandomWordCard();
           if (bonusCard) cards.push(bonusCard);
         }
 
         if (cards.length > 0) {
-          CardPopup.show(cards, "index.html", "홈으로 🎉", {
+          WordCardPopup.show(cards, "index.html", "홈으로 🎉", {
             subtitle:
               "점수 " +
               score +

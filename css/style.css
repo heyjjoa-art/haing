@@ -101,6 +101,10 @@ input[type="text"] {
   margin-top: 6px;
 }
 
+.secondary-btn[hidden] {
+  display: none;
+}
+
 .danger-btn {
   display: inline-block;
   background: #fdeaea;

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>읽기 - Journeys</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/reader.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Journeys 📘</h1>
+  <p class="subtitle" id="levelSubtitle"></p>
+</header>
+
+<main class="reader-main">
+
+  <section class="story-page">
+    <h2 class="story-title" id="storyTitle"></h2>
+
+    <section class="stamp-board" id="stampBoard">
+      <h3 class="stamp-board-title">🗓 오늘의 미션 도장판</h3>
+      <p class="stamp-board-hint">1·2·3번을 모두 끝내면 오늘 요일 칸에 도장이 찍혀요.</p>
+      <div class="stamp-board-weeks" id="stampBoardWeeks"></div>
+    </section>
+
+    <div class="story-page-layout">
+      <div class="story-image-col" id="storyImageCol" hidden>
+        <div class="story-photos" id="storyPhotos"></div>
+      </div>
+
+      <div class="story-content-col">
+        <div class="mode-actions" id="modeActions">
+          <button type="button" id="listenBtn" class="listen-btn listen">🔊 1. 음원 듣기</button>
+          <button type="button" id="followBtn" class="listen-btn follow">✨ 2. 따라 읽기</button>
+          <button type="button" id="aloneBtn" class="listen-btn alone">📖 3. 혼자 읽기</button>
+        </div>
+
+        <div class="speed-control" id="speedControl">
+          <span class="speed-label">읽는 속도</span>
+          <button type="button" class="speed-btn" data-speed="slow">🐢 느리게</button>
+          <button type="button" class="speed-btn" data-speed="normal">🚶 보통</button>
+          <button type="button" class="speed-btn" data-speed="fast">🐇 빠르게</button>
+        </div>
+
+        <p class="listen-note">1·2·3번 모두 지금 읽는 부분이 노란색으로 표시돼요. 모르는 단어는 톡 눌러보세요!</p>
+
+        <div class="story-text" id="storyTextArea"></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="back-link"><a href="index.html">← 목록으로</a></p>
+
+</main>
+
+<div class="word-popup" id="wordPopup">
+  <div class="word-popup-body">
+    <span class="word-popup-word" id="wordPopupWord"></span>
+    <span class="word-popup-meaning" id="wordPopupMeaning"></span>
+  </div>
+  <button type="button" class="word-popup-close" id="wordPopupClose">✕</button>
+</div>
+
+<div class="reward-modal" id="rewardModal" hidden>
+  <div class="reward-card">
+    <span class="reward-sparkle">✨ 🔮 ✨</span>
+    <p class="reward-title">오늘의 미션 완성!</p>
+    <p class="reward-zodiac" id="rewardZodiac"></p>
+    <p class="reward-heading">✧ 오늘의 운세 ✧</p>
+    <p class="reward-text" id="rewardText"></p>
+    <div class="reward-lucky-row">
+      <span class="reward-lucky-chip" id="rewardLuckyColor"></span>
+      <span class="reward-lucky-chip" id="rewardLuckyNumber"></span>
+    </div>
+    <button type="button" class="reward-close-btn" id="rewardCloseBtn">확인</button>
+  </div>
+</div>
+
+<script src="../js/words-data.js"></script>
+<script src="../js/child-store.js"></script>
+<script src="../js/fortune-store.js"></script>
+<script src="js/tts.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/stamp-store.js"></script>
+<script src="js/dictionary.js"></script>
+<script src="js/reader.js"></script>
+</body>
+</html>

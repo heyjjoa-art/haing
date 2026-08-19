@@ -25,9 +25,9 @@
 
   function completeStorybook() {
     if (ProgressStore.markDone("storybook")) {
-      var card = CardStore.awardRandomCard();
+      var card = WordCardStore.awardRandomWordCard();
       if (card) {
-        CardPopup.show(card, "flashcards.html", "다음 단계로 ▶");
+        WordCardPopup.show(card, "flashcards.html", "다음 단계로 ▶");
       }
     }
   }

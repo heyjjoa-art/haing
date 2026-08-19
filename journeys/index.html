@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journeys - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Journeys 📘</h1>
+  <p class="subtitle">읽어주기 · 따라읽기 · 혼자읽기로 공부해요</p>
+</header>
+
+<main>
+
+  <p class="add-unit-row" id="addUnitRow">
+    <a href="add.html" class="file-btn" id="addUnitLink">➕ 새 유닛 추가</a>
+  </p>
+
+  <p class="empty-state" id="emptyState" hidden>
+    아직 등록된 유닛이 없어요. 위의 “새 유닛 추가”로 첫 유닛을 올려주세요.
+  </p>
+
+  <div id="levelList"></div>
+
+  <p class="back-link" id="backLink"><a href="../index.html">← Haing 홈으로</a></p>
+
+</main>
+
+<script>
+  // 관리자 탭(?admin=1)에서 열렸을 때만 수정/삭제, 새 유닛 추가 버튼을 보여준다.
+  // Journeys 탭에서 그냥 읽으러 왔을 때는 아이들이 실수로 지우지 않도록 숨긴다.
+  // home.js가 이 값을 읽어서 카드에 관리 버튼을 넣을지 정하므로, home.js보다 먼저 실행돼야 한다.
+  window.JOURNEYS_ADMIN_MODE = new URLSearchParams(location.search).get("admin") === "1";
+
+  function applyAdminMode() {
+    document.getElementById("addUnitLink").href = window.JOURNEYS_ADMIN_MODE ? "add.html?admin=1" : "add.html";
+    if (window.self !== window.top) {
+      document.getElementById("backLink").hidden = true;
+      document.getElementById("addUnitRow").hidden = !window.JOURNEYS_ADMIN_MODE;
+    }
+    if (window.JOURNEYS_ADMIN_MODE && window.__journeysRenderHome) window.__journeysRenderHome();
+  }
+  applyAdminMode();
+
+  // iframe으로 열렸을 때 일부 브라우저 환경에서 iframe src의 쿼리스트링(?admin=1)이
+  // 유지되지 않는 경우를 대비해, 부모 창이 보내는 메시지로도 관리자 모드를 켤 수 있게 한다.
+  window.addEventListener("message", function (event) {
+    if (event.origin !== window.location.origin) return;
+    if (event.data && event.data.type === "haing:journeys-admin-mode" && !window.JOURNEYS_ADMIN_MODE) {
+      window.JOURNEYS_ADMIN_MODE = true;
+      applyAdminMode();
+    }
+  });
+</script>
+<script src="../js/child-store.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/stamp-store.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

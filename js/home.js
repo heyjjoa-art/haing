@@ -47,93 +47,31 @@
     });
   }
 
-  function openCardLightbox(imageUrl, name) {
-    var lightbox = document.getElementById("cardLightbox");
-    document.getElementById("cardLightboxImg").src = imageUrl;
-    var caption = document.getElementById("cardLightboxName");
-    if (caption) caption.textContent = name || "";
-    lightbox.classList.add("open");
-  }
-
-  (function setupLightbox() {
-    var lightbox = document.getElementById("cardLightbox");
-    if (!lightbox) return;
-    document.getElementById("cardLightboxClose").addEventListener("click", function () {
-      lightbox.classList.remove("open");
-    });
-    lightbox.addEventListener("click", function (e) {
-      if (e.target === lightbox) lightbox.classList.remove("open");
-    });
-  })();
-
-  function renderCardCollection() {
-    var section = document.getElementById("cardCollectionSection");
-    var collected = CardStore.getCollected();
-
-    document.getElementById("collectionCount").textContent = String(collected.length);
-    document.getElementById("collectionTotal").textContent = String(MEMBER_CARDS.length);
-
-    var gridEl = document.getElementById("cardGrid");
-    gridEl.innerHTML = "";
-    MEMBER_CARDS.forEach(function (member) {
-      var isOwned = collected.indexOf(member.id) !== -1;
-
-      var wrap = document.createElement("div");
-      wrap.className = "member-card-wrap" + (isOwned ? " owned" : " locked-card");
-
-      var imgEl = document.createElement("img");
-      imgEl.className = "member-card";
-      imgEl.alt = isOwned ? member.name + " 카드" : "아직 모으지 않은 카드";
-      imgEl.src = isOwned ? member.image : buildLockedCardImageUrl();
-      wrap.appendChild(imgEl);
-
-      if (isOwned) {
-        var nameTag = document.createElement("span");
-        nameTag.className = "member-card-name";
-        nameTag.textContent = member.name;
-        wrap.appendChild(nameTag);
-
-        wrap.addEventListener("click", function () {
-          openCardLightbox(member.image, member.name);
-        });
-      }
-
-      gridEl.appendChild(wrap);
-    });
-
-    section.hidden = collected.length === 0;
-
-    var pending = CardStore.getPendingCard();
-    var revealEl = document.getElementById("cardReveal");
-    if (pending) {
-      section.hidden = false;
-      revealEl.hidden = false;
-      document.getElementById("cardRevealText").textContent =
-        "🎉 새 카드 획득! " + pending.name + " (" + pending.gen + ")";
-      document.getElementById("cardRevealCloseBtn").addEventListener(
-        "click",
-        function () {
-          CardStore.clearPending();
-          revealEl.hidden = true;
-        },
-        { once: true }
-      );
-    } else {
-      revealEl.hidden = true;
-    }
+  // 도감 버튼에 지금까지 모은 단어 카드 수를 보여준다. 자세한 목록은 wordcards.html에서.
+  function renderWordCardLink() {
+    var linkEl = document.getElementById("wordCardLink");
+    if (!linkEl) return;
+    linkEl.textContent = "📔 단어 도감 (" + WordCardStore.getCount() + ")";
   }
 
   function renderUnitHistory() {
     var selectEl = document.getElementById("unitHistorySelect");
     var sectionEl = document.getElementById("unitHistorySection");
+    var goBtn = document.getElementById("unitGoBtn");
     if (!selectEl) return;
 
     var units = DataStore.getAllUnits();
 
     if (units.length === 0) {
-      sectionEl.hidden = true;
+      // 유닛이 하나도 없어도 지금까지 모은 단어 카드가 있으면 도감 버튼은 보여준다.
+      sectionEl.hidden = WordCardStore.getCount() === 0;
+      selectEl.disabled = true;
+      goBtn.disabled = true;
       return;
     }
+
+    selectEl.disabled = false;
+    goBtn.disabled = false;
     sectionEl.hidden = false;
 
     var currentUnit = DataStore.getCurrentUnit();
@@ -148,28 +86,17 @@
     });
   }
 
+  // 유닛 삭제는 관리자 탭에서만 한다 - 여기서는 이동만 가능하다.
   (function setupUnitHistoryControls() {
     var selectEl = document.getElementById("unitHistorySelect");
     var goBtn = document.getElementById("unitGoBtn");
-    var deleteBtn = document.getElementById("unitDeleteBtn");
-    if (!selectEl || !goBtn || !deleteBtn) return;
+    if (!selectEl || !goBtn) return;
 
     goBtn.addEventListener("click", function () {
       var chosen = selectEl.value;
       if (!chosen) return;
       DataStore.setCurrentUnit(chosen);
       location.href = "storybook.html?unit=" + encodeURIComponent(chosen);
-    });
-
-    deleteBtn.addEventListener("click", function () {
-      var chosen = selectEl.value;
-      if (!chosen) return;
-      var label = chosen === "unspecified" ? "이름 없는 자료" : "Unit " + chosen;
-      if (confirm(label + "을(를) 삭제할까요? (모은 카드는 그대로 남아요)")) {
-        DataStore.deleteUnit(chosen);
-        renderUnitHistory();
-        renderCards();
-      }
     });
   })();
 
@@ -184,12 +111,12 @@
   }
 
   renderCards();
-  renderCardCollection();
+  renderWordCardLink();
   renderUnitHistory();
 
   window.__haingRenderHome = function () {
     renderCards();
-    renderCardCollection();
+    renderWordCardLink();
     renderUnitHistory();
   };
 })();

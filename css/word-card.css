@@ -1,0 +1,250 @@
+/* ── 미니카드 본체 (팝업 · 도감 그리드 · 확대보기 공용) ───────────── */
+.wc-card {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: #ffffff;
+  border: 2px solid #e4d6c3;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.wc-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0 38%, rgba(255, 255, 255, 0) 38%);
+  pointer-events: none;
+}
+
+.wc-card-band {
+  flex: 0 0 46%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wc-card-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.wc-card-body {
+  flex: 1;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.wc-card-word {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #3a2e26;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+}
+
+.wc-card-meaning {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #6b5544;
+}
+
+.wc-card-def {
+  margin: 8px 4px 0;
+  font-size: 0.8rem;
+  color: #6b5544;
+  line-height: 1.5;
+}
+
+.wc-card-unit {
+  display: block;
+  padding: 3px 0;
+  text-align: center;
+  font-size: 0.6rem;
+  color: #8a7969;
+  background: #fdf6ec;
+  border-top: 1px solid #e4d6c3;
+}
+
+.wc-card-new {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  background: #8fd3a3;
+  color: #2f7a48;
+  font-size: 0.55rem;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 2px 5px;
+}
+
+.wc-tone-0 { border-color: #ffb454; }
+.wc-tone-0 .wc-card-band { background: #ffb454; }
+
+.wc-tone-1 { border-color: #ffc978; }
+.wc-tone-1 .wc-card-band { background: #ffd9a0; }
+
+.wc-tone-2 { border-color: #a85d2b; }
+.wc-tone-2 .wc-card-band { background: #a85d2b; }
+
+.wc-tone-3 { border-color: #8fd3a3; }
+.wc-tone-3 .wc-card-band { background: #8fd3a3; }
+
+.wc-card-lg {
+  width: 220px;
+}
+
+.wc-card-lg .wc-card-emoji {
+  font-size: 4rem;
+}
+
+.wc-card-lg .wc-card-word {
+  font-size: 1.4rem;
+}
+
+/* ── 획득 팝업 ─────────────────────────────────────── */
+.wc-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(58, 46, 38, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.wc-popup-box {
+  background: #fff4e0;
+  border: 3px solid #ffb454;
+  border-radius: 20px;
+  padding: 24px 20px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+
+.wc-popup-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #a85d2b;
+}
+
+.wc-popup-subtitle {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #6b5544;
+}
+
+.wc-popup-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.wc-popup-cards .wc-card {
+  flex: 0 1 130px;
+}
+
+.wc-popup-btn {
+  display: inline-block;
+  background: #ffb454;
+  color: #3a2e26;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ── 도감 페이지 ───────────────────────────────────── */
+.wc-stat {
+  text-align: center;
+  color: #a85d2b;
+  font-weight: bold;
+  margin: 0 0 16px;
+}
+
+.wc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.wc-grid[hidden] {
+  display: none;
+}
+
+.wc-grid .wc-card {
+  cursor: pointer;
+}
+
+.wc-empty {
+  display: block;
+  background: #fff4e0;
+  border: 2px dashed #e4d6c3;
+  border-radius: 16px;
+  padding: 28px 16px;
+  text-align: center;
+  color: #8a7969;
+}
+
+.wc-empty[hidden] {
+  display: none;
+}
+
+.wc-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(58, 46, 38, 0.85);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.wc-lightbox.open {
+  display: flex;
+}
+
+.wc-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ffb454;
+  color: #3a2e26;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 380px) {
+  .wc-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* wordcards.html 전용 뒤로가기 링크 (다른 게임 페이지들과 같은 스타일) */
+.back-link {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.back-link a {
+  color: #8a7969;
+  text-decoration: none;
+  font-size: 0.9rem;
+}

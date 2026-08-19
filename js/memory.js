@@ -160,9 +160,9 @@
       nextRoundBtn.textContent = "처음부터 다시";
       nextRoundBtn.onclick = startNewCycle;
       if (ProgressStore.markDone("memory")) {
-        var card = CardStore.awardRandomCard();
+        var card = WordCardStore.awardRandomWordCard();
         if (card) {
-          CardPopup.show(card, "hangman.html", "다음 단계로 ▶");
+          WordCardPopup.show(card, "hangman.html", "다음 단계로 ▶");
         }
       }
     } else {

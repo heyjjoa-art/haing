@@ -7,12 +7,19 @@ var ProgressStore = (function () {
     return (typeof DataStore !== "undefined" && DataStore.resolveUnitKey()) || "unspecified";
   }
 
+  // 진행 상황은 아이(하정/하진)별로 따로 쌓인다. 유닛/단어 콘텐츠 자체는
+  // ChildStore와 무관하게 두 아이가 공유한다.
+  function childPrefix() {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    return childId ? childId + "_" : "guest_";
+  }
+
   function progressKey() {
-    return "haingProgress_" + unitKey();
+    return "haingProgress_" + childPrefix() + unitKey();
   }
 
   function stepProgressKey() {
-    return "haingStepProgress_" + unitKey();
+    return "haingStepProgress_" + childPrefix() + unitKey();
   }
 
   function load() {
@@ -81,7 +88,7 @@ var ProgressStore = (function () {
   // 게임마다 필요한 잡다한 상태(예: 4번 게임에서 마지막으로 있던 단계)를
   // 유닛별로 저장해서, 다시 들어왔을 때 그 지점부터 이어갈 수 있게 한다.
   function customKey(name) {
-    return "haingCustom_" + name + "_" + unitKey();
+    return "haingCustom_" + name + "_" + childPrefix() + unitKey();
   }
 
   function setCustomState(name, value) {

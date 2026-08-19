@@ -115,13 +115,13 @@
       updateProgress();
       if (completedWords >= TOTAL_WORDS) {
         if (ProgressStore.markDone("flashcards")) {
-          var card = CardStore.awardRandomCard();
+          var card = WordCardStore.awardRandomWordCard();
           if (card) {
-            CardPopup.show(card, "memory.html", "다음 단계로 ▶");
+            WordCardPopup.show(card, "memory.html", "다음 단계로 ▶");
             return;
           }
         }
-        location.href = CardPopup.withUnitParam("memory.html");
+        location.href = WordCardPopup.withUnitParam("memory.html");
         return;
       }
       nextWord();

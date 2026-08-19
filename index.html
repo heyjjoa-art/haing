@@ -7,56 +7,42 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/home.css">
 <link rel="stylesheet" href="css/upload.css">
+<link rel="stylesheet" href="css/tabs.css">
+<link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
-<header class="app-header">
+<div class="login-gate" id="loginGate">
+  <div class="login-card">
+    <h1>Haing 🐣</h1>
+    <p>누가 공부할까요?</p>
+    <div class="login-child-grid" id="loginChildGrid"></div>
+  </div>
+</div>
+
+<header class="app-header" id="mainHeader">
   <h1>Haing 🐣</h1>
   <p class="subtitle">Studying English Hard!</p>
+  <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
 </header>
 
-<main>
+<nav class="tab-bar" role="tablist">
+  <button type="button" class="tab-btn" id="tabBtnJourneys" role="tab" aria-selected="true" aria-controls="panelJourneys">Journeys</button>
+  <button type="button" class="tab-btn" id="tabBtnWord" role="tab" aria-selected="false" aria-controls="panelWord">Word</button>
+  <button type="button" class="tab-btn" id="tabBtnAdmin" role="tab" aria-selected="false" aria-controls="panelAdmin">관리자</button>
+</nav>
 
-  <section class="card upload-card">
-    <h2>📸 이번주 사진 업로드</h2>
-    <p class="hint">책 사진 2장(본문 페이지, 단어 페이지)을 한 번에 선택해서 올려주세요. 아래 1~4번 기능에 바로 반영돼요.</p>
-
-    <label class="file-btn">
-      사진 2장 선택 / 촬영
-      <input type="file" id="weekPhotosInput" accept="image/*" multiple hidden>
-    </label>
-
-    <div class="upload-preview-grid">
-      <div>
-        <p class="field-label">1. 본문 이야기 페이지</p>
-        <div class="preview-box" id="storyPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
-      </div>
-      <div>
-        <p class="field-label">2. 단어 리스트 페이지</p>
-        <div class="preview-box" id="wordsPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
-      </div>
-    </div>
-
-    <p class="save-status" id="saveStatus"></p>
-    <div class="manual-unit-entry" id="manualUnitEntry" hidden>
-      <input type="text" id="manualUnitInput" class="unit-input" placeholder="Unit 번호를 직접 입력 (예: 15)" inputmode="numeric">
-      <button type="button" id="manualUnitApplyBtn" class="secondary-btn">적용</button>
-    </div>
-    <div class="upload-actions">
-      <button type="button" id="saveWeekBtn" class="file-btn">💾 저장하고 반영하기</button>
-    </div>
-  </section>
+<main id="panelWord" class="tab-panel" role="tabpanel" aria-labelledby="tabBtnWord" hidden>
 
   <section class="card unit-history" id="unitHistorySection" hidden>
-    <h2>📚 지난 UNIT 다시하기</h2>
+    <h2>📚 유닛 선택</h2>
     <div class="unit-history-row">
       <select class="unit-history-select" id="unitHistorySelect">
         <option value="">유닛을 선택하세요</option>
       </select>
       <button type="button" class="secondary-btn" id="unitGoBtn">▶ 이동</button>
-      <button type="button" class="danger-btn" id="unitDeleteBtn">🗑 삭제</button>
+      <a class="secondary-btn wordcard-link-btn" href="wordcards.html" id="wordCardLink">📔 단어 도감 (0)</a>
     </div>
-    <p class="hint">삭제해도 모은 스텔라이브 카드는 그대로 남아있어요.</p>
   </section>
 
   <p class="step-guide">📌 1번부터 순서대로 완료하면 다음 단계가 열려요!</p>
@@ -91,42 +77,127 @@
     </a>
   </div>
 
-  <section class="card-collection" id="cardCollectionSection" hidden>
-    <h2>🃏 스텔라이브 멤버 카드 컬렉션</h2>
-    <p class="collection-count">
-      <strong id="collectionCount">0</strong> / <strong id="collectionTotal">20</strong>장 모았어요
-    </p>
+</main>
 
-    <div class="card-reveal" id="cardReveal" hidden>
-      <p id="cardRevealText"></p>
-      <button type="button" class="secondary-btn" id="cardRevealCloseBtn">확인</button>
-    </div>
+<div id="panelJourneys" class="tab-panel" role="tabpanel" aria-labelledby="tabBtnJourneys">
+  <iframe src="journeys/index.html" class="journeys-frame" title="Journeys" loading="lazy"></iframe>
+</div>
 
-    <div class="card-grid" id="cardGrid"></div>
-  </section>
+<main id="panelAdmin" class="tab-panel" role="tabpanel" aria-labelledby="tabBtnAdmin" hidden>
+  <p class="hint admin-shared-hint">여기서 등록하면 하정이와 하진이 모두에게 똑같이 보여요.</p>
+
+  <nav class="subtab-bar" role="tablist">
+    <button type="button" class="subtab-btn" id="subtabBtnWord" role="tab" aria-selected="true" aria-controls="subpanelWord">Word</button>
+    <button type="button" class="subtab-btn" id="subtabBtnJourneys" role="tab" aria-selected="false" aria-controls="subpanelJourneys">Journeys</button>
+  </nav>
+
+  <div id="subpanelWord" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnWord">
+    <section class="card upload-card">
+      <h2>📸 Word - 이번주 사진 업로드</h2>
+      <p class="hint">책 사진 2장(본문 페이지, 단어 페이지)을 한 번에 선택해서 올려주세요. Word 탭의 1~4번 기능에 바로 반영돼요.</p>
+
+      <label class="file-btn">
+        사진 2장 선택 / 촬영
+        <input type="file" id="weekPhotosInput" accept="image/*" multiple hidden>
+      </label>
+
+      <div class="upload-preview-grid">
+        <div>
+          <p class="field-label">1. 본문 이야기 페이지</p>
+          <div class="preview-box" id="storyPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
+        </div>
+        <div>
+          <p class="field-label">2. 단어 리스트 페이지</p>
+          <div class="preview-box" id="wordsPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
+        </div>
+      </div>
+
+      <p class="save-status" id="saveStatus"></p>
+      <div class="manual-unit-entry" id="manualUnitEntry" hidden>
+        <input type="text" id="manualUnitInput" class="unit-input" placeholder="Unit 번호를 직접 입력 (예: 15)" inputmode="numeric">
+        <button type="button" id="manualUnitApplyBtn" class="secondary-btn">적용</button>
+      </div>
+      <div class="upload-actions">
+        <button type="button" id="saveWeekBtn" class="file-btn">💾 저장하고 반영하기</button>
+      </div>
+    </section>
+
+    <section class="card admin-word-units-card">
+      <h2>📚 Word - 유닛 관리</h2>
+      <p class="hint">등록된 Word 유닛을 삭제할 수 있어요. 삭제해도 모은 단어 카드(도감)는 그대로 남아요.</p>
+      <div id="adminWordUnitList"></div>
+    </section>
+  </div>
+
+  <div id="subpanelJourneys" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnJourneys" hidden>
+    <section class="card admin-journeys-card">
+      <h2>📘 Journeys - 유닛 관리</h2>
+      <p class="hint">새 유닛을 등록하거나, 등록된 유닛을 수정·삭제할 수 있어요.</p>
+      <iframe src="journeys/index.html?admin=1" id="adminJourneysFrame" class="journeys-frame" title="Journeys 유닛 관리" loading="lazy"></iframe>
+    </section>
+  </div>
 
   <p class="reset-all-row">
     <button type="button" id="resetAllBtn" class="danger-btn">🔄 이 기기의 데이터 전체 초기화</button>
   </p>
-
 </main>
 
-<div class="card-lightbox" id="cardLightbox">
-  <button type="button" class="card-lightbox-close" id="cardLightboxClose">✕ 닫기</button>
-  <img src="" alt="카드 확대 보기" id="cardLightboxImg">
-  <p class="card-lightbox-name" id="cardLightboxName"></p>
-</div>
+<script>
+  // 관리자 탭 안의 Word / Journeys 서브탭 전환.
+  (function () {
+    var STORAGE_KEY = "haingAdminSubtab";
+    var subtabs = [
+      { id: "word", btn: document.getElementById("subtabBtnWord"), panel: document.getElementById("subpanelWord") },
+      { id: "journeys", btn: document.getElementById("subtabBtnJourneys"), panel: document.getElementById("subpanelJourneys") }
+    ];
+
+    function activate(id) {
+      subtabs.forEach(function (t) {
+        var active = t.id === id;
+        t.btn.classList.toggle("active", active);
+        t.btn.setAttribute("aria-selected", active ? "true" : "false");
+        t.panel.hidden = !active;
+      });
+      localStorage.setItem(STORAGE_KEY, id);
+    }
+
+    subtabs.forEach(function (t) {
+      t.btn.addEventListener("click", function () {
+        activate(t.id);
+      });
+    });
+
+    var saved = localStorage.getItem(STORAGE_KEY);
+    activate(saved === "journeys" ? "journeys" : "word");
+  })();
+
+  // iframe src의 ?admin=1이 일부 브라우저 환경에서 유지되지 않는 경우를 대비해,
+  // 로드될 때마다 관리자 모드 신호를 한 번 더 보내준다(journeys/index.html이 처리).
+  (function () {
+    var frame = document.getElementById("adminJourneysFrame");
+    if (!frame) return;
+    frame.addEventListener("load", function () {
+      try {
+        frame.contentWindow.postMessage({ type: "haing:journeys-admin-mode" }, window.location.origin);
+      } catch (e) {
+        // no-op
+      }
+    });
+  })();
+</script>
 
 <script src="js/vendor/jsQR.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/child-store.js"></script>
 <script src="js/words-data.js"></script>
 <script src="js/data-store.js"></script>
 <script src="js/progress-store.js"></script>
-<script src="js/card-data.js"></script>
-<script src="js/card-image.js"></script>
-<script src="js/card-store.js"></script>
+<script src="js/word-card-store.js"></script>
 <script src="js/qr-utils.js"></script>
 <script src="js/upload.js"></script>
 <script src="js/home.js"></script>
+<script src="js/admin-word-units.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/login.js"></script>
 </body>
 </html>

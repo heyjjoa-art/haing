@@ -1,0 +1,122 @@
+/* 스텔라이브 카드 컬렉션 관련 스타일. index.html의 #cardCollectionSection과
+   #cardLightbox가 단어 카드 도감(wordcards.html, css/word-card.css)으로
+   대체되면서 css/home.css에서 이 규칙들을 그대로 빼내 보관해둔다. */
+
+.card-collection {
+  margin-top: 20px;
+  background: #fff4e0;
+  border: 2px solid #ffb454;
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+}
+
+.collection-count {
+  font-weight: bold;
+  color: #a85d2b;
+  margin: 4px 0 16px;
+}
+
+.card-reveal {
+  background: #fff;
+  border: 2px solid #8fd3a3;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.card-reveal p {
+  margin: 0 0 10px;
+  font-weight: bold;
+  color: #2f7a48;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.member-card-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.member-card-wrap.locked-card {
+  opacity: 0.85;
+}
+
+.member-card-wrap.owned {
+  cursor: pointer;
+}
+
+.member-card {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: #fff;
+  display: block;
+}
+
+.member-card-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(58, 46, 38, 0.85), rgba(58, 46, 38, 0));
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 10px 4px 5px;
+}
+
+.card-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card-lightbox.open {
+  display: flex;
+}
+
+.card-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+}
+
+.card-lightbox-name {
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.card-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ffb454;
+  color: #3a2e26;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 380px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
