@@ -11,16 +11,16 @@
   padding: 10px 12px;
   border: none;
   border-radius: 12px 12px 0 0;
-  background: #f0e4d2;
-  color: #8a7969;
+  background: var(--color-border-soft);
+  color: var(--color-text-faint);
   font-size: 0.95rem;
   font-weight: bold;
   cursor: pointer;
 }
 
 .tab-btn.active {
-  background: #ffffff;
-  color: #3a2e26;
+  background: var(--color-surface);
+  color: var(--color-text);
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
 }
 
@@ -34,7 +34,7 @@
   height: calc(100vh - 160px);
   min-height: 520px;
   border: none;
-  background: #f3f7fb;
+  background: var(--color-bg);
 }
 
 #panelAdmin {
@@ -50,19 +50,19 @@
 .subtab-btn {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e4d6c3;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #ffffff;
-  color: #8a7969;
+  background: var(--color-surface);
+  color: var(--color-text-faint);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
 }
 
 .subtab-btn.active {
-  background: #ffb454;
-  border-color: #ffb454;
-  color: #3a2e26;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .subtab-panel[hidden] {
@@ -76,7 +76,7 @@
 .admin-journeys-card .journeys-frame {
   height: 80vh;
   min-height: 480px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .admin-unit-row {
@@ -85,7 +85,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid #f0e2cd;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .admin-unit-row:last-child {
@@ -94,7 +94,7 @@
 
 .admin-unit-label {
   font-weight: bold;
-  color: #3a2e26;
+  color: var(--color-text);
 }
 
 .admin-unit-row .danger-btn {

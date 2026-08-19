@@ -1,3 +1,49 @@
+/* ── 디자인 토큰: 하잉 전체(Word · Journeys) 공용 색상/스타일 값 ─────────
+   따뜻한 크림 + 오렌지 톤의 "종이 노트" 컨셉. 새 색을 추가할 때도 여기
+   토큰을 먼저 찾아 재사용하고, 정말 새 의미가 필요할 때만 변수를 늘린다. */
+:root {
+  --color-bg: #fdf6ec;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fbf3e8;
+  --color-header-bg: #ffd9a0;
+
+  --color-text: #3a2e26;
+  --color-text-muted: #6b5544;
+  --color-text-faint: #8a7969;
+  --color-text-placeholder: #b7a893;
+
+  --color-border: #e4d6c3;
+  --color-border-soft: #f0e2cd;
+
+  --color-accent: #ffb454;
+  --color-accent-active: #ff9f2e;
+  --color-accent-soft: #ffd9a0;
+  --color-accent-deep: #a85d2b;
+  --color-accent-deep-2: #d3691e;
+
+  --color-gold: #e8b84b;
+  --color-gold-soft: #ffe6a8;
+
+  --color-success: #2f7a48;
+  --color-success-bg: #e3f6e8;
+  --color-success-bg-soft: #f3fbf5;
+  --color-success-border: #8fd3a3;
+
+  --color-danger: #b3261e;
+  --color-danger-bg: #fdeaea;
+  --color-danger-border: #f3c8c6;
+
+  --color-highlight: #fff176;
+
+  --color-neutral-bg: #eef2f6;
+  --color-neutral-border: #d7dee6;
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,16 +51,16 @@
 body {
   margin: 0;
   font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
-  background: #fdf6ec;
-  color: #3a2e26;
+  background: var(--color-bg);
+  color: var(--color-text);
   padding-bottom: 40px;
 }
 
 .app-header {
   text-align: center;
   padding: 28px 16px 18px;
-  background: #ffd9a0;
-  border-bottom: 4px solid #ffb454;
+  background: var(--color-header-bg);
+  border-bottom: 4px solid var(--color-accent);
 }
 
 .app-header h1 {
@@ -30,7 +76,7 @@ body {
 .subtitle {
   margin: 4px 0 0;
   font-size: 0.95rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
 }
 
 main {
@@ -40,11 +86,11 @@ main {
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   padding: 18px;
   margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .card h2 {
@@ -55,7 +101,7 @@ main {
 .hint {
   margin: 0 0 12px;
   font-size: 0.85rem;
-  color: #8a7969;
+  color: var(--color-text-faint);
 }
 
 .field-label {
@@ -63,15 +109,15 @@ main {
   font-size: 0.85rem;
   font-weight: bold;
   margin: 12px 0 4px;
-  color: #6b5544;
+  color: var(--color-text-muted);
 }
 
 textarea,
 input[type="text"] {
   width: 100%;
   padding: 10px;
-  border: 1px solid #e4d6c3;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
@@ -79,10 +125,10 @@ input[type="text"] {
 
 .file-btn {
   display: inline-block;
-  background: #ffb454;
-  color: #3a2e26;
+  background: var(--color-accent);
+  color: var(--color-text);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -90,16 +136,16 @@ input[type="text"] {
 }
 
 .file-btn:active {
-  background: #ff9f2e;
+  background: var(--color-accent-active);
 }
 
 .secondary-btn {
   display: inline-block;
-  background: #eef2f6;
-  color: #3a2e26;
-  border: 1px solid #d7dee6;
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-neutral-border);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -112,11 +158,11 @@ input[type="text"] {
 
 .danger-btn {
   display: inline-block;
-  background: #fdeaea;
-  color: #b3261e;
-  border: 1px solid #f3c8c6;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -128,8 +174,8 @@ input[type="text"] {
 .qr-box {
   margin-top: 12px;
   min-height: 100px;
-  border: 2px dashed #e4d6c3;
-  border-radius: 12px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,24 +185,24 @@ input[type="text"] {
 .preview-box img {
   max-width: 100%;
   max-height: 320px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .qr-box img,
 .qr-box canvas {
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .placeholder {
-  color: #b7a893;
+  color: var(--color-text-placeholder);
   font-size: 0.85rem;
   text-align: center;
 }
 
 .audio-name {
   font-size: 0.8rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
   margin-top: 6px;
   word-break: break-all;
 }
@@ -174,10 +220,10 @@ audio {
 
 .word-item {
   position: relative;
-  background: #fbf3e8;
-  border-radius: 12px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-md);
   padding: 14px;
-  border: 1px solid #f0e2cd;
+  border: 1px solid var(--color-border-soft);
 }
 
 .remove-word-btn {
@@ -186,13 +232,13 @@ audio {
   right: 8px;
   background: none;
   border: none;
-  color: #b3261e;
+  color: var(--color-danger);
   font-size: 1rem;
   cursor: pointer;
 }
 
 .qr-note {
   font-size: 0.75rem;
-  color: #b7a893;
+  color: var(--color-text-placeholder);
   margin-top: 6px;
 }

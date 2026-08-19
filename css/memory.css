@@ -7,7 +7,7 @@
 .progress-line {
   text-align: center;
   font-size: 0.9rem;
-  color: #8a7969;
+  color: var(--color-text-faint);
   margin-bottom: 10px;
 }
 
@@ -24,7 +24,7 @@
   display: flex;
   gap: 16px;
   font-size: 0.95rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
 }
 
 .memory-grid {
@@ -58,7 +58,7 @@
 .card-face {
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,23 +71,23 @@
 }
 
 .card-back {
-  background: #ffb454;
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-surface);
   font-size: 1.6rem;
   font-weight: bold;
 }
 
 .card-front {
-  background: #fff;
-  border: 2px solid #ffd9a0;
-  color: #3a2e26;
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent-soft);
+  color: var(--color-text);
   transform: rotateY(180deg);
 }
 
 .memory-card.matched .card-front {
-  background: #e3f6e8;
-  border-color: #8fd3a3;
-  color: #2f7a48;
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
 }
 
 .memory-card.word .card-front {
@@ -108,11 +108,11 @@
 .win-banner {
   margin-top: 18px;
   background: #fff4e0;
-  border: 2px solid #ffb454;
-  border-radius: 14px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
-  color: #a85d2b;
+  color: var(--color-accent-deep);
 }
 
 .win-banner p {
@@ -127,7 +127,7 @@
 }
 
 .back-link a {
-  color: #8a7969;
+  color: var(--color-text-faint);
   text-decoration: none;
   font-size: 0.9rem;
 }

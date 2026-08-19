@@ -1,3 +1,50 @@
+/* ── 디자인 토큰: 하잉 전체(Word · Journeys) 공용 색상/스타일 값 ─────────
+   메인 앱(css/style.css)과 동일한 토큰 이름을 그대로 써서, iframe으로
+   분리되어 있어도 하나의 서비스처럼 보이게 맞춘다. */
+:root {
+  --color-bg: #fdf6ec;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fbf3e8;
+  --color-header-bg: #ffd9a0;
+
+  --color-text: #3a2e26;
+  --color-text-muted: #6b5544;
+  --color-text-faint: #8a7969;
+  --color-text-placeholder: #b7a893;
+
+  --color-border: #e4d6c3;
+  --color-border-soft: #f0e2cd;
+
+  --color-accent: #ffb454;
+  --color-accent-active: #ff9f2e;
+  --color-accent-soft: #ffd9a0;
+  --color-accent-deep: #a85d2b;
+  --color-accent-deep-2: #d3691e;
+
+  --color-gold: #e8b84b;
+  --color-gold-soft: #ffe6a8;
+
+  --color-success: #2f7a48;
+  --color-success-bg: #e3f6e8;
+  --color-success-bg-soft: #f3fbf5;
+  --color-success-border: #8fd3a3;
+
+  --color-danger: #b3261e;
+  --color-danger-bg: #fdeaea;
+  --color-danger-border: #f3c8c6;
+
+  --color-highlight: #fff176;
+  --color-stamp: #e0453a;
+
+  --color-neutral-bg: #eef2f6;
+  --color-neutral-border: #d7dee6;
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,16 +52,16 @@
 body {
   margin: 0;
   font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
-  background: #f3f7fb;
-  color: #24313f;
+  background: var(--color-bg);
+  color: var(--color-text);
   padding-bottom: 40px;
 }
 
 .app-header {
   text-align: center;
   padding: 28px 16px 18px;
-  background: #bfe0ff;
-  border-bottom: 4px solid #7cb8f2;
+  background: var(--color-header-bg);
+  border-bottom: 4px solid var(--color-accent);
 }
 
 .app-header h1 {
@@ -25,7 +72,7 @@ body {
 .subtitle {
   margin: 4px 0 0;
   font-size: 0.95rem;
-  color: #3a5a78;
+  color: var(--color-text-muted);
 }
 
 main {
@@ -35,11 +82,11 @@ main {
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   padding: 18px;
   margin-bottom: 18px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .field-label {
@@ -47,21 +94,21 @@ main {
   font-size: 0.85rem;
   font-weight: bold;
   margin: 12px 0 4px;
-  color: #3a5a78;
+  color: var(--color-text-muted);
 }
 
 .hint {
   margin: 0 0 8px;
   font-size: 0.85rem;
-  color: #7c93a8;
+  color: var(--color-text-faint);
 }
 
 textarea,
 input[type="text"] {
   width: 100%;
   padding: 10px;
-  border: 1px solid #cfe0ee;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-family: inherit;
   resize: vertical;
@@ -69,10 +116,10 @@ input[type="text"] {
 
 .file-btn {
   display: inline-block;
-  background: #7cb8f2;
-  color: #ffffff;
+  background: var(--color-accent);
+  color: var(--color-text);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -81,16 +128,16 @@ input[type="text"] {
 }
 
 .file-btn:active {
-  background: #5aa0e6;
+  background: var(--color-accent-active);
 }
 
 .secondary-btn {
   display: inline-block;
-  background: #eef4fa;
-  color: #24313f;
-  border: 1px solid #cfe0ee;
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-neutral-border);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -104,11 +151,11 @@ input[type="text"] {
 
 .danger-btn {
   display: inline-block;
-  background: #fdeaea;
-  color: #b3261e;
-  border: 1px solid #f3c8c6;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -122,8 +169,8 @@ input[type="text"] {
 .preview-box {
   margin-top: 12px;
   min-height: 100px;
-  border: 2px dashed #cfe0ee;
-  border-radius: 12px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,11 +180,11 @@ input[type="text"] {
 .preview-box img {
   max-width: 100%;
   max-height: 320px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .placeholder {
-  color: #9db2c4;
+  color: var(--color-text-placeholder);
   font-size: 0.85rem;
   text-align: center;
 }
@@ -152,14 +199,14 @@ input[type="text"] {
 .ocr-status {
   margin: 6px 0 0;
   font-size: 0.8rem;
-  color: #3a7a4e;
+  color: var(--color-success);
   min-height: 1.2em;
 }
 
 .save-status {
   margin: 10px 0 0;
   font-size: 0.85rem;
-  color: #3a7a4e;
+  color: var(--color-success);
   font-weight: bold;
   min-height: 1.2em;
 }
@@ -170,7 +217,7 @@ input[type="text"] {
 }
 
 .back-link a {
-  color: #5a7286;
+  color: var(--color-text-faint);
   text-decoration: none;
   font-size: 0.9rem;
 }
@@ -182,9 +229,9 @@ input[type="text"] {
 
 .empty-state {
   text-align: center;
-  color: #7c93a8;
+  color: var(--color-text-faint);
   font-size: 0.9rem;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 14px;
   padding: 24px 16px;
 }
@@ -195,7 +242,7 @@ input[type="text"] {
 
 .level-heading {
   font-size: 1.05rem;
-  color: #2a5a8a;
+  color: var(--color-accent-deep);
   margin: 0 0 10px;
   padding-left: 2px;
 }
@@ -215,12 +262,12 @@ input[type="text"] {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  background: #ffffff;
+  background: var(--color-surface);
   border-radius: 14px;
   padding: 18px 10px;
   text-decoration: none;
-  color: #24313f;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
   text-align: center;
   min-height: 96px;
   justify-content: center;
@@ -238,7 +285,7 @@ input[type="text"] {
 
 .unit-stamp-badge {
   font-size: 0.72rem;
-  color: #3a7a4e;
+  color: var(--color-success);
   font-weight: bold;
 }
 
@@ -252,9 +299,9 @@ input[type="text"] {
   flex: 1;
   display: inline-block;
   text-align: center;
-  background: #eef4fa;
-  color: #24313f;
-  border: 1px solid #cfe0ee;
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 5px 4px;
   font-size: 0.75rem;
@@ -264,9 +311,9 @@ input[type="text"] {
 }
 
 .unit-manage-btn.danger {
-  background: #fdeaea;
-  color: #b3261e;
-  border-color: #f3c8c6;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
 }
 
 .photo-grid {
@@ -279,7 +326,7 @@ input[type="text"] {
 .photo-grid:empty::before {
   content: "선택된 사진이 없어요";
   grid-column: 1 / -1;
-  color: #9db2c4;
+  color: var(--color-text-placeholder);
   font-size: 0.85rem;
   text-align: center;
   padding: 18px 0;
@@ -289,8 +336,8 @@ input[type="text"] {
   position: relative;
   border-radius: 10px;
   overflow: hidden;
-  border: 2px solid #cfe0ee;
-  background: #fff;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .photo-thumb img {
@@ -304,7 +351,7 @@ input[type="text"] {
   position: absolute;
   top: 4px;
   left: 4px;
-  background: #24313fcc;
+  background: rgba(58, 46, 38, 0.8);
   color: #fff;
   font-size: 0.7rem;
   font-weight: bold;

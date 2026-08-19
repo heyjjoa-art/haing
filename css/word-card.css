@@ -2,8 +2,8 @@
 .wc-card {
   position: relative;
   aspect-ratio: 3 / 4;
-  background: #ffffff;
-  border: 2px solid #e4d6c3;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -41,7 +41,7 @@
   display: block;
   font-size: 0.95rem;
   font-weight: bold;
-  color: #3a2e26;
+  color: var(--color-text);
   letter-spacing: 0.02em;
   word-break: break-all;
 }
@@ -50,13 +50,13 @@
   display: block;
   margin-top: 2px;
   font-size: 0.75rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
 }
 
 .wc-card-def {
   margin: 8px 4px 0;
   font-size: 0.8rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -65,9 +65,9 @@
   padding: 3px 0;
   text-align: center;
   font-size: 0.6rem;
-  color: #8a7969;
-  background: #fdf6ec;
-  border-top: 1px solid #e4d6c3;
+  color: var(--color-text-faint);
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
 }
 
 .wc-card-new {
@@ -75,44 +75,44 @@
   top: 5px;
   right: 5px;
   z-index: 1;
-  background: #8fd3a3;
-  color: #2f7a48;
+  background: var(--color-success-border);
+  color: var(--color-success);
   font-size: 0.55rem;
   font-weight: bold;
   border-radius: 6px;
   padding: 2px 5px;
 }
 
-.wc-tone-0 { border-color: #ffb454; }
-.wc-tone-0 .wc-card-band { background: #ffb454; }
+.wc-tone-0 { border-color: var(--color-accent); }
+.wc-tone-0 .wc-card-band { background: var(--color-accent); }
 
 .wc-tone-1 { border-color: #ffc978; }
-.wc-tone-1 .wc-card-band { background: #ffd9a0; }
+.wc-tone-1 .wc-card-band { background: var(--color-accent-soft); }
 
-.wc-tone-2 { border-color: #a85d2b; }
-.wc-tone-2 .wc-card-band { background: #a85d2b; }
+.wc-tone-2 { border-color: var(--color-accent-deep); }
+.wc-tone-2 .wc-card-band { background: var(--color-accent-deep); }
 
-.wc-tone-3 { border-color: #8fd3a3; }
-.wc-tone-3 .wc-card-band { background: #8fd3a3; }
+.wc-tone-3 { border-color: var(--color-success-border); }
+.wc-tone-3 .wc-card-band { background: var(--color-success-border); }
 
 /* 유닛 완전정복 트로피 카드 - 일반 단어 카드와 확실히 구분되는 금색 톤 */
 .wc-card-trophy {
-  border-color: #e8b84b;
+  border-color: var(--color-gold);
   box-shadow: 0 2px 10px rgba(232, 184, 75, 0.35);
 }
 
 .wc-card-trophy .wc-card-band {
-  background: linear-gradient(135deg, #ffe6a8, #e8b84b);
+  background: linear-gradient(135deg, var(--color-gold-soft), var(--color-gold));
 }
 
 .wc-card-trophy .wc-card-word {
-  color: #a85d2b;
+  color: var(--color-accent-deep);
 }
 
 .wc-card-trophy .wc-card-unit {
   background: #fff8e6;
-  border-top-color: #e8b84b;
-  color: #a85d2b;
+  border-top-color: var(--color-gold);
+  color: var(--color-accent-deep);
   font-weight: bold;
 }
 
@@ -142,7 +142,7 @@
 
 .wc-popup-box {
   background: #fff4e0;
-  border: 3px solid #ffb454;
+  border: 3px solid var(--color-accent);
   border-radius: 20px;
   padding: 24px 20px;
   max-width: 360px;
@@ -154,7 +154,7 @@
   margin: 0 0 6px;
   font-size: 1.15rem;
   font-weight: bold;
-  color: #a85d2b;
+  color: var(--color-accent-deep);
 }
 
 .wc-popup-title-lg {
@@ -165,7 +165,7 @@
 .wc-popup-subtitle {
   margin: 0 0 14px;
   font-size: 0.85rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
 }
 
 .wc-popup-cards {
@@ -182,11 +182,11 @@
 
 .wc-popup-btn {
   display: inline-block;
-  background: #ffb454;
-  color: #3a2e26;
+  background: var(--color-accent);
+  color: var(--color-text);
   border: none;
   padding: 10px 24px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
@@ -202,24 +202,24 @@
 .wc-subtab-btn {
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid #e4d6c3;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #ffffff;
-  color: #8a7969;
+  background: var(--color-surface);
+  color: var(--color-text-faint);
   font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
 }
 
 .wc-subtab-btn.active {
-  background: #ffb454;
-  border-color: #ffb454;
-  color: #3a2e26;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .wc-stat {
   text-align: center;
-  color: #a85d2b;
+  color: var(--color-accent-deep);
   font-weight: bold;
   margin: 0 0 16px;
 }
@@ -241,11 +241,11 @@
 .wc-empty {
   display: block;
   background: #fff4e0;
-  border: 2px dashed #e4d6c3;
+  border: 2px dashed var(--color-border);
   border-radius: 16px;
   padding: 28px 16px;
   text-align: center;
-  color: #8a7969;
+  color: var(--color-text-faint);
 }
 
 .wc-empty[hidden] {
@@ -271,10 +271,10 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  background: #ffb454;
-  color: #3a2e26;
+  background: var(--color-accent);
+  color: var(--color-text);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 8px 14px;
   font-size: 0.9rem;
   font-weight: bold;
@@ -297,7 +297,7 @@
   text-align: center;
   font-size: 1.1rem;
   font-weight: bold;
-  color: #a85d2b;
+  color: var(--color-accent-deep);
 }
 
 .wc-unit-detail .wc-grid {
@@ -323,7 +323,7 @@
 }
 
 .back-link a {
-  color: #8a7969;
+  color: var(--color-text-faint);
   text-decoration: none;
   font-size: 0.9rem;
 }

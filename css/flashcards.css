@@ -7,7 +7,7 @@
 .progress-line {
   text-align: center;
   font-size: 0.9rem;
-  color: #8a7969;
+  color: var(--color-text-faint);
   margin-bottom: 10px;
 }
 
@@ -17,17 +17,17 @@
   justify-content: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: #6b5544;
+  color: var(--color-text-muted);
   margin-bottom: 16px;
   cursor: pointer;
 }
 
 .flash-card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 28px 20px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
 }
 
 .stage-dots {
@@ -41,11 +41,11 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #e4d6c3;
+  background: var(--color-border);
 }
 
 .dot.active {
-  background: #ffb454;
+  background: var(--color-accent);
 }
 
 .flash-emoji {
@@ -56,15 +56,15 @@
 
 .flash-question {
   font-size: 1rem;
-  color: #8a7969;
+  color: var(--color-text-faint);
   margin: 0 0 18px;
 }
 
 .flash-definition {
   font-size: 1.05rem;
-  color: #3a2e26;
-  background: #fbf3e8;
-  border-radius: 10px;
+  color: var(--color-text);
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
   margin: 0 0 16px;
 }
@@ -72,13 +72,13 @@
 .flash-word {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #d3691e;
+  color: var(--color-accent-deep-2);
   margin: 0 0 10px;
 }
 
 .flash-meaning {
   font-size: 1.2rem;
-  color: #2f7a48;
+  color: var(--color-success);
   font-weight: bold;
   margin: 0 0 18px;
 }
@@ -102,7 +102,7 @@
 }
 
 .back-link a {
-  color: #8a7969;
+  color: var(--color-text-faint);
   text-decoration: none;
   font-size: 0.9rem;
 }

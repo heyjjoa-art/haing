@@ -8,22 +8,22 @@
 .upload-card .preview-box img {
   max-width: 100%;
   max-height: 260px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 .qr-status {
   margin: 6px 0 0;
   font-size: 0.8rem;
-  color: #8a7969;
+  color: var(--color-text-faint);
 }
 
 .qr-status.found {
-  color: #2f7a48;
+  color: var(--color-success);
   font-weight: bold;
 }
 
 .qr-status.not-found {
-  color: #b3261e;
+  color: var(--color-danger);
 }
 
 .upload-actions {
@@ -36,7 +36,7 @@
 .save-status {
   margin: 10px 0 0;
   font-size: 0.85rem;
-  color: #2f7a48;
+  color: var(--color-success);
   font-weight: bold;
   min-height: 1.2em;
 }
@@ -54,7 +54,7 @@
 .unit-input {
   flex: 1;
   padding: 10px;
-  border: 1px solid #e4d6c3;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
 }
