@@ -17,9 +17,25 @@
 
   pageSubtitleEl.textContent = unit === "unspecified" ? "이름 없는 자료 본문 수정" : "Unit " + unit + " 본문 수정";
 
-  var existing = DataStore.load(unit);
-  storyTitleInput.value = existing.storyTitle || "";
-  storyTextInput.value = existing.storyText || "";
+  // 클라우드 동기화(bootstrapCloudSync)는 비동기라, 이 기기에 아직 로컬 캐시가 없으면
+  // 페이지 로드 시점엔 데이터가 비어 있을 수 있다. 클라우드에서 도착하면 이 render를
+  // 다시 불러서 채운다 - 단, 그 사이 사용자가 이미 타이핑을 시작했으면 덮어쓰지 않는다.
+  var userEdited = false;
+  [storyTitleInput, storyTextInput].forEach(function (el) {
+    el.addEventListener("input", function () {
+      userEdited = true;
+    });
+  });
+
+  function render() {
+    if (userEdited) return;
+    var existing = DataStore.load(unit);
+    storyTitleInput.value = existing.storyTitle || "";
+    storyTextInput.value = existing.storyText || "";
+  }
+
+  render();
+  window.__haingRenderWordEdit = render;
 
   saveBtn.addEventListener("click", function () {
     var storyTitle = storyTitleInput.value.trim();

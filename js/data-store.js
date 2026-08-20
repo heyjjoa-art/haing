@@ -138,6 +138,7 @@ var DataStore = (function () {
     saveAllUnits(remoteDocs || {});
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderAdminWordUnits) window.__haingRenderAdminWordUnits();
+    if (window.__haingRenderWordEdit) window.__haingRenderWordEdit();
   }
 
   // bootstrap 시점의 1회성 스냅샷은 위와 다르게 "덮어쓰기"가 아니라 "병합"해야 한다 -
@@ -159,6 +160,7 @@ var DataStore = (function () {
     saveAllUnits(merged);
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderAdminWordUnits) window.__haingRenderAdminWordUnits();
+    if (window.__haingRenderWordEdit) window.__haingRenderWordEdit();
   }
 
   // 이 기기가 클라우드에 처음 연결될 때: 클라우드가 비어있으면(가장 먼저 연결한 기기)
