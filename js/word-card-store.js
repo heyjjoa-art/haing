@@ -284,8 +284,12 @@ var WordCardStore = (function () {
     var path = cloudPath();
     if (!path) return;
     HaingCloud.getDocOnce(path).then(function (remote) {
-      if (remote && remote.cards && remote.cards.length > 0) {
-        saveCollected(remote.cards);
+      // 클라우드에 문서 자체가 없으면(이 아이가 클라우드에 처음 연결) 이 기기 카드를
+      // 시작점으로 올린다. 문서가 있으면 카드가 0장이어도(=관리자가 삭제한 경우 포함)
+      // 클라우드를 그대로 따른다 - "0장"과 "아직 연결 안 됨"을 구분해야 삭제가 이
+      // 기기에도 실제로 반영된다.
+      if (remote) {
+        saveCollected(remote.cards || []);
         if (window.__haingRenderHome) window.__haingRenderHome();
         if (window.__haingRenderWordCards) window.__haingRenderWordCards();
       } else {
