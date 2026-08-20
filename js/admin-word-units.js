@@ -30,6 +30,12 @@
       var actions = document.createElement("div");
       actions.className = "admin-unit-actions";
 
+      var editTextBtn = document.createElement("a");
+      editTextBtn.className = "secondary-btn";
+      editTextBtn.href = "word-edit.html?unit=" + encodeURIComponent(entry.unit);
+      editTextBtn.textContent = "📝 본문 수정";
+      actions.appendChild(editTextBtn);
+
       var editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "secondary-btn";

@@ -15,12 +15,8 @@
 
 <main>
 
-  <p class="add-unit-row" id="addUnitRow">
-    <a href="add.html" class="file-btn" id="addUnitLink">➕ 새 유닛 추가</a>
-  </p>
-
   <p class="empty-state" id="emptyState" hidden>
-    아직 등록된 유닛이 없어요. 위의 “새 유닛 추가”로 첫 유닛을 올려주세요.
+    아직 등록된 유닛이 없어요.
   </p>
 
   <div id="levelList"></div>
@@ -36,10 +32,8 @@
   window.JOURNEYS_ADMIN_MODE = new URLSearchParams(location.search).get("admin") === "1";
 
   function applyAdminMode() {
-    document.getElementById("addUnitLink").href = window.JOURNEYS_ADMIN_MODE ? "add.html?admin=1" : "add.html";
     if (window.self !== window.top) {
       document.getElementById("backLink").hidden = true;
-      document.getElementById("addUnitRow").hidden = !window.JOURNEYS_ADMIN_MODE;
     }
     if (window.JOURNEYS_ADMIN_MODE && window.__journeysRenderHome) window.__journeysRenderHome();
   }

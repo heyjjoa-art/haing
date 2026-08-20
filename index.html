@@ -92,39 +92,9 @@
   </nav>
 
   <div id="subpanelWord" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnWord">
-    <section class="card upload-card">
-      <h2>📸 Word - 이번주 사진 업로드</h2>
-      <p class="hint">책 사진 2장(본문 페이지, 단어 페이지)을 한 번에 선택해서 올려주세요. Word 탭의 1~4번 기능에 바로 반영돼요.</p>
-
-      <label class="file-btn">
-        사진 2장 선택 / 촬영
-        <input type="file" id="weekPhotosInput" accept="image/*" multiple hidden>
-      </label>
-
-      <div class="upload-preview-grid">
-        <div>
-          <p class="field-label">1. 본문 이야기 페이지</p>
-          <div class="preview-box" id="storyPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
-        </div>
-        <div>
-          <p class="field-label">2. 단어 리스트 페이지</p>
-          <div class="preview-box" id="wordsPhotoPreview"><span class="placeholder">사진 미리보기</span></div>
-        </div>
-      </div>
-
-      <p class="field-label">Unit 번호</p>
-      <div class="manual-unit-entry" id="manualUnitEntry">
-        <input type="text" id="manualUnitInput" class="unit-input" placeholder="Unit 번호를 입력 (예: 15)" inputmode="numeric">
-      </div>
-      <p class="save-status" id="saveStatus"></p>
-      <div class="upload-actions">
-        <button type="button" id="saveWeekBtn" class="file-btn">💾 저장하고 반영하기</button>
-      </div>
-    </section>
-
     <section class="card admin-word-units-card">
       <h2>📚 Word - 유닛 관리</h2>
-      <p class="hint">등록된 Word 유닛을 삭제할 수 있어요. 삭제해도 모은 단어 카드(도감)는 그대로 남아요.</p>
+      <p class="hint">유닛의 본문을 수정하거나 삭제할 수 있어요. 삭제해도 모은 단어 카드(도감)는 그대로 남아요.</p>
       <div id="adminWordUnitList"></div>
     </section>
   </div>
@@ -132,7 +102,7 @@
   <div id="subpanelJourneys" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnJourneys" hidden>
     <section class="card admin-journeys-card">
       <h2>📘 Journeys - 유닛 관리</h2>
-      <p class="hint">새 유닛을 등록하거나, 등록된 유닛을 수정·삭제할 수 있어요.</p>
+      <p class="hint">등록된 유닛의 본문을 수정하거나 삭제할 수 있어요.</p>
       <iframe src="journeys/index.html?admin=1" id="adminJourneysFrame" class="journeys-frame" title="Journeys 유닛 관리" loading="lazy"></iframe>
     </section>
   </div>
@@ -182,7 +152,6 @@
   })();
 </script>
 
-<script src="js/vendor/jsQR.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="js/firebase-init.js"></script>
@@ -191,8 +160,6 @@
 <script src="js/data-store.js"></script>
 <script src="js/progress-store.js"></script>
 <script src="js/word-card-store.js"></script>
-<script src="js/qr-utils.js"></script>
-<script src="js/upload.js"></script>
 <script src="js/home.js"></script>
 <script src="js/admin-word-units.js"></script>
 <script src="js/tabs.js"></script>

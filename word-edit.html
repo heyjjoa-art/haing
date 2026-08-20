@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 본문 수정 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/upload.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Haing 🐣</h1>
+  <p class="subtitle" id="pageSubtitle">Unit 본문 수정</p>
+</header>
+
+<main>
+
+  <section class="card">
+    <p class="field-label">본문 제목</p>
+    <input type="text" id="storyTitleInput" placeholder="예: The Priest">
+
+    <p class="field-label">본문 텍스트</p>
+    <p class="hint">사진 속 본문을 직접 입력해주세요. 문단 사이는 빈 줄로 구분해요.</p>
+    <textarea id="storyTextInput" rows="12" placeholder="여기에 본문을 입력해주세요."></textarea>
+
+    <p class="save-status" id="saveStatus"></p>
+    <div class="upload-actions">
+      <button type="button" id="saveBtn" class="file-btn">💾 저장하기</button>
+    </div>
+  </section>
+
+  <p class="back-link"><a href="index.html">← 관리자로 돌아가기</a></p>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/words-data.js"></script>
+<script src="js/data-store.js"></script>
+<script src="js/word-edit.js"></script>
+</body>
+</html>

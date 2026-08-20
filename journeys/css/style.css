@@ -215,11 +215,6 @@ input[type="text"] {
   font-size: 0.9rem;
 }
 
-.add-unit-row {
-  text-align: center;
-  margin: 4px 0 20px;
-}
-
 .empty-state {
   text-align: center;
   color: var(--color-text-faint);

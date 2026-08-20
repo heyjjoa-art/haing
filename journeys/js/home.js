@@ -25,9 +25,7 @@
     listEl.innerHTML = "";
 
     if (groups.length === 0) {
-      emptyEl.textContent = window.JOURNEYS_ADMIN_MODE
-        ? "아직 등록된 유닛이 없어요. 위의 “새 유닛 추가”로 첫 유닛을 올려주세요."
-        : "아직 등록된 유닛이 없어요. Haing 홈의 “관리자” 탭에서 올려주세요.";
+      emptyEl.textContent = "아직 등록된 유닛이 없어요.";
       emptyEl.hidden = false;
       return;
     }

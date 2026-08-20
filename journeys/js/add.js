@@ -7,6 +7,13 @@
   var editUnit = editId ? JourneysStore.getUnit(editId) : null;
   var listHref = "index.html" + (isAdmin ? "?admin=1" : "");
 
+  // 새 유닛 추가는 이 화면에서 더 이상 하지 않는다(내용은 Claude가 사진을 보고
+  // Firestore에 직접 넣어준다) - 수정할 기존 유닛이 없으면 목록으로 돌려보낸다.
+  if (!editUnit) {
+    window.location.href = listHref;
+    return;
+  }
+
   var levelInput = document.getElementById("levelInput");
   var titleInput = document.getElementById("titleInput");
   var photoInput = document.getElementById("photoInput");
@@ -20,25 +27,19 @@
 
   backLink.href = listHref;
 
+  document.title = "유닛 수정 - Journeys";
+  pageSubtitle.textContent = "유닛 수정";
+  saveBtn.textContent = "💾 수정 내용 저장";
+  deleteBtn.hidden = false;
+
+  levelInput.value = editUnit.level || "";
+  titleInput.value = editUnit.title || "";
+  textInput.value = editUnit.text || "";
+
   // 책 페이지 사진을 순서대로 여러 장 쌓아둔다.
-  var pendingPhotos = []; // { compactDataUrl }
-
-  // 수정 모드면 기존 유닛 내용을 폼에 채워둔다.
-  if (editUnit) {
-    document.title = "유닛 수정 - Journeys";
-    pageSubtitle.textContent = "유닛 수정";
-    saveBtn.textContent = "💾 수정 내용 저장";
-    deleteBtn.hidden = false;
-
-    levelInput.value = editUnit.level || "";
-    titleInput.value = editUnit.title || "";
-    textInput.value = editUnit.text || "";
-    pendingPhotos = (editUnit.photos || []).map(function (src) {
-      return { compactDataUrl: src };
-    });
-  } else if (isAdmin) {
-    document.title = "새 유닛 추가 - Journeys";
-  }
+  var pendingPhotos = (editUnit.photos || []).map(function (src) {
+    return { compactDataUrl: src };
+  }); // { compactDataUrl }
 
   // renderPhotoGrid는 아래에서 정의되지만 함수 선언이라 호이스팅되어 여기서 먼저
   // 호출해도 안전하다 - 수정 모드에서 불러온 기존 사진을 바로 그려준다.
@@ -185,7 +186,7 @@
           return p.compactDataUrl;
         })
       };
-      if (editUnit) payload.id = editUnit.id;
+      payload.id = editUnit.id;
       var unit = JourneysStore.saveUnit(payload);
       saveStatus.style.color = "";
       saveStatus.textContent = "☁️ 클라우드에 저장 중...";
@@ -200,8 +201,7 @@
       });
       Promise.race([Promise.resolve(unit.cloudSyncPromise), cloudWaitTimeout]).then(function () {
         saveStatus.textContent = "✅ 저장했어요!";
-        // 수정한 경우엔 목록으로, 새로 만든 경우엔 방금 만든 유닛을 바로 미리보기.
-        window.location.href = editUnit ? listHref : "reader.html?id=" + encodeURIComponent(unit.id);
+        window.location.href = listHref;
       });
     } catch (e) {
       saveStatus.style.color = "#b3261e";
