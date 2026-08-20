@@ -30,14 +30,9 @@
     </label>
     <div class="photo-grid" id="photoGrid"></div>
 
-    <p class="upload-actions">
-      <button type="button" id="ocrBtn" class="secondary-btn" disabled>🔎 새로 추가한 페이지 텍스트 인식하기</button>
-    </p>
-    <p class="ocr-status" id="ocrStatus"></p>
-
     <p class="field-label">본문 텍스트</p>
-    <p class="hint">인식 결과가 틀리면 직접 고쳐주세요. 문단 사이는 빈 줄로 구분해요.</p>
-    <textarea id="textInput" rows="12" placeholder="여기에 본문이 나타나요. 인식이 안 됐으면 직접 입력해도 돼요."></textarea>
+    <p class="hint">사진 속 본문을 직접 입력해주세요. 문단 사이는 빈 줄로 구분해요.</p>
+    <textarea id="textInput" rows="12" placeholder="여기에 본문을 입력해주세요."></textarea>
 
     <p class="save-status" id="saveStatus"></p>
     <div class="upload-actions">
@@ -50,7 +45,6 @@
 
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="js/firebase-init.js"></script>

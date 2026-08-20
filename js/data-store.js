@@ -268,9 +268,19 @@ var DataStore = (function () {
     if (typeof HaingCloud !== "undefined") HaingCloud.deleteDoc(CLOUD_COLLECTION + "/" + unitKey);
   }
 
+  // 사진만 올라오고 단어/본문이 아직 안 채워진 유닛은 "준비된" 걸로 치지 않는다 -
+  // 그래야 홈 화면에서 스토리북 단계가 계속 잠겨서, 빈 유닛이 기본 샘플(Unit 15)로
+  // 둔갑해 보이는 대신 정직하게 "준비 중"으로 보인다.
   function hasCustomData(unitKey) {
     var data = load(unitKey);
-    return !!(data.storyPhotoDataUrl || data.wordsPhotoDataUrl);
+    return !!(data.words && data.words.length && data.storyText && data.storyText.trim());
+  }
+
+  // 기기에 등록된 유닛이 하나도 없을 때만 내장 샘플(Unit 15)을 보여준다 - 유닛은
+  // 등록됐는데 아직 단어/본문이 안 채워진 경우까지 샘플로 대신 채우면, 다른 유닛을
+  // 등록한 것처럼 보이는 착각을 준다(예: Unit 18을 올렸는데 Unit 15 내용이 나옴).
+  function anyUnitsRegistered() {
+    return Object.keys(loadAllUnits()).length > 0;
   }
 
   function getStoryPhotoUrl(unitKey) {
@@ -291,7 +301,8 @@ var DataStore = (function () {
 
   function getStoryTitle(unitKey) {
     var data = load(unitKey);
-    return data.storyTitle || DEFAULT_STORY_TITLE;
+    if (data.storyTitle) return data.storyTitle;
+    return anyUnitsRegistered() ? "" : DEFAULT_STORY_TITLE;
   }
 
   function getStoryParagraphs(unitKey) {
@@ -302,7 +313,7 @@ var DataStore = (function () {
         .map(function (p) { return p.trim(); })
         .filter(Boolean);
     }
-    return DEFAULT_STORY_PARAGRAPHS;
+    return anyUnitsRegistered() ? [] : DEFAULT_STORY_PARAGRAPHS;
   }
 
   function getStoryAudioLink(unitKey) {
@@ -318,7 +329,7 @@ var DataStore = (function () {
   function getWords(unitKey) {
     var data = load(unitKey);
     if (data.words && data.words.length) return data.words;
-    return DEFAULT_WORDS_DATA;
+    return anyUnitsRegistered() ? [] : DEFAULT_WORDS_DATA;
   }
 
   return {

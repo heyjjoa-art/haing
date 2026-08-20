@@ -18,7 +18,7 @@
 
       var done = ProgressStore.isDone(step);
       var unlocked = ProgressStore.isUnlocked(step);
-      // 스토리북은 이번 주 사진을 올리고 "저장하고 반영하기"를 눌러야만 열린다.
+      // 스토리북은 이번 주 단어/본문이 채워져야만 열린다(사진만 올라온 상태로는 안 열림).
       if (step === "storybook" && !DataStore.hasCustomData()) {
         unlocked = false;
       }
@@ -32,7 +32,7 @@
         card.classList.add("locked");
         statusEl.textContent =
           step === "storybook"
-            ? "🔒 사진을 올리고 저장해 주세요"
+            ? "🔒 아직 단어·본문이 준비되지 않았어요"
             : "🔒 이전 단계를 먼저 완료하세요";
       } else {
         var progress = ProgressStore.getStepProgress(step);

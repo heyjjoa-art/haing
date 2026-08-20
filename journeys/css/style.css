@@ -196,13 +196,6 @@ input[type="text"] {
   margin-top: 12px;
 }
 
-.ocr-status {
-  margin: 6px 0 0;
-  font-size: 0.8rem;
-  color: var(--color-success);
-  min-height: 1.2em;
-}
-
 .save-status {
   margin: 10px 0 0;
   font-size: 0.85rem;
