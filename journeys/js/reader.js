@@ -5,15 +5,23 @@
   var unitId = params.get("id");
   var unit = unitId ? JourneysStore.getUnit(unitId) : null;
 
+  // 관리자 탭(?admin=1)에서 들어왔으면, 목록으로 돌아갈 때도 admin=1을 유지해서
+  // 수정/삭제 버튼이 계속 보이게 한다.
+  var isAdmin = params.get("admin") === "1";
+  var backHref = "index.html" + (isAdmin ? "?admin=1" : "");
+
   var readerMain = document.querySelector(".reader-main");
 
   if (!unit) {
     readerMain.innerHTML =
-      '<p class="empty-state">유닛을 찾을 수 없어요. <a href="index.html">목록으로 돌아가기</a></p>';
+      '<p class="empty-state">유닛을 찾을 수 없어요. <a href="' + backHref + '">목록으로 돌아가기</a></p>';
     return;
   }
 
   var childId = typeof ChildStore !== "undefined" ? ChildStore.getActive() : null;
+
+  var backLinkEl = document.getElementById("backLink");
+  if (backLinkEl) backLinkEl.href = backHref;
 
   var storyTitleEl = document.getElementById("storyTitle");
   var levelSubtitleEl = document.getElementById("levelSubtitle");
@@ -68,6 +76,7 @@
   var wordPopupEl = document.getElementById("wordPopup");
   var wordPopupWordEl = document.getElementById("wordPopupWord");
   var wordPopupMeaningEl = document.getElementById("wordPopupMeaning");
+  var wordPopupEnEl = document.getElementById("wordPopupEn");
   var wordPopupCloseBtn = document.getElementById("wordPopupClose");
   var wordLookupToken = 0;
   var wordCloseTimer = null;
@@ -147,7 +156,7 @@
         span.className = "story-word";
         span.textContent = token;
         span.addEventListener("click", function () {
-          speakWord(token);
+          speakWord(token, paragraph);
         });
         p.appendChild(span);
         wordSpans.push({ start: offset, end: offset + token.length, el: span });
@@ -208,9 +217,11 @@
     }
   }
 
-  // 모르는 단어를 누르면 읽어주고, 한글 뜻을 아래쪽 팝업에 보여준다. 읽던 중이었다면
-  // 잠깐 멈췄다가, 팝업이 자동으로 닫히면서 그 지점부터 다시 이어서 읽어준다.
-  function speakWord(rawWord) {
+  // 모르는 단어를 누르면 읽어주고, 한글 뜻과 영영 설명을 아래쪽 팝업에 보여준다. 읽던
+  // 중이었다면 잠깐 멈췄다가, 팝업이 자동으로 닫히면서 그 지점부터 다시 이어서 읽어준다.
+  // context(단어가 속한 문단)를 넘겨주면, 여러 뜻 중 본문에 나온 뜻에 가장 가까운
+  // 영영 설명을 골라준다(Dictionary.lookup 참고).
+  function speakWord(rawWord, context) {
     var clean = rawWord.replace(/[^a-zA-Z']/g, "");
     if (!clean) return;
 
@@ -222,6 +233,7 @@
 
     wordPopupWordEl.textContent = clean;
     wordPopupMeaningEl.textContent = "뜻 찾는 중...";
+    wordPopupEnEl.textContent = "";
     wordPopupEl.classList.add("open");
 
     if (Tts.isSupported()) {
@@ -234,13 +246,14 @@
       wordCloseTimer = setTimeout(function () {
         if (myLookupToken !== wordLookupToken) return;
         closeWordPopupAndResume();
-      }, 2800);
+      }, 3600);
     }
 
     if (typeof Dictionary !== "undefined") {
-      Dictionary.lookup(clean).then(function (meaning) {
+      Dictionary.lookup(clean, context).then(function (result) {
         if (myLookupToken !== wordLookupToken) return; // 그 사이 다른 단어를 눌렀으면 무시
-        wordPopupMeaningEl.textContent = meaning ? "뜻: " + meaning : "뜻을 찾지 못했어요 😥";
+        wordPopupMeaningEl.textContent = result && result.ko ? "뜻: " + result.ko : "뜻을 찾지 못했어요 😥";
+        wordPopupEnEl.textContent = result && result.en ? result.en : "";
         scheduleAutoClose();
       });
     } else {

@@ -321,6 +321,12 @@
   color: var(--color-accent-soft);
 }
 
+.word-popup-en {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
+}
+
 .word-popup-close {
   flex: none;
   background: rgba(255, 255, 255, 0.15);

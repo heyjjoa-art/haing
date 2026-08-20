@@ -4,10 +4,11 @@
 // 공부 얘기가 아니라 아이들이 읽으면 그냥 기분 좋아지는 일반적인 문장들로 구성했다.
 //
 // 문구는 "오프닝(오늘 분위기) + 조언 + 결과" 3조각을 조합해서 만든다.
-// 8 x 6 x 5 = 240가지 서로 다른 조합이 나오고, 오늘 날짜를 기준으로 하루에 하나씩
-// 순서대로(무작위 아님) 돌아가며 써서 240일(대략 한 달 20일 x 12달)이 지나기 전에는
-// 같은 문구가 절대 반복되지 않는다. 게다가 띠마다 시작 지점을 다르게 잡아서, 같은 날
-// 하정이(말띠)와 하진이(닭띠)가 보는 문구도 서로 달라진다.
+// 오프닝/조언/결과/색 인덱스를 모두 comboIndex % 각 배열 길이로 독립 계산하기
+// 때문에 매일 세 문장과 색이 다 같이 바뀌고(어제와 이어서 비슷해 보이지 않음),
+// 전체 조합은 최소 120일(8, 6, 5의 최소공배수)이 지나야 반복된다. 게다가 띠마다
+// 시작 지점을 다르게 잡아서, 같은 날 하정이(말띠)와 하진이(닭띠)가 보는 문구도
+// 서로 달라진다.
 var FortuneStore = (function () {
   var OPENERS = [
     "괜히 기분 좋은 일이 자꾸 생기는 하루예요.",
@@ -37,7 +38,11 @@ var FortuneStore = (function () {
     "편안한 마음이 오히려 더 좋은 결과를 가져다줄 거예요."
   ];
 
-  var COLORS = ["노랑", "하늘색", "초록", "분홍", "주황", "보라", "하양", "빨강"];
+  var COLORS = [
+    "에메랄드 그린", "라벤더 퍼플", "코랄 핑크", "레몬 옐로우", "스카이 블루",
+    "피치 오렌지", "민트 그린", "체리 레드", "라일락", "터콰이즈",
+    "머스터드 옐로우", "베이비 핑크", "인디고 블루", "탠저린 오렌지"
+  ];
 
   var CYCLE_LENGTH = OPENERS.length * ADVICES.length * OUTCOMES.length; // 8*6*5 = 240
 
@@ -63,13 +68,20 @@ var FortuneStore = (function () {
   function getTodayFortune(zodiacName) {
     var comboIndex = (((daysSinceEpoch() + zodiacOffset(zodiacName)) % CYCLE_LENGTH) + CYCLE_LENGTH) % CYCLE_LENGTH;
 
+    // 자릿수(진법) 방식 대신 각 배열마다 독립적으로 comboIndex % 길이를 써서
+    // 오프닝/조언/결과/색이 "매일" 다 같이 바뀌도록 한다. 예전 방식은
+    // outcomeIdx만 매일 바뀌고 adviceIdx는 5일에 한 번, openerIdx는
+    // 30일에 한 번만 바뀌어서 색이 30일씩 똑같이 나오는 문제가 있었다.
+    // 색 인덱스도 openerIdx에 얹어 쓰지 않고 COLORS 자체 길이로 독립 계산해서,
+    // 문장과 색이 서로 다른 주기로 바뀌며 더 다양하게 섞이도록 한다.
     var outcomeIdx = comboIndex % OUTCOMES.length;
-    var adviceIdx = Math.floor(comboIndex / OUTCOMES.length) % ADVICES.length;
-    var openerIdx = Math.floor(comboIndex / (OUTCOMES.length * ADVICES.length)) % OPENERS.length;
+    var adviceIdx = comboIndex % ADVICES.length;
+    var openerIdx = comboIndex % OPENERS.length;
+    var colorIdx = comboIndex % COLORS.length;
 
     return {
       main: OPENERS[openerIdx] + " " + ADVICES[adviceIdx] + " " + OUTCOMES[outcomeIdx],
-      color: COLORS[openerIdx],
+      color: COLORS[colorIdx],
       number: (comboIndex % 9) + 1
     };
   }

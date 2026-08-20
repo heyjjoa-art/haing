@@ -93,13 +93,3 @@
   color: var(--color-text);
   font-size: 0.95rem;
 }
-
-.reset-all-row {
-  text-align: center;
-  margin-top: 24px;
-}
-
-.reset-all-row .danger-btn {
-  font-size: 0.8rem;
-  opacity: 0.8;
-}

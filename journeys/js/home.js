@@ -51,7 +51,7 @@
 
         var link = document.createElement("a");
         link.className = "unit-card";
-        link.href = "reader.html?id=" + encodeURIComponent(unit.id);
+        link.href = "reader.html?id=" + encodeURIComponent(unit.id) + (window.JOURNEYS_ADMIN_MODE ? "&admin=1" : "");
         link.innerHTML =
           '<span class="unit-emoji">📘</span>' +
           '<span class="unit-title">' + escapeHtml(unit.title || "제목 없음") + "</span>" +

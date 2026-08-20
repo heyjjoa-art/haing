@@ -100,16 +100,6 @@
     });
   })();
 
-  var resetAllBtn = document.getElementById("resetAllBtn");
-  if (resetAllBtn) {
-    resetAllBtn.addEventListener("click", function () {
-      if (confirm("이 기기에 저장된 사진, 카드, 진행 상황을 모두 지울까요? 되돌릴 수 없어요.")) {
-        localStorage.clear();
-        location.reload();
-      }
-    });
-  }
-
   renderCards();
   renderWordCardLink();
   renderUnitHistory();
