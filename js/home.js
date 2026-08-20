@@ -51,7 +51,7 @@
   function renderWordCardLink() {
     var linkEl = document.getElementById("wordCardLink");
     if (!linkEl) return;
-    linkEl.textContent = "📔 단어 도감 (" + WordCardStore.getCount() + ")";
+    linkEl.textContent = "📔 내가 획득한 단어 도감 (" + WordCardStore.getCount() + ")";
   }
 
   function renderUnitHistory() {
