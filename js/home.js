@@ -77,99 +77,93 @@
     linkEl.textContent = "📔 내가 획득한 단어 도감 (" + WordCardStore.getCount() + ")";
   }
 
+  // "주간 유닛"(매주 올리는 본문+단어)과 "초등 필수 단어"(본문 없는 고정 단어장)를
+  // 카테고리 하나로 합쳐서 고르게 한다 - 카테고리를 먼저 고르면 그에 맞는 번호 목록이 뜬다.
   function renderUnitHistory() {
-    var selectEl = document.getElementById("unitHistorySelect");
+    var categorySelect = document.getElementById("unitCategorySelect");
+    var numberSelect = document.getElementById("unitNumberSelect");
     var sectionEl = document.getElementById("unitHistorySection");
-    var goBtn = document.getElementById("unitGoBtn");
-    if (!selectEl) return;
+    var hintEl = document.getElementById("unitHistoryHint");
+    if (!categorySelect || !numberSelect) return;
 
-    var units = DataStore.getAllUnits();
+    var weeklyUnits = DataStore.getAllUnits();
+    var elementaryLevels = DataStore.getElementaryLevels();
 
-    if (units.length === 0) {
-      // 유닛이 하나도 없어도 지금까지 모은 단어 카드가 있으면 도감 버튼은 보여준다.
-      sectionEl.hidden = WordCardStore.getCount() === 0;
-      selectEl.disabled = true;
-      goBtn.disabled = true;
-      return;
-    }
-
-    selectEl.disabled = false;
-    goBtn.disabled = false;
-    sectionEl.hidden = false;
-
-    var currentUnit = DataStore.getCurrentUnit();
-
-    selectEl.innerHTML = '<option value="">유닛을 선택하세요</option>';
-    units.forEach(function (entry) {
-      var option = document.createElement("option");
-      option.value = entry.unit;
-      var label = entry.unit === "unspecified" ? "이름 없는 자료" : "Unit " + entry.unit;
-      option.textContent = label + (entry.unit === currentUnit ? " (현재)" : "");
-      selectEl.appendChild(option);
-    });
-  }
-
-  // 유닛 삭제는 관리자 탭에서만 한다 - 여기서는 이동만 가능하다.
-  (function setupUnitHistoryControls() {
-    var selectEl = document.getElementById("unitHistorySelect");
-    var goBtn = document.getElementById("unitGoBtn");
-    if (!selectEl || !goBtn) return;
-
-    goBtn.addEventListener("click", function () {
-      var chosen = selectEl.value;
-      if (!chosen) return;
-      DataStore.setCurrentUnit(chosen);
-      location.href = "storybook.html?unit=" + encodeURIComponent(chosen);
-    });
-  })();
-
-  // 초등 필수 단어 단계 선택 목록 - 매주 올리는 유닛과 달리 항상 고정으로 존재한다.
-  function renderElementaryLevels() {
-    var selectEl = document.getElementById("elementaryLevelSelect");
-    var sectionEl = document.getElementById("elementaryLevelSection");
-    if (!selectEl || !sectionEl) return;
-
-    var levels = DataStore.getElementaryLevels();
-    if (levels.length === 0) {
+    if (weeklyUnits.length === 0 && elementaryLevels.length === 0) {
       sectionEl.hidden = true;
       return;
     }
-
     sectionEl.hidden = false;
+
     var currentUnit = DataStore.getCurrentUnit();
 
-    selectEl.innerHTML = '<option value="">단계를 선택하세요</option>';
-    levels.forEach(function (entry) {
-      var option = document.createElement("option");
-      option.value = entry.level;
-      option.textContent = entry.level + " (" + entry.count + "개)" + (entry.level === currentUnit ? " (현재)" : "");
-      selectEl.appendChild(option);
-    });
+    function populateNumberOptions() {
+      var category = categorySelect.value;
+      hintEl.hidden = category !== "elementary";
+      numberSelect.innerHTML = '<option value="">번호를 선택하세요</option>';
+      var list = category === "elementary" ? elementaryLevels : weeklyUnits;
+      list.forEach(function (entry) {
+        var key = category === "elementary" ? entry.level : entry.unit;
+        var option = document.createElement("option");
+        option.value = key;
+        var label =
+          category === "elementary"
+            ? entry.level + " (" + entry.count + "개)"
+            : entry.unit === "unspecified"
+              ? "이름 없는 자료"
+              : "Unit " + entry.unit;
+        option.textContent = label + (key === currentUnit ? " (현재)" : "");
+        numberSelect.appendChild(option);
+      });
+    }
+
+    // 카테고리 목록에는 실제로 고를 게 있는 종류만 보여준다.
+    categorySelect.innerHTML = "";
+    if (weeklyUnits.length > 0) {
+      var weeklyOpt = document.createElement("option");
+      weeklyOpt.value = "weekly";
+      weeklyOpt.textContent = "📚 주간 유닛";
+      categorySelect.appendChild(weeklyOpt);
+    }
+    if (elementaryLevels.length > 0) {
+      var elemOpt = document.createElement("option");
+      elemOpt.value = "elementary";
+      elemOpt.textContent = "📗 초등 필수 단어";
+      categorySelect.appendChild(elemOpt);
+    }
+
+    // 지금 보고 있는 유닛이 속한 카테고리를 기본으로 보여준다.
+    categorySelect.value = DataStore.isElementaryUnit(currentUnit) ? "elementary" : "weekly";
+    if (!categorySelect.value) categorySelect.selectedIndex = 0;
+
+    categorySelect.onchange = populateNumberOptions;
+    populateNumberOptions();
   }
 
-  // 초등 단계는 본문이 없어서 스토리북이 아니라 바로 단어 학습(2번)으로 보낸다.
-  (function setupElementaryLevelControls() {
-    var selectEl = document.getElementById("elementaryLevelSelect");
-    var goBtn = document.getElementById("elementaryLevelGoBtn");
-    if (!selectEl || !goBtn) return;
+  // 유닛 삭제는 관리자 탭에서만 한다 - 여기서는 이동만 가능하다.
+  // "이동"은 바로 어떤 단계로 뛰어들지 않고, 고른 유닛/단계를 현재 유닛으로 바꾼 뒤
+  // 이 화면에 그대로 남아 단계 목록(카드)을 보여준다 - 그래야 몇 번을 시작할지
+  // 직접 고를 수 있고, 다시 다른 유닛을 고르고 싶을 때도 선택 UI가 계속 남아있다.
+  (function setupUnitHistoryControls() {
+    var numberSelect = document.getElementById("unitNumberSelect");
+    var goBtn = document.getElementById("unitGoBtn");
+    if (!numberSelect || !goBtn) return;
 
     goBtn.addEventListener("click", function () {
-      var chosen = selectEl.value;
+      var chosen = numberSelect.value;
       if (!chosen) return;
       DataStore.setCurrentUnit(chosen);
-      location.href = "flashcards.html?unit=" + encodeURIComponent(chosen);
+      if (window.__haingRenderHome) window.__haingRenderHome();
     });
   })();
 
   renderCards();
   renderWordCardLink();
   renderUnitHistory();
-  renderElementaryLevels();
 
   window.__haingRenderHome = function () {
     renderCards();
     renderWordCardLink();
     renderUnitHistory();
-    renderElementaryLevels();
   };
 })();

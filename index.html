@@ -23,7 +23,10 @@
 <header class="app-header" id="mainHeader">
   <h1>Haing 🐣</h1>
   <p class="subtitle">영어를 좋아하는 우리들</p>
-  <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
+  <div class="header-side">
+    <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
+    <a class="wordcard-link-btn" href="wordcards.html" id="wordCardLink">📔 내가 획득한 단어 도감 (0)</a>
+  </div>
 </header>
 
 <nav class="tab-bar" role="tablist">
@@ -36,23 +39,16 @@
 
   <section class="card unit-history" id="unitHistorySection" hidden>
     <h2>📚 유닛 선택</h2>
+    <p class="hint" id="unitHistoryHint" hidden>본문 없이 단어만 익히는 단계예요. 2~4번(단어 학습 · 매칭 · 스펠링)만 진행해요.</p>
     <div class="unit-history-row">
-      <select class="unit-history-select" id="unitHistorySelect">
-        <option value="">유닛을 선택하세요</option>
+      <select class="unit-history-select" id="unitCategorySelect">
+        <option value="weekly">📚 주간 유닛</option>
+        <option value="elementary">📗 초등 필수 단어</option>
+      </select>
+      <select class="unit-history-select" id="unitNumberSelect">
+        <option value="">번호를 선택하세요</option>
       </select>
       <button type="button" class="secondary-btn" id="unitGoBtn">▶ 이동</button>
-      <a class="secondary-btn wordcard-link-btn" href="wordcards.html" id="wordCardLink">📔 내가 획득한 단어 도감 (0)</a>
-    </div>
-  </section>
-
-  <section class="card unit-history" id="elementaryLevelSection" hidden>
-    <h2>📗 초등 필수 단어</h2>
-    <p class="hint">본문 없이 단어만 익히는 단계예요. 2~4번(단어 학습 · 매칭 · 스펠링)만 진행해요.</p>
-    <div class="unit-history-row">
-      <select class="unit-history-select" id="elementaryLevelSelect">
-        <option value="">단계를 선택하세요</option>
-      </select>
-      <button type="button" class="secondary-btn" id="elementaryLevelGoBtn">▶ 이동</button>
     </div>
   </section>
 
