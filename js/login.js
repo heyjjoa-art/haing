@@ -5,7 +5,6 @@
 
   var gate = document.getElementById("loginGate");
   var grid = document.getElementById("loginChildGrid");
-  var switchBtn = document.getElementById("childSwitchBtn");
 
   function renderGrid() {
     grid.innerHTML = "";
@@ -26,14 +25,7 @@
 
   function applyActive() {
     var info = ChildStore.getActiveInfo();
-    if (info) {
-      gate.hidden = true;
-      switchBtn.hidden = false;
-      switchBtn.textContent = info.zodiacEmoji + " " + info.name;
-    } else {
-      gate.hidden = false;
-      switchBtn.hidden = true;
-    }
+    gate.hidden = !!info;
     // 로그인한 아이가 바뀌면 진행 상황/카드 컬렉션도 그 아이 것으로 다시 그린다.
     if (window.__haingRenderHome) window.__haingRenderHome();
 
@@ -47,13 +39,6 @@
       journeysFrame.src = journeysFrame.src;
     }
   }
-
-  switchBtn.addEventListener("click", function () {
-    if (confirm("다른 친구로 바꿀까요?")) {
-      ChildStore.setActive(null);
-      applyActive();
-    }
-  });
 
   renderGrid();
   applyActive();

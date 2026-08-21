@@ -22,14 +22,11 @@
 
 <header class="app-header" id="mainHeader">
   <h1>Haing 🐣</h1>
-  <p class="subtitle">영어를 좋아하는 우리들</p>
-  <div class="header-side">
-    <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
-    <a class="wordcard-link-btn" href="wordcards.html" id="wordCardLink">
-      <span class="wordcard-link-icon" aria-hidden="true">📔</span>
-      <span class="wordcard-link-label">단어도감 <span id="wordCardCount">0</span></span>
-    </a>
-  </div>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
+  <a class="wordcard-link-btn" href="wordcards.html" id="wordCardLink">
+    <span class="wordcard-link-icon" aria-hidden="true">📔</span>
+    <span class="wordcard-link-label">단어도감</span>
+  </a>
 </header>
 
 <nav class="tab-bar" role="tablist">
@@ -53,33 +50,33 @@
     </div>
   </section>
 
-  <p class="step-guide" id="stepGuideText">📌 1번부터 순서대로 완료하면 다음 단계가 열려요!</p>
+  <p class="step-guide" id="stepGuideText">📌 순서대로 완료하면 다음 단계가 열려요!</p>
 
   <div class="home-main">
     <a class="home-card" href="storybook.html" data-step="storybook">
       <span class="home-emoji">📖</span>
-      <span class="home-title">1. 스토리북 보기</span>
+      <span class="home-title">1. 스토리북</span>
       <span class="home-desc">본문 이야기 · 음성으로 읽어주기</span>
       <span class="home-status" data-status></span>
     </a>
 
     <a class="home-card" href="flashcards.html" data-step="flashcards">
       <span class="home-emoji">⚡</span>
-      <span class="home-title">2. 단어 학습 (스피드 카드)</span>
+      <span class="home-title">2. 스피드 카드</span>
       <span class="home-desc">그림 → 영영 설명 → 한글 뜻 3단계</span>
       <span class="home-status" data-status></span>
     </a>
 
     <a class="home-card" href="memory.html" data-step="memory">
       <span class="home-emoji">🃏</span>
-      <span class="home-title">3. 단어 매칭 게임</span>
+      <span class="home-title">3. 메모리 게임</span>
       <span class="home-desc">영어 단어 ↔ 한글 뜻 짝 맞추기</span>
       <span class="home-status" data-status></span>
     </a>
 
     <a class="home-card" href="hangman.html" data-step="hangman">
       <span class="home-emoji">🔡</span>
-      <span class="home-title">4. 스펠링 맞추기 게임</span>
+      <span class="home-title">4. 스펠링 게임</span>
       <span class="home-desc">쉬운 단계 / 중간 단계 / 어려운 단계</span>
       <span class="home-status" data-status></span>
     </a>
@@ -164,6 +161,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="js/firebase-init.js"></script>
 <script src="js/child-store.js"></script>
+<script src="js/child-badge.js"></script>
 <script src="js/words-data.js"></script>
 <script src="js/elementary-words-data.js"></script>
 <script src="js/data-store.js"></script>

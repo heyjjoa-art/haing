@@ -14,9 +14,7 @@
     var cards = document.querySelectorAll(".home-card[data-step]");
     var guideEl = document.getElementById("stepGuideText");
     if (guideEl) {
-      guideEl.textContent = isElementary
-        ? "📌 순서대로 완료하면 다음 단계가 열려요!"
-        : "📌 1번부터 순서대로 완료하면 다음 단계가 열려요!";
+      guideEl.textContent = "📌 순서대로 완료하면 다음 단계가 열려요!";
     }
 
     cards.forEach(function (card) {
@@ -68,13 +66,6 @@
         }
       }
     });
-  }
-
-  // 도감 버튼에 지금까지 모은 단어 카드 수를 보여준다. 자세한 목록은 wordcards.html에서.
-  function renderWordCardLink() {
-    var countEl = document.getElementById("wordCardCount");
-    if (!countEl) return;
-    countEl.textContent = String(WordCardStore.getCount());
   }
 
   // "주간 유닛"(매주 올리는 본문+단어)과 "초등영단어"(본문 없는 고정 단어장)를
@@ -161,12 +152,10 @@
   })();
 
   renderCards();
-  renderWordCardLink();
   renderUnitHistory();
 
   window.__haingRenderHome = function () {
     renderCards();
-    renderWordCardLink();
     renderUnitHistory();
   };
 })();
