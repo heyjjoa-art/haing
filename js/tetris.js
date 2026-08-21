@@ -344,7 +344,7 @@
     if (isGameOver) return;
     paused = next;
     pauseVeilEl.hidden = !paused;
-    pauseBtn.textContent = paused ? "▶ 이어하기" : "⏸ 일시정지";
+    pauseBtn.textContent = paused ? "▶" : "⏸";
   }
 
   function gameOver() {
@@ -371,7 +371,7 @@
     isGameOver = false;
     paused = false;
     pauseVeilEl.hidden = true;
-    pauseBtn.textContent = "⏸ 일시정지";
+    pauseBtn.textContent = "⏸";
     overlayEl.hidden = true;
     showBestScore();
     updateStatsUI();
