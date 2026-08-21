@@ -206,6 +206,10 @@ var JourneysStore = (function () {
     var groups = {};
     Object.keys(units).forEach(function (id) {
       var u = units[id];
+      // 유닛 문서 안에 id 필드가 안 들어있으면(예: Claude가 도구로 Firestore에 직접
+      // 넣으면서 깜빡한 경우) 홈 화면 카드가 "reader.html?id=undefined"로 링크되어
+      // "유닛을 찾을 수 없어요"가 뜬다 - 맵의 키(=진짜 문서 id)로 보정해준다.
+      if (!u.id) u = Object.assign({}, u, { id: id });
       var level = u.level || "미분류";
       if (!groups[level]) groups[level] = [];
       groups[level].push(u);
