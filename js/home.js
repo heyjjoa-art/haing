@@ -146,6 +146,11 @@
     numberSelect.addEventListener("change", function () {
       var chosen = numberSelect.value;
       if (!chosen) return;
+      // 복습(2~4번 반복)으로 받는 별 스티커는 단어마다 5개가 한도다. 이 유닛의
+      // 단어가 전부 5개씩 다 찼으면 더 복습해도 얻을 게 없으니 안내해준다.
+      if (typeof WordCardStore !== "undefined" && WordCardStore.isStarLimitReached(chosen)) {
+        alert("별 5개가 모두 지급되었어요\n\n다른 단어도 공부해보아요!");
+      }
       DataStore.setCurrentUnit(chosen);
       if (window.__haingRenderHome) window.__haingRenderHome();
     });

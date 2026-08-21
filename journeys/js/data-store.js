@@ -137,19 +137,28 @@ var JourneysStore = (function () {
     if (window.__journeysRenderHome) window.__journeysRenderHome();
   }
 
+  // 로컬에만 있고 클라우드엔 없는 유닛을 "방금 만들어서 아직 못 올라간 것"으로 봐줄
+  // 최대 시간. 이보다 오래된 로컬 전용 유닛은 다른 기기에서 삭제된 것으로 보고
+  // 로컬에서도 지운다 - 안 그러면 삭제해도 예전 기기/탭이 다시 열릴 때마다
+  // 그 기기에 남아있던 stale 사본이 클라우드로 되살아나 계속 재등장한다.
+  var RECENT_LOCAL_ONLY_MS = 5 * 60 * 1000;
+
   // bootstrap 시점의 1회성 스냅샷은 위와 다르게 "덮어쓰기"가 아니라 "병합"해야 한다 -
   // 방금 다른 페이지에서 저장한 유닛의 클라우드 쓰기가 아직 도착하기 전일 수 있어서,
-  // 그대로 덮어쓰면 막 저장한 내용이 사라진다. 로컬에만 있는(=아직 못 올라간) 유닛이나
-  // 로컬이 더 최신인 유닛은 살려두고, 클라우드에 없던 것은 다시 밀어올린다.
+  // 그대로 덮어쓰면 막 저장한 내용이 사라진다. 로컬이 더 최신인 유닛은 살려두고,
+  // 로컬에만 있는 유닛은 방금 생긴 것일 때만 살려서 다시 밀어올린다(오래된 것은
+  // 다른 기기에서 지워진 걸로 보고 같이 지운다).
   function mergeCloudSnapshotIntoLocal(remoteDocs) {
     var local = loadAll();
     var merged = Object.assign({}, remoteDocs);
     Object.keys(local).forEach(function (id) {
       var remote = remoteDocs[id];
       var localUnit = local[id];
-      if (!remote || (localUnit.updatedAt || 0) > (remote.updatedAt || 0)) {
+      if (remote && (localUnit.updatedAt || 0) > (remote.updatedAt || 0)) {
         merged[id] = localUnit;
-        if (!remote) syncUnitToCloud(id, localUnit);
+      } else if (!remote && Date.now() - (localUnit.updatedAt || 0) < RECENT_LOCAL_ONLY_MS) {
+        merged[id] = localUnit;
+        syncUnitToCloud(id, localUnit);
       }
     });
     saveAll(merged);

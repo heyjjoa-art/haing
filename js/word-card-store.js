@@ -267,6 +267,18 @@ var WordCardStore = (function () {
     });
   }
 
+  // 트로피 받은 유닛의 단어 카드가 전부 별 5개(한도)까지 찼는지 본다 - 다 찼으면
+  // 이 유닛을 더 복습해도 얻을 별이 없다는 뜻이라, 홈 화면에서 다른 유닛을 권해준다.
+  function isStarLimitReached(unitKey) {
+    var resolvedUnit = typeof DataStore !== "undefined" ? DataStore.resolveUnitKey(unitKey) : unitKey;
+    if (!hasTrophy(resolvedUnit)) return false;
+    var cards = getUnitWordCards(resolvedUnit);
+    if (cards.length === 0) return false;
+    return cards.every(function (r) {
+      return (r.stars || 0) >= 5;
+    });
+  }
+
   // 유닛 번호를 바꿀 때, 모든 아이(로그인 안 한 guest 포함)가 이미 모은 카드의 unit
   // 필드도 같이 옮겨준다. 안 옮기면 도감에서 카드가 예전 번호로 남아 트로피와 어긋난다.
   function renameUnitInCards(oldUnit, newUnit) {
@@ -363,6 +375,7 @@ var WordCardStore = (function () {
     addStar: addStar,
     filterUncollected: filterUncollected,
     hasTrophy: hasTrophy,
+    isStarLimitReached: isStarLimitReached,
     awardTrophyIfComplete: awardTrophyIfComplete,
     awardJourneysTrophy: awardJourneysTrophy,
     getTrophyCards: getTrophyCards,
