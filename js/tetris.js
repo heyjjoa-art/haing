@@ -330,7 +330,7 @@
     if (!nextType) return;
     var matrix = SHAPES[nextType];
     var n = matrix.length;
-    var size = 18;
+    var size = 12;
     var offsetX = (nextCanvas.width - n * size) / 2;
     var offsetY = (nextCanvas.height - n * size) / 2;
     for (var r = 0; r < n; r++) {

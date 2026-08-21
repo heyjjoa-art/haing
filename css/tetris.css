@@ -52,24 +52,34 @@
   color: var(--color-text-muted);
 }
 
+/* 다음 블록/일시정지를 보드 바깥이 아니라 화면(캔버스) 안쪽 위에 떠 있는
+   막대로 얹는다 - 살짝 투명한 배경을 깔아서 뒤에 블록이 있어도 읽힌다. */
 .tetris-top-bar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin: 0 auto 10px;
-  max-width: 280px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(58, 46, 38, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .tetris-next-wrap {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .tetris-pause-btn {
   margin-top: 0;
+  padding: 6px 10px;
+  font-size: 0.8rem;
 }
 
 .tetris-board-wrap {
@@ -107,15 +117,15 @@
 
 .tetris-next-label {
   margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-text-faint);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .tetris-next {
-  background: #3a2e26;
+  background: rgba(0, 0, 0, 0.25);
   border-radius: var(--radius-sm);
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
 }
 
 /* 양손 조작: 왼쪽엔 바로 내리기(왼손 엄지), 오른쪽엔 +자 방향 패드(오른손 엄지). */

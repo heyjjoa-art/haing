@@ -35,16 +35,17 @@
     <span>줄 <strong id="tetrisLines">0</strong></span>
   </div>
 
-  <div class="tetris-top-bar">
-    <div class="tetris-next-wrap">
-      <p class="tetris-next-label">다음 블록</p>
-      <canvas id="tetrisNext" class="tetris-next" width="72" height="72"></canvas>
-    </div>
-    <button type="button" class="secondary-btn tetris-pause-btn" id="tetrisPauseBtn">⏸ 일시정지</button>
-  </div>
-
   <div class="tetris-board-wrap">
     <canvas id="tetrisBoard" class="tetris-board" width="280" height="560"></canvas>
+
+    <div class="tetris-top-bar">
+      <div class="tetris-next-wrap">
+        <p class="tetris-next-label">다음 블록</p>
+        <canvas id="tetrisNext" class="tetris-next" width="56" height="56"></canvas>
+      </div>
+      <button type="button" class="secondary-btn tetris-pause-btn" id="tetrisPauseBtn">⏸ 일시정지</button>
+    </div>
+
     <div class="tetris-pause-veil" id="tetrisPauseVeil" hidden>⏸ 일시정지</div>
   </div>
 
