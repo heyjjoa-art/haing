@@ -4,6 +4,12 @@
 // 카드는 "단어" 기준으로 중복 없이 모으는 개인 단어 사전 개념이라, 유닛이 삭제돼도
 // 이미 모은 카드는 그대로 남도록 완전한 스냅샷(뜻·이모지 등)을 저장해둔다.
 var WordCardStore = (function () {
+  // 하루 3세트(ProgressStore.WORD_SETS_DAILY_CAP)를 넘긴 뒤에는 공부 자체는
+  // 계속할 수 있지만, 별/카드/트로피 같은 보상은 더 안 쌓이게 막는다.
+  function dailyWordCapReached() {
+    return typeof ProgressStore !== "undefined" && ProgressStore.reachedDailyWordCap && ProgressStore.reachedDailyWordCap();
+  }
+
   function childPrefix() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     return childId ? childId + "_" : "guest_";
@@ -97,6 +103,7 @@ var WordCardStore = (function () {
   // 이미 다 모았으면(예: 같은 유닛을 반복 완료) null - 호출하는 쪽은 이미
   // "카드가 있으면 팝업을 띄운다" 형태로 짜여 있어서 별도 처리가 필요 없다.
   function awardRandomWordCard(unitKey) {
+    if (dailyWordCapReached()) return null;
     var words = (typeof DataStore !== "undefined" && DataStore.getWords(unitKey)) || [];
     var collected = getCollected();
     var owned = {};
@@ -122,6 +129,7 @@ var WordCardStore = (function () {
   // 안 주는 대신 별 스티커를 하나 붙여준다. 최대 5개까지만 쌓인다.
   // 반환값: 붙인 뒤의 별 개수(카드가 없으면 null - 호출부가 헷갈리지 않게).
   function addStar(word) {
+    if (dailyWordCapReached()) return null;
     var key = normalize(word);
     var collected = getCollected();
     var record = collected.filter(function (r) {
@@ -140,6 +148,7 @@ var WordCardStore = (function () {
   function awardWordCard(word, unitKey) {
     if (!word || !word.word) return null;
     if (hasWord(word.word)) return null;
+    if (dailyWordCapReached()) return null;
     var collected = getCollected();
     var record = toRecord(word, unitKey);
     collected.push(record);
@@ -187,6 +196,7 @@ var WordCardStore = (function () {
     var words = DataStore.getWords(unitKey);
     if (!isUnitComplete(words)) return null;
     if (hasTrophy(resolvedUnit)) return null;
+    if (dailyWordCapReached()) return null;
 
     var record = {
       word: trophyWordKey(resolvedUnit),

@@ -38,6 +38,59 @@ var ProgressStore = (function () {
     return "haingReviewProgress_" + childPrefix() + unitKey();
   }
 
+  // 하루에 몇 바퀴(=세트)나 단어 공부를 끝냈는지 - 유닛과 무관하게 아이 하나당 하루
+  // 단위로 센다. 1~4번(또는 초등의 2~4번)을 처음 다 끝내거나, 복습을 한 바퀴 다시
+  // 돌 때마다 1세트로 친다. 하루 3세트까지만 별/카드/게임 기회 같은 보상이 쌓이고,
+  // 그 이상은 공부 자체는 계속할 수 있지만 보상은 더 안 쌓인다(word-card-store.js 참고).
+  var WORD_SETS_DAILY_CAP = 3;
+
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function wordSetsTodayKey() {
+    return "haingWordSetsToday_" + childPrefix();
+  }
+
+  function getTodaySetInfo() {
+    var raw = localStorage.getItem(wordSetsTodayKey());
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.date === todayStr()) {
+          return { date: parsed.date, count: parsed.count || 0 };
+        }
+      } catch (e) {
+        // no-op - 아래에서 오늘치로 새로 시작한다
+      }
+    }
+    return { date: todayStr(), count: 0 };
+  }
+
+  function recordWordSetCompleted() {
+    var info = getTodaySetInfo();
+    if (info.count < WORD_SETS_DAILY_CAP) {
+      info.count += 1;
+      localStorage.setItem(wordSetsTodayKey(), JSON.stringify(info));
+    }
+  }
+
+  // 오늘 단어 공부를 한 세트라도 끝냈는지 - 게임 잠금 해제 조건에 쓴다.
+  function hasCompletedSetToday() {
+    return getTodaySetInfo().count > 0;
+  }
+
+  // 오늘 하루치 보상 한도(3세트)를 다 채웠는지 - word-card-store.js가 별/카드
+  // 지급 여부를 결정할 때 쓴다.
+  function reachedDailyWordCap() {
+    return getTodaySetInfo().count >= WORD_SETS_DAILY_CAP;
+  }
+
   function load() {
     var raw = localStorage.getItem(progressKey());
     if (!raw) return {};
@@ -53,6 +106,10 @@ var ProgressStore = (function () {
     if (data[step]) return false;
     data[step] = true;
     localStorage.setItem(progressKey(), JSON.stringify(data));
+    // 이 단계를 끝내면서 유닛을 처음으로 다 끝냈다면(1~4번 완주) 오늘의 첫 세트로 센다.
+    if (currentSteps().every(function (s) { return !!data[s]; })) {
+      recordWordSetCompleted();
+    }
     syncToCloud();
     return true;
   }
@@ -86,7 +143,11 @@ var ProgressStore = (function () {
     var lapDone = currentSteps().every(function (s) {
       return !!review[s];
     });
-    if (lapDone) review = {};
+    if (lapDone) {
+      review = {};
+      // 복습 한 바퀴를 다 돌았으니 오늘의 세트로 센다.
+      recordWordSetCompleted();
+    }
     localStorage.setItem(reviewProgressKey(), JSON.stringify(review));
     syncToCloud();
   }
@@ -169,6 +230,7 @@ var ProgressStore = (function () {
         key.indexOf("haingProgress_" + prefix) === 0 ||
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
+        key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1)
       ) {
         entries[key] = localStorage.getItem(key);
@@ -195,6 +257,7 @@ var ProgressStore = (function () {
         key.indexOf("haingProgress_" + prefix) === 0 ||
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
+        key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1);
       if (isProgressKey && (!data || !data.entries || !(key in data.entries))) {
         localStorage.removeItem(key);
@@ -249,6 +312,8 @@ var ProgressStore = (function () {
     setStepProgress: setStepProgress,
     getStepProgress: getStepProgress,
     setCustomState: setCustomState,
-    getCustomState: getCustomState
+    getCustomState: getCustomState,
+    hasCompletedSetToday: hasCompletedSetToday,
+    reachedDailyWordCap: reachedDailyWordCap
   };
 })();

@@ -173,12 +173,25 @@ var StampStore = (function () {
     }).length;
   }
 
+  // 오늘 어느 유닛이든 하루 미션(1.음원 듣기·2.따라 읽기·3.혼자 읽기)을 하나라도
+  // 끝냈는지 - Word 쪽 "오늘 저니스 먼저 하기" 게임 잠금 해제 조건에 쓴다.
+  function hasCompletedAnyToday(childId) {
+    if (!childId) return false;
+    ensureCloudSync(childId);
+    var all = loadAll(childId);
+    var today = todayStr();
+    return Object.keys(all).some(function (unitId) {
+      return isDayComplete((all[unitId] || {})[today]);
+    });
+  }
+
   return {
     STAGES: STAGES,
     WEEKDAY_LABELS: WEEKDAY_LABELS,
     getTodayStamps: getTodayStamps,
     markStageDone: markStageDone,
     getWeekGrid: getWeekGrid,
-    getTotalStampedDays: getTotalStampedDays
+    getTotalStampedDays: getTotalStampedDays,
+    hasCompletedAnyToday: hasCompletedAnyToday
   };
 })();
