@@ -245,6 +245,13 @@
     updateProgress();
     ProgressStore.setStepProgress("hangman", Math.min(overallCompleted, TOTAL_ALL_WORDS), TOTAL_ALL_WORDS);
 
+    // 이 유닛 트로피를 이미 받은 뒤(=복습 중)라면, 새로 줄 카드는 없으니(이미 다 모음)
+    // 맞힌 단어 카드에 별 스티커를 하나 붙여준다(최대 5개).
+    var earnedStar = null;
+    if (didWin && WordCardStore.hasTrophy()) {
+      earnedStar = WordCardStore.addStar(currentWord.word);
+    }
+
     // 카드는 실제로 직접 맞힌 단어에만, 그 자리에서 바로 준다 - 찍어서 맞은 게 아니라
     // 진짜 아는 단어만 도감에 들어가고, 결과도 기다리지 않고 바로 확인할 수 있다.
     var wordCard = null;
@@ -290,7 +297,8 @@
     disableAllKeys();
 
     if (didWin) {
-      resultTextEl.textContent = "🎉 정답이에요! " + currentWord.word.toUpperCase();
+      resultTextEl.textContent =
+        "🎉 정답이에요! " + currentWord.word.toUpperCase() + (earnedStar ? " ⭐ 스티커 획득!" : "");
     } else {
       resultTextEl.textContent =
         "😢 아쉬워요! 정답은 " + currentWord.word.toUpperCase() + " 였어요.";

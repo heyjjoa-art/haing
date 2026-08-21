@@ -53,6 +53,13 @@
   color: var(--color-text-muted);
 }
 
+.wc-card-stars {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+}
+
 .wc-card-def {
   margin: 8px 4px 0;
   font-size: 0.8rem;

@@ -135,6 +135,14 @@
       flippedCards = [];
       matchCount++;
       updateStats();
+
+      // 이 유닛 트로피를 이미 받은 뒤(=복습 중)라면, 맞힌 단어 카드에 별 스티커를
+      // 하나 붙여준다(최대 5개).
+      if (WordCardStore.hasTrophy()) {
+        var matchedWord = currentRoundWords[parseInt(a.dataset.pairId, 10)];
+        if (matchedWord) WordCardStore.addStar(matchedWord.word);
+      }
+
       if (matchCount === currentRoundWords.length) {
         onRoundComplete();
       }

@@ -118,6 +118,22 @@ var WordCardStore = (function () {
     return record;
   }
 
+  // 이미 카드로 모은(=트로피까지 받은 유닛의) 단어를 복습에서 또 맞히면, 카드는 새로
+  // 안 주는 대신 별 스티커를 하나 붙여준다. 최대 5개까지만 쌓인다.
+  // 반환값: 붙인 뒤의 별 개수(카드가 없으면 null - 호출부가 헷갈리지 않게).
+  function addStar(word) {
+    var key = normalize(word);
+    var collected = getCollected();
+    var record = collected.filter(function (r) {
+      return !r.isTrophy && normalize(r.word) === key;
+    })[0];
+    if (!record) return null;
+    record.stars = Math.min(5, (record.stars || 0) + 1);
+    saveCollected(collected);
+    syncToCloud();
+    return record.stars;
+  }
+
   // 특정 단어 하나를 콕 집어 카드로 만든다(4번 게임에서 실제로 맞힌 단어용).
   // 이미 모은 단어면 null - 중복으로 다시 주지 않는다.
   function awardWordCard(word, unitKey) {
@@ -310,6 +326,7 @@ var WordCardStore = (function () {
     hasWord: hasWord,
     awardRandomWordCard: awardRandomWordCard,
     awardWordCard: awardWordCard,
+    addStar: addStar,
     filterUncollected: filterUncollected,
     hasTrophy: hasTrophy,
     awardTrophyIfComplete: awardTrophyIfComplete,

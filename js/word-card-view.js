@@ -44,6 +44,13 @@ var WordCardView = (function () {
     return html;
   }
 
+  // 트로피 받은 유닛의 단어를 복습에서 또 맞히면(최대 5개) 카드에 붙는 별 스티커.
+  function starsHtml(record) {
+    var stars = Math.min(5, (record && record.stars) || 0);
+    if (stars <= 0) return "";
+    return '<span class="wc-card-stars">' + new Array(stars + 1).join("⭐") + "</span>";
+  }
+
   function cardHtml(record, opts) {
     opts = opts || {};
     if (record && record.isTrophy) return trophyCardHtml(record, opts);
@@ -57,7 +64,8 @@ var WordCardView = (function () {
       '<div class="wc-card-band"><span class="wc-card-emoji">' + escapeHtml(record.emoji || "📘") + "</span></div>" +
       '<div class="wc-card-body">' +
       '<strong class="wc-card-word">' + escapeHtml(record.word) + "</strong>" +
-      '<span class="wc-card-meaning">' + escapeHtml(record.meaningKo) + "</span>";
+      '<span class="wc-card-meaning">' + escapeHtml(record.meaningKo) + "</span>" +
+      starsHtml(record);
     if (opts.large && record.definition) {
       html += '<p class="wc-card-def">' + escapeHtml(record.definition) + "</p>";
     }
