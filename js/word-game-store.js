@@ -77,14 +77,27 @@ var WordGameStore = (function () {
     return getCredits();
   }
 
+  // 관리자로 로그인해 있으면 게임 기회를 무한으로 쳐서 계속 테스트할 수 있게 한다.
+  function isAdminActive() {
+    return typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
+  }
+
   function getCredits() {
+    if (isAdminActive()) return Infinity;
     var pinned = pinnedCreditsForActiveChild();
     if (pinned !== null) return pinned;
     return getState().credits;
   }
 
+  // 화면에 그대로 찍기 좋은 문자열. 관리자는 "Infinity"라는 영어 대신 "무제한"으로 보여준다.
+  function getCreditsLabel() {
+    var credits = getCredits();
+    return credits === Infinity ? "무제한" : String(credits);
+  }
+
   // 게임을 하나 시작할 때 기회를 1회 쓴다. 남은 기회가 없으면 false.
   function spendCredit() {
+    if (isAdminActive()) return true;
     if (pinnedCreditsForActiveChild() !== null) return true;
     var state = getState();
     if (state.credits <= 0) return false;
@@ -190,6 +203,7 @@ var WordGameStore = (function () {
   return {
     syncCredits: syncCredits,
     getCredits: getCredits,
+    getCreditsLabel: getCreditsLabel,
     spendCredit: spendCredit,
     grantCredits: grantCredits,
     getCreditsForChild: getCreditsForChild,

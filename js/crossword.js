@@ -651,10 +651,10 @@
 
   retryBtn.addEventListener("click", function () {
     if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
-    creditsEl.textContent = String(WordGameStore.getCredits());
+    creditsEl.textContent = WordGameStore.getCreditsLabel();
     newGame(currentLevel);
   });
 
-  creditsEl.textContent = String(typeof WordGameStore !== "undefined" ? WordGameStore.getCredits() : 0);
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : "0";
   newGame("elementary");
 })();

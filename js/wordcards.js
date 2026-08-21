@@ -84,7 +84,7 @@
 
   function renderGames() {
     var credits = typeof WordGameStore !== "undefined" ? WordGameStore.syncCredits() : 0;
-    gameCreditsEl.textContent = String(credits);
+    gameCreditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : String(credits);
     gamesLockedEl.hidden = credits > 0;
     gamesGridEl.hidden = credits <= 0;
   }
