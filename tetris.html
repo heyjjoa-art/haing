@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>테트리스 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/tetris.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle">🧱 테트리스</p>
+  <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
+</header>
+
+<main class="tetris-main">
+  <p class="tetris-credits">🎮 남은 게임 기회 <strong id="tetrisCredits">0</strong>회</p>
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="tetrisEasyTab" data-difficulty="easy">🟢 쉬움</button>
+    <button type="button" class="stage-tab" id="tetrisNormalTab" data-difficulty="normal">🟡 보통</button>
+    <button type="button" class="stage-tab" id="tetrisHardTab" data-difficulty="hard">🔴 어려움</button>
+  </div>
+
+  <p class="tetris-best">🏆 나의 최고 점수 <strong id="tetrisBest">0</strong></p>
+
+  <div class="tetris-stats">
+    <span>점수 <strong id="tetrisScore">0</strong></span>
+    <span>레벨 <strong id="tetrisLevel">1</strong></span>
+    <span>줄 <strong id="tetrisLines">0</strong></span>
+  </div>
+
+  <div class="tetris-layout">
+    <div class="tetris-board-wrap">
+      <canvas id="tetrisBoard" class="tetris-board" width="280" height="560"></canvas>
+      <div class="tetris-pause-veil" id="tetrisPauseVeil" hidden>⏸ 일시정지</div>
+    </div>
+    <div class="tetris-side">
+      <p class="tetris-next-label">다음 블록</p>
+      <canvas id="tetrisNext" class="tetris-next" width="96" height="96"></canvas>
+      <button type="button" class="secondary-btn" id="tetrisPauseBtn">⏸ 일시정지</button>
+    </div>
+  </div>
+
+  <div class="tetris-controls">
+    <button type="button" class="tetris-btn" id="tetrisLeftBtn" aria-label="왼쪽으로">◀</button>
+    <button type="button" class="tetris-btn" id="tetrisRotateBtn" aria-label="회전">⟳</button>
+    <button type="button" class="tetris-btn" id="tetrisRightBtn" aria-label="오른쪽으로">▶</button>
+    <button type="button" class="tetris-btn" id="tetrisDownBtn" aria-label="빨리 내려가기">▼</button>
+  </div>
+  <button type="button" class="tetris-drop-btn" id="tetrisDropBtn">⤓ 바로 내리기</button>
+
+  <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+
+  <div class="tetris-overlay" id="tetrisOverlay" hidden>
+    <div class="tetris-overlay-box">
+      <p class="tetris-overlay-title" id="tetrisOverlayTitle">게임 오버!</p>
+      <p class="tetris-overlay-score" id="tetrisOverlayScore"></p>
+      <button type="button" class="wc-popup-btn" id="tetrisRetryBtn">🔄 다시 하기</button>
+      <p class="tetris-overlay-note" id="tetrisOverlayNote" hidden>게임 기회를 모두 썼어요! 트로피 카드나 별 스티커를 더 모으면 기회가 또 생겨요.</p>
+      <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+    </div>
+  </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/child-store.js"></script>
+<script src="js/child-badge.js"></script>
+<script src="js/word-card-store.js"></script>
+<script src="js/word-game-store.js"></script>
+<script src="js/tetris.js"></script>
+</body>
+</html>

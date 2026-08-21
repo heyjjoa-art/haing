@@ -12,15 +12,17 @@
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
   <p class="subtitle">📔 내가 획득한 단어 도감</p>
+  <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
 </header>
 
 <main class="wordcards-main">
   <nav class="wc-subtab-bar" role="tablist">
     <button type="button" class="wc-subtab-btn" id="wcTabWords" role="tab" aria-selected="true" aria-controls="wcGrid">단어 카드</button>
     <button type="button" class="wc-subtab-btn" id="wcTabTrophies" role="tab" aria-selected="false" aria-controls="wcGrid">트로피 카드</button>
+    <button type="button" class="wc-subtab-btn" id="wcTabGames" role="tab" aria-selected="false" aria-controls="wcGamesPanel">게임</button>
   </nav>
 
-  <p class="wc-stat"><strong id="wcCount">0</strong><span id="wcCountLabel">개 모았어요</span></p>
+  <p class="wc-stat" id="wcStatLine"><strong id="wcCount">0</strong><span id="wcCountLabel">개 모았어요</span></p>
 
   <div class="wc-empty" id="wcEmpty" hidden>
     <p id="wcEmptyLine1">아직 모은 단어 카드가 없어요.</p>
@@ -29,12 +31,38 @@
 
   <div class="wc-grid" id="wcGrid" hidden></div>
 
+  <div class="wc-games-panel" id="wcGamesPanel" hidden>
+    <p class="wc-stat">🎮 남은 게임 기회 <strong id="wcGameCredits">0</strong>회</p>
+    <p class="wc-games-rule">트로피 카드 1장, 또는 별 스티커 20개를 모을 때마다<br>게임 기회가 3회씩 생겨요!</p>
+
+    <div class="wc-games-locked" id="wcGamesLocked" hidden>
+      <p>🔒 아직 게임 기회가 없어요.</p>
+      <p>트로피 카드를 모으거나<br>복습에서 별 스티커를 모아보세요!</p>
+    </div>
+
+    <div class="wc-games-grid" id="wcGamesGrid" hidden>
+      <button type="button" class="wc-game-card" id="wcGameTetris">
+        <span class="wc-game-emoji">🧱</span>
+        <span class="wc-game-title">테트리스</span>
+      </button>
+      <button type="button" class="wc-game-card" id="wcGameSudoku">
+        <span class="wc-game-emoji">🔢</span>
+        <span class="wc-game-title">스도쿠</span>
+      </button>
+      <button type="button" class="wc-game-card" id="wcGameCrossword">
+        <span class="wc-game-emoji">📝</span>
+        <span class="wc-game-title">가로세로 낱말</span>
+      </button>
+    </div>
+  </div>
+
   <p class="back-link"><a href="index.html">← 홈으로</a></p>
 </main>
 
 <div class="wc-lightbox" id="wcLightbox">
   <button type="button" class="wc-lightbox-close" id="wcLightboxClose">✕ 닫기</button>
   <div id="wcLightboxBody"></div>
+  <button type="button" class="secondary-btn wc-lightbox-replay" id="wcLightboxReplayBtn" hidden>🔊 다시 듣기</button>
 </div>
 
 <div class="wc-lightbox" id="wcUnitLightbox">
@@ -49,8 +77,11 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="js/firebase-init.js"></script>
 <script src="js/child-store.js"></script>
+<script src="js/child-badge.js"></script>
 <script src="js/word-card-store.js"></script>
 <script src="js/word-card-view.js"></script>
+<script src="js/word-game-store.js"></script>
+<script src="js/tts.js"></script>
 <script src="js/wordcards.js"></script>
 </body>
 </html>

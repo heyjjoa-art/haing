@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가로세로 낱말 - Haing</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/crossword.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle">📝 가로세로 낱말</p>
+  <button type="button" class="child-switch-btn" id="childSwitchBtn" hidden></button>
+</header>
+
+<main class="crossword-main">
+  <p class="crossword-credits">🎮 남은 게임 기회 <strong id="crosswordCredits">0</strong>회</p>
+  <p class="crossword-best">🏆 나의 최고 기록 <strong id="crosswordBest">-</strong> · ⏱ <strong id="crosswordTimer">0:00</strong></p>
+  <p class="crossword-total">🔥 지금까지 맞힌 단어 총 <strong id="crosswordTotalSolved">0</strong>개</p>
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="crosswordElementaryTab" data-level="elementary">🟢 초등</button>
+    <button type="button" class="stage-tab" id="crosswordMiddle1Tab" data-level="middle1">🟡 중1</button>
+    <button type="button" class="stage-tab" id="crosswordMiddle2Tab" data-level="middle2">🟠 중2</button>
+    <button type="button" class="stage-tab" id="crosswordMiddle3Tab" data-level="middle3">🔴 중3</button>
+  </div>
+
+  <p class="crossword-empty" id="crosswordEmpty" hidden>
+    낱말퍼즐을 만들지 못했어요.<br>다른 단계를 선택하거나 다시 시도해보세요!
+  </p>
+
+  <div id="crosswordPlay" hidden>
+    <div class="crossword-board-scroll">
+      <div class="crossword-board" id="crosswordBoard"></div>
+    </div>
+
+    <div class="crossword-clues">
+      <div class="crossword-clue-col">
+        <p class="crossword-clue-heading">➡️ 가로</p>
+        <ul class="crossword-clue-list" id="crosswordAcrossList"></ul>
+      </div>
+      <div class="crossword-clue-col">
+        <p class="crossword-clue-heading">⬇️ 세로</p>
+        <ul class="crossword-clue-list" id="crosswordDownList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+
+  <div class="crossword-overlay" id="crosswordOverlay" hidden>
+    <div class="crossword-overlay-box">
+      <p class="crossword-overlay-title">🎉 낱말퍼즐을 완성했어요!</p>
+      <p class="crossword-overlay-desc" id="crosswordOverlayDesc"></p>
+      <button type="button" class="wc-popup-btn" id="crosswordRetryBtn">🔄 새 퍼즐</button>
+      <p class="crossword-overlay-note" id="crosswordOverlayNote" hidden>게임 기회를 모두 썼어요! 트로피 카드나 별 스티커를 더 모으면 기회가 또 생겨요.</p>
+      <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+    </div>
+  </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/child-store.js"></script>
+<script src="js/child-badge.js"></script>
+<script src="js/word-card-store.js"></script>
+<script src="js/word-game-store.js"></script>
+<script src="js/crossword-words.js"></script>
+<script src="js/crossword.js"></script>
+</body>
+</html>

@@ -3,7 +3,9 @@
 
   var tabWordsBtn = document.getElementById("wcTabWords");
   var tabTrophiesBtn = document.getElementById("wcTabTrophies");
+  var tabGamesBtn = document.getElementById("wcTabGames");
 
+  var statLineEl = document.getElementById("wcStatLine");
   var countEl = document.getElementById("wcCount");
   var countLabelEl = document.getElementById("wcCountLabel");
   var emptyEl = document.getElementById("wcEmpty");
@@ -11,24 +13,44 @@
   var emptyLine2El = document.getElementById("wcEmptyLine2");
   var gridEl = document.getElementById("wcGrid");
 
+  var gamesPanelEl = document.getElementById("wcGamesPanel");
+  var gameCreditsEl = document.getElementById("wcGameCredits");
+  var gamesLockedEl = document.getElementById("wcGamesLocked");
+  var gamesGridEl = document.getElementById("wcGamesGrid");
+  var gameTetrisBtn = document.getElementById("wcGameTetris");
+  var gameSudokuBtn = document.getElementById("wcGameSudoku");
+  var gameCrosswordBtn = document.getElementById("wcGameCrossword");
+
   var lightboxEl = document.getElementById("wcLightbox");
   var lightboxBodyEl = document.getElementById("wcLightboxBody");
   var lightboxCloseBtn = document.getElementById("wcLightboxClose");
+  var lightboxReplayBtn = document.getElementById("wcLightboxReplayBtn");
 
   var unitLightboxEl = document.getElementById("wcUnitLightbox");
   var unitTitleEl = document.getElementById("wcUnitDetailTitle");
   var unitGridEl = document.getElementById("wcUnitDetailGrid");
   var unitLightboxCloseBtn = document.getElementById("wcUnitLightboxClose");
 
-  var currentTab = "words"; // "words" | "trophies"
+  var currentTab = "words"; // "words" | "trophies" | "games"
+
+  function speakDefinition(record) {
+    if (typeof Tts === "undefined" || !record || !record.definition) return;
+    Tts.stop();
+    Tts.speak(record.definition);
+  }
 
   function openLightbox(record) {
     lightboxBodyEl.innerHTML = WordCardView.cardHtml(record, { large: true });
+    var hasDefinition = !!(record && record.definition);
+    lightboxReplayBtn.hidden = !hasDefinition;
+    lightboxReplayBtn.onclick = hasDefinition ? function () { speakDefinition(record); } : null;
     lightboxEl.classList.add("open");
+    speakDefinition(record);
   }
 
   function closeLightbox() {
     lightboxEl.classList.remove("open");
+    if (typeof Tts !== "undefined") Tts.stop();
   }
 
   lightboxCloseBtn.addEventListener("click", closeLightbox);
@@ -60,7 +82,26 @@
     if (e.target === unitLightboxEl) closeUnitDetail();
   });
 
+  function renderGames() {
+    var credits = typeof WordGameStore !== "undefined" ? WordGameStore.syncCredits() : 0;
+    gameCreditsEl.textContent = String(credits);
+    gamesLockedEl.hidden = credits > 0;
+    gamesGridEl.hidden = credits <= 0;
+  }
+
   function render() {
+    if (currentTab === "games") {
+      statLineEl.hidden = true;
+      emptyEl.hidden = true;
+      gridEl.hidden = true;
+      gamesPanelEl.hidden = false;
+      renderGames();
+      return;
+    }
+
+    statLineEl.hidden = false;
+    gamesPanelEl.hidden = true;
+
     var pending = WordCardStore.getPendingWords();
     var isTrophyTab = currentTab === "trophies";
     var cards = (isTrophyTab ? WordCardStore.getTrophyCards() : WordCardStore.getInProgressCards())
@@ -85,7 +126,7 @@
       var isNew = pending.indexOf(String(record.word || "").toLowerCase()) !== -1;
       var el = WordCardView.cardEl(record, { isNew: isNew });
       el.addEventListener("click", function () {
-        if (record.isTrophy) {
+        if (record.isTrophy && !record.journeysTrophy) {
           openUnitDetail(record);
         } else {
           openLightbox(record);
@@ -103,6 +144,8 @@
     tabWordsBtn.setAttribute("aria-selected", tab === "words" ? "true" : "false");
     tabTrophiesBtn.classList.toggle("active", tab === "trophies");
     tabTrophiesBtn.setAttribute("aria-selected", tab === "trophies" ? "true" : "false");
+    tabGamesBtn.classList.toggle("active", tab === "games");
+    tabGamesBtn.setAttribute("aria-selected", tab === "games" ? "true" : "false");
     render();
   }
 
@@ -111,6 +154,24 @@
   });
   tabTrophiesBtn.addEventListener("click", function () {
     activateTab("trophies");
+  });
+  tabGamesBtn.addEventListener("click", function () {
+    activateTab("games");
+  });
+
+  function startGame(url) {
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
+    window.location.href = url;
+  }
+
+  gameTetrisBtn.addEventListener("click", function () {
+    startGame("tetris.html");
+  });
+  gameSudokuBtn.addEventListener("click", function () {
+    startGame("sudoku.html");
+  });
+  gameCrosswordBtn.addEventListener("click", function () {
+    startGame("crossword.html");
   });
 
   activateTab("words");
