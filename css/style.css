@@ -51,6 +51,13 @@
   box-sizing: border-box;
 }
 
+/* 세로 스크롤바가 생겼다 없어졌다 하면 그만큼 콘텐츠 폭이 흔들린다(예: 관리자
+   탭에서 내용이 짧은 Word와 긴 Journeys를 오갈 때 카드 너비가 달라 보이던 문제).
+   스크롤바 자리를 항상 남겨둬서 필요할 때만 나타나도 폭이 안 변하게 한다. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;

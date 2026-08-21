@@ -52,8 +52,18 @@
   box-sizing: border-box;
 }
 
+/* Journeys 화면은 부모 페이지 안 고정 높이 iframe(.journeys-frame) 안에서 열린다.
+   iframe 안 문서는 overflow가 visible이어도(기본값) 자동으로 스크롤이 생기지 않고
+   그냥 잘려서 안 보이는 채로 남는다 - 그래서 명시적으로 auto를 줘야 이 iframe
+   내부에서 스크롤이 생긴다(부모 페이지 자체는 스크롤되지 않게 유지된다). */
+html {
+  height: 100%;
+  overflow-y: auto;
+}
+
 body {
   margin: 0;
+  min-height: 100%;
   font-family: "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
