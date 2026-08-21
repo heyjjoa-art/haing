@@ -77,25 +77,31 @@ body {
 /* 계정 전환은 예전엔 이 자리의 버튼이었는데, 지금은 부제목 안 아이 이름
    (.subtitle-child-btn)을 누르는 방식으로 옮겨서 우측엔 단어도감 아이콘만 둔다. */
 .subtitle-child-btn {
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.6);
   border: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-left: 2px;
+  font-size: 0.85rem;
   font-weight: bold;
-  color: var(--color-accent-deep);
-  text-decoration: underline dotted;
+  color: var(--color-text-muted);
   cursor: pointer;
+  vertical-align: middle;
 }
 
 .wordcard-link-btn {
   position: absolute;
-  top: 14px;
+  top: 50%;
   right: 14px;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.6);
   border: none;
   border-radius: 16px;
