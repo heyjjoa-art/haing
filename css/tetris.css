@@ -52,18 +52,31 @@
   color: var(--color-text-muted);
 }
 
-.tetris-layout {
+.tetris-top-bar {
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: flex-start;
-  gap: 12px;
+  gap: 16px;
+  margin: 0 auto 10px;
+  max-width: 280px;
+}
+
+.tetris-next-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.tetris-pause-btn {
+  margin-top: 0;
 }
 
 .tetris-board-wrap {
   position: relative;
-  flex: 0 0 auto;
   width: 100%;
-  max-width: 240px;
+  max-width: 280px;
+  margin: 0 auto;
 }
 
 .tetris-board {
@@ -92,14 +105,6 @@
   display: none;
 }
 
-.tetris-side {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
 .tetris-next-label {
   margin: 0;
   font-size: 0.75rem;
@@ -113,20 +118,48 @@
   height: 72px;
 }
 
-.tetris-controls {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 240px;
+/* 양손 조작: 왼쪽엔 바로 내리기(왼손 엄지), 오른쪽엔 +자 방향 패드(오른손 엄지). */
+.tetris-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 280px;
   margin: 14px auto 8px;
 }
 
+.tetris-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 6px;
+}
+
+.tetris-dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.tetris-dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.tetris-dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.tetris-dpad-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
 .tetris-btn {
-  padding: 12px 0;
+  padding: 0;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-neutral-border);
   background: var(--color-neutral-bg);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
   color: var(--color-text);
   cursor: pointer;
@@ -137,16 +170,16 @@
 }
 
 .tetris-drop-btn {
-  display: block;
-  width: 100%;
-  max-width: 240px;
-  margin: 0 auto 12px;
+  flex: 0 0 auto;
+  width: 90px;
+  height: 150px;
   padding: 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: none;
   background: var(--color-accent);
   color: var(--color-text);
   font-size: 0.9rem;
+  line-height: 1.5;
   font-weight: bold;
   cursor: pointer;
 }

@@ -35,25 +35,30 @@
     <span>줄 <strong id="tetrisLines">0</strong></span>
   </div>
 
-  <div class="tetris-layout">
-    <div class="tetris-board-wrap">
-      <canvas id="tetrisBoard" class="tetris-board" width="280" height="560"></canvas>
-      <div class="tetris-pause-veil" id="tetrisPauseVeil" hidden>⏸ 일시정지</div>
-    </div>
-    <div class="tetris-side">
+  <div class="tetris-top-bar">
+    <div class="tetris-next-wrap">
       <p class="tetris-next-label">다음 블록</p>
-      <canvas id="tetrisNext" class="tetris-next" width="96" height="96"></canvas>
-      <button type="button" class="secondary-btn" id="tetrisPauseBtn">⏸ 일시정지</button>
+      <canvas id="tetrisNext" class="tetris-next" width="72" height="72"></canvas>
     </div>
+    <button type="button" class="secondary-btn tetris-pause-btn" id="tetrisPauseBtn">⏸ 일시정지</button>
   </div>
 
-  <div class="tetris-controls">
-    <button type="button" class="tetris-btn" id="tetrisLeftBtn" aria-label="왼쪽으로">◀</button>
-    <button type="button" class="tetris-btn" id="tetrisRotateBtn" aria-label="회전">⟳</button>
-    <button type="button" class="tetris-btn" id="tetrisRightBtn" aria-label="오른쪽으로">▶</button>
-    <button type="button" class="tetris-btn" id="tetrisDownBtn" aria-label="빨리 내려가기">▼</button>
+  <div class="tetris-board-wrap">
+    <canvas id="tetrisBoard" class="tetris-board" width="280" height="560"></canvas>
+    <div class="tetris-pause-veil" id="tetrisPauseVeil" hidden>⏸ 일시정지</div>
   </div>
-  <button type="button" class="tetris-drop-btn" id="tetrisDropBtn">⤓ 바로 내리기</button>
+
+  <!-- 양손 조작: 왼손은 왼쪽의 바로 내리기, 오른손은 오른쪽의 +자 방향 패드
+       (위=회전, 아래=빨리 내려가기, 좌우=이동). -->
+  <div class="tetris-controls-row">
+    <button type="button" class="tetris-drop-btn" id="tetrisDropBtn">⤓<br>바로<br>내리기</button>
+    <div class="tetris-dpad">
+      <button type="button" class="tetris-btn tetris-dpad-up" id="tetrisRotateBtn" aria-label="회전">⟳</button>
+      <button type="button" class="tetris-btn tetris-dpad-left" id="tetrisLeftBtn" aria-label="왼쪽으로">◀</button>
+      <button type="button" class="tetris-btn tetris-dpad-right" id="tetrisRightBtn" aria-label="오른쪽으로">▶</button>
+      <button type="button" class="tetris-btn tetris-dpad-down" id="tetrisDownBtn" aria-label="빨리 내려가기">▼</button>
+    </div>
+  </div>
 
   <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
 
