@@ -101,15 +101,26 @@ body {
 }
 
 .wordcard-link-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.6);
   border: none;
   border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.78rem;
+  padding: 4px 14px 4px 6px;
   font-weight: bold;
   color: var(--color-text-muted);
   text-decoration: none;
-  text-align: right;
+}
+
+.wordcard-link-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.wordcard-link-label {
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .app-header h1 {
