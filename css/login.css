@@ -35,6 +35,10 @@
   justify-content: center;
 }
 
+.login-child-grid[hidden] {
+  display: none;
+}
+
 .login-child-btn {
   flex: 1;
   display: flex;
@@ -61,5 +65,47 @@
   font-size: 1.1rem;
   font-weight: bold;
   color: var(--color-text);
+}
+
+.login-pin-step[hidden] {
+  display: none;
+}
+
+.login-pin-title {
+  margin: 0 0 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.login-pin-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  text-align: center;
+  letter-spacing: 4px;
+}
+
+.login-pin-error {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+}
+
+.login-pin-error[hidden] {
+  display: none;
+}
+
+.login-pin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.login-pin-actions button {
+  flex: 1;
+  margin-top: 0;
 }
 

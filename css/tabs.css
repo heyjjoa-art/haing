@@ -79,6 +79,50 @@
   border-radius: var(--radius-md);
 }
 
+.admin-child-settings-card {
+  max-width: 640px;
+  margin: 0 auto 18px;
+}
+
+.admin-child-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.admin-child-settings-row:last-child {
+  border-bottom: none;
+}
+
+.admin-child-settings-name {
+  font-weight: bold;
+  color: var(--color-text);
+  min-width: 70px;
+}
+
+.admin-child-settings-status {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  min-width: 70px;
+}
+
+.admin-child-settings-input {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.admin-child-settings-row .secondary-btn,
+.admin-child-settings-row .danger-btn {
+  margin-top: 0;
+}
+
 .admin-unit-row {
   display: flex;
   flex-wrap: wrap;

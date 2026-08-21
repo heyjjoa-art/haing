@@ -17,6 +17,16 @@
     <h1>Haing 🐣</h1>
     <p>누가 공부할까요?</p>
     <div class="login-child-grid" id="loginChildGrid"></div>
+
+    <div class="login-pin-step" id="loginPinStep" hidden>
+      <p class="login-pin-title" id="loginPinTitle"></p>
+      <input type="password" inputmode="numeric" autocomplete="off" class="login-pin-input" id="loginPinInput" placeholder="비밀번호">
+      <p class="login-pin-error" id="loginPinError" hidden>비밀번호가 틀렸어요. 다시 입력해주세요.</p>
+      <div class="login-pin-actions">
+        <button type="button" class="secondary-btn" id="loginPinBackBtn">← 뒤로</button>
+        <button type="button" class="file-btn" id="loginPinSubmitBtn">확인</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -91,6 +101,18 @@
 <main id="panelAdmin" class="tab-panel" role="tabpanel" aria-labelledby="tabBtnAdmin" hidden>
   <p class="hint admin-shared-hint">여기서 등록하면 하정이와 하진이 모두에게 똑같이 보여요.</p>
 
+  <section class="card admin-child-settings-card">
+    <h2>🔒 계정 비밀번호</h2>
+    <p class="hint">형제가 실수로 서로 계정을 바꾸지 않도록, 원하면 계정마다 비밀번호를 정해둘 수 있어요. 비워두면 비밀번호 없이 바로 전환돼요. (이 기기에만 적용돼요)</p>
+    <div id="adminChildPinList"></div>
+  </section>
+
+  <section class="card admin-child-settings-card">
+    <h2>🎮 게임 기회 관리</h2>
+    <p class="hint">트로피·별 스티커로 자동으로 쌓이는 기회예요. 잘못 줄었을 때만 손으로 더해주세요.</p>
+    <div id="adminGameCreditsList"></div>
+  </section>
+
   <nav class="subtab-bar" role="tablist">
     <button type="button" class="subtab-btn" id="subtabBtnWord" role="tab" aria-selected="true" aria-controls="subpanelWord">Word</button>
     <button type="button" class="subtab-btn" id="subtabBtnJourneys" role="tab" aria-selected="false" aria-controls="subpanelJourneys">Journeys</button>
@@ -161,14 +183,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="js/firebase-init.js"></script>
 <script src="js/child-store.js"></script>
+<script src="js/child-auth-store.js"></script>
 <script src="js/child-badge.js"></script>
 <script src="js/words-data.js"></script>
 <script src="js/elementary-words-data.js"></script>
 <script src="js/data-store.js"></script>
 <script src="js/progress-store.js"></script>
 <script src="js/word-card-store.js"></script>
+<script src="js/word-game-store.js"></script>
 <script src="js/home.js"></script>
 <script src="js/admin-word-units.js"></script>
+<script src="js/admin-child-settings.js"></script>
 <script src="js/tabs.js"></script>
 <script src="js/login.js"></script>
 </body>

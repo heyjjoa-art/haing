@@ -1,10 +1,48 @@
 // 하정/하진 중 누구인지 이름만 골라서 표시하는 아주 단순한 로그인.
-// 비밀번호는 없다 - 화면에서 이름을 탭하면 그 아이 기록으로 바로 전환된다.
+// 계정마다 비밀번호를 정해뒀으면(ChildAuthStore, 관리자 탭에서 설정) 이름을
+// 탭했을 때 비밀번호부터 물어보고, 맞아야 그 아이 기록으로 전환된다.
 (function () {
   "use strict";
 
   var gate = document.getElementById("loginGate");
   var grid = document.getElementById("loginChildGrid");
+  var pinStep = document.getElementById("loginPinStep");
+  var pinTitle = document.getElementById("loginPinTitle");
+  var pinInput = document.getElementById("loginPinInput");
+  var pinError = document.getElementById("loginPinError");
+  var pinBackBtn = document.getElementById("loginPinBackBtn");
+  var pinSubmitBtn = document.getElementById("loginPinSubmitBtn");
+  var pendingChild = null;
+
+  function showPinStep(child) {
+    pendingChild = child;
+    grid.hidden = true;
+    pinStep.hidden = false;
+    pinTitle.textContent = child.zodiacEmoji + " " + child.name + " 비밀번호를 입력하세요";
+    pinInput.value = "";
+    pinError.hidden = true;
+    pinInput.focus();
+  }
+
+  function hidePinStep() {
+    pendingChild = null;
+    pinStep.hidden = true;
+    grid.hidden = false;
+  }
+
+  function submitPin() {
+    if (!pendingChild) return;
+    var child = pendingChild;
+    if (ChildAuthStore.verifyPin(child.id, pinInput.value)) {
+      hidePinStep();
+      ChildStore.setActive(child.id);
+      applyActive();
+    } else {
+      pinError.hidden = false;
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  }
 
   function renderGrid() {
     grid.innerHTML = "";
@@ -16,8 +54,12 @@
         '<span class="login-child-emoji">' + child.zodiacEmoji + "</span>" +
         '<span class="login-child-name">' + child.name + "</span>";
       btn.addEventListener("click", function () {
-        ChildStore.setActive(child.id);
-        applyActive();
+        if (typeof ChildAuthStore !== "undefined" && ChildAuthStore.hasPin(child.id)) {
+          showPinStep(child);
+        } else {
+          ChildStore.setActive(child.id);
+          applyActive();
+        }
       });
       grid.appendChild(btn);
     });
@@ -26,6 +68,7 @@
   function applyActive() {
     var info = ChildStore.getActiveInfo();
     gate.hidden = !!info;
+    if (!info) hidePinStep();
     // 로그인한 아이가 바뀌면 진행 상황/카드 컬렉션도 그 아이 것으로 다시 그린다.
     if (window.__haingRenderHome) window.__haingRenderHome();
 
@@ -39,6 +82,12 @@
       journeysFrame.src = journeysFrame.src;
     }
   }
+
+  pinBackBtn.addEventListener("click", hidePinStep);
+  pinSubmitBtn.addEventListener("click", submitPin);
+  pinInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") submitPin();
+  });
 
   renderGrid();
   applyActive();

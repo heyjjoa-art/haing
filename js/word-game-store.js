@@ -102,6 +102,45 @@ var WordGameStore = (function () {
     return getCredits();
   }
 
+  // 관리자 탭에서 "지금 로그인한 아이"와 무관하게 특정 아이의 기회를 직접
+  // 확인/조정할 때 쓴다(예: 동기화 오류로 잘못 줄었을 때 손으로 복구).
+  function stateKeyFor(childId) {
+    return "haingGameCredits_" + (childId ? childId + "_" : "guest_");
+  }
+
+  function getStateFor(childId) {
+    var raw = localStorage.getItem(stateKeyFor(childId));
+    if (!raw) return defaultState();
+    try {
+      var parsed = JSON.parse(raw);
+      return {
+        credits: parsed.credits || 0,
+        trophiesCounted: parsed.trophiesCounted || 0,
+        starBlocksCounted: parsed.starBlocksCounted || 0
+      };
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function getCreditsForChild(childId) {
+    return getStateFor(childId).credits;
+  }
+
+  // n을 더한다(복구용으로는 양수, 되돌릴 땐 음수도 가능 - 0 밑으로는 안 내려간다).
+  // 이후에도 트로피/별로 쌓이는 정상적인 카운트는 그대로 이어진다(고정이 아니다).
+  function adminAddCredits(childId, n) {
+    if (!childId) return 0;
+    var state = getStateFor(childId);
+    state.credits = Math.max(0, state.credits + n);
+    localStorage.setItem(stateKeyFor(childId), JSON.stringify(state));
+    if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
+      HaingCloud.writeDoc("wordGameCredits/" + childId, state);
+    }
+    if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
+    return state.credits;
+  }
+
   function cloudPath() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     return childId ? "wordGameCredits/" + childId : null;
@@ -152,6 +191,8 @@ var WordGameStore = (function () {
     syncCredits: syncCredits,
     getCredits: getCredits,
     spendCredit: spendCredit,
-    grantCredits: grantCredits
+    grantCredits: grantCredits,
+    getCreditsForChild: getCreditsForChild,
+    adminAddCredits: adminAddCredits
   };
 })();
