@@ -22,7 +22,7 @@ var WordGameStore = (function () {
   }
 
   function defaultState() {
-    return { credits: 0, trophiesCounted: 0, starBlocksCounted: 0 };
+    return { credits: 0, trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0 };
   }
 
   function getState() {
@@ -33,7 +33,8 @@ var WordGameStore = (function () {
       return {
         credits: parsed.credits || 0,
         trophiesCounted: parsed.trophiesCounted || 0,
-        starBlocksCounted: parsed.starBlocksCounted || 0
+        starBlocksCounted: parsed.starBlocksCounted || 0,
+        updatedAt: parsed.updatedAt || 0
       };
     } catch (e) {
       return defaultState();
@@ -41,6 +42,7 @@ var WordGameStore = (function () {
   }
 
   function saveState(state) {
+    state.updatedAt = Date.now();
     localStorage.setItem(stateKey(), JSON.stringify(state));
     syncToCloud(state);
   }
@@ -146,6 +148,7 @@ var WordGameStore = (function () {
     if (!childId) return 0;
     var state = getStateFor(childId);
     state.credits = Math.max(0, state.credits + n);
+    state.updatedAt = Date.now();
     localStorage.setItem(stateKeyFor(childId), JSON.stringify(state));
     if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
       HaingCloud.writeDoc("wordGameCredits/" + childId, state);
@@ -166,12 +169,19 @@ var WordGameStore = (function () {
     HaingCloud.writeDoc(path, state);
   }
 
+  // 클라우드 값이 이 기기의 로컬 값보다 새것일 때만 덮어쓴다 - 예전엔 무조건
+  // 덮어써서, 아직 동기화가 안 된(또는 느린) 기기가 최신 값을 받아오는 도중에
+  // 화면을 그리면 순간적으로 옛날 값(심하면 0)이 보이거나, 그 옛날 로컬 값이
+  // 오히려 클라우드로 다시 밀려 올라가 실제로 쌓인 기회가 사라지는 문제가 있었다.
   function applyCloudState(data) {
     if (!data) return;
+    var local = getState();
+    if ((data.updatedAt || 0) < (local.updatedAt || 0)) return;
     localStorage.setItem(stateKey(), JSON.stringify({
       credits: data.credits || 0,
       trophiesCounted: data.trophiesCounted || 0,
-      starBlocksCounted: data.starBlocksCounted || 0
+      starBlocksCounted: data.starBlocksCounted || 0,
+      updatedAt: data.updatedAt || 0
     }));
     if (window.__haingRenderWordCards) window.__haingRenderWordCards();
   }
