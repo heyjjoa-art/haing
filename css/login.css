@@ -67,6 +67,28 @@
   color: var(--color-text);
 }
 
+.login-admin-btn[hidden] {
+  display: none;
+}
+
+.login-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 22px;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text-faint);
+  cursor: pointer;
+}
+
+.login-admin-emoji {
+  font-size: 1.1rem;
+}
+
 .login-pin-step[hidden] {
   display: none;
 }
@@ -107,5 +129,22 @@
 .login-pin-actions button {
   flex: 1;
   margin-top: 0;
+}
+
+.login-pin-skip {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 0.82rem;
+  color: var(--color-text-faint);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-pin-skip[hidden] {
+  display: none;
 }
 

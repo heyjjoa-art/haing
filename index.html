@@ -17,15 +17,20 @@
     <h1>Haing 🐣</h1>
     <p>누가 공부할까요?</p>
     <div class="login-child-grid" id="loginChildGrid"></div>
+    <button type="button" class="login-admin-btn" id="loginAdminBtn">
+      <span class="login-admin-emoji">🛠️</span>
+      <span class="login-admin-name">관리자</span>
+    </button>
 
     <div class="login-pin-step" id="loginPinStep" hidden>
       <p class="login-pin-title" id="loginPinTitle"></p>
       <input type="password" inputmode="numeric" autocomplete="off" class="login-pin-input" id="loginPinInput" placeholder="비밀번호">
-      <p class="login-pin-error" id="loginPinError" hidden>비밀번호가 틀렸어요. 다시 입력해주세요.</p>
+      <p class="login-pin-error" id="loginPinError" hidden></p>
       <div class="login-pin-actions">
         <button type="button" class="secondary-btn" id="loginPinBackBtn">← 뒤로</button>
         <button type="button" class="file-btn" id="loginPinSubmitBtn">확인</button>
       </div>
+      <button type="button" class="login-pin-skip" id="loginPinSkipBtn" hidden>비밀번호 없이 시작할래요</button>
     </div>
   </div>
 </div>
@@ -101,21 +106,10 @@
 <main id="panelAdmin" class="tab-panel" role="tabpanel" aria-labelledby="tabBtnAdmin" hidden>
   <p class="hint admin-shared-hint">여기서 등록하면 하정이와 하진이 모두에게 똑같이 보여요.</p>
 
-  <section class="card admin-child-settings-card">
-    <h2>🔒 계정 비밀번호</h2>
-    <p class="hint">형제가 실수로 서로 계정을 바꾸지 않도록, 원하면 계정마다 비밀번호를 정해둘 수 있어요. 비워두면 비밀번호 없이 바로 전환돼요. (이 기기에만 적용돼요)</p>
-    <div id="adminChildPinList"></div>
-  </section>
-
-  <section class="card admin-child-settings-card">
-    <h2>🎮 게임 기회 관리</h2>
-    <p class="hint">트로피·별 스티커로 자동으로 쌓이는 기회예요. 잘못 줄었을 때만 손으로 더해주세요.</p>
-    <div id="adminGameCreditsList"></div>
-  </section>
-
   <nav class="subtab-bar" role="tablist">
     <button type="button" class="subtab-btn" id="subtabBtnWord" role="tab" aria-selected="true" aria-controls="subpanelWord">Word</button>
     <button type="button" class="subtab-btn" id="subtabBtnJourneys" role="tab" aria-selected="false" aria-controls="subpanelJourneys">Journeys</button>
+    <button type="button" class="subtab-btn" id="subtabBtnAccount" role="tab" aria-selected="false" aria-controls="subpanelAccount">계정</button>
   </nav>
 
   <div id="subpanelWord" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnWord">
@@ -133,6 +127,30 @@
       <iframe src="journeys/index.html?admin=1" id="adminJourneysFrame" class="journeys-frame" title="Journeys 유닛 관리" loading="lazy"></iframe>
     </section>
   </div>
+
+  <div id="subpanelAccount" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnAccount" hidden>
+    <section class="card admin-child-settings-card">
+      <h2>🔑 관리자 비밀번호</h2>
+      <p class="hint">이 관리자 탭에 들어올 때 물어보는 비밀번호예요. 바꾸려면 새 비밀번호를 입력하고 저장하세요. (이 기기에만 적용돼요)</p>
+      <div class="admin-child-settings-row">
+        <input type="password" inputmode="numeric" autocomplete="off" class="admin-child-settings-input" id="adminPinChangeInput" placeholder="새 관리자 비밀번호">
+        <button type="button" class="secondary-btn" id="adminPinChangeSaveBtn">저장</button>
+        <button type="button" class="danger-btn" id="adminPinChangeClearBtn">비밀번호 없애기</button>
+      </div>
+    </section>
+
+    <section class="card admin-child-settings-card">
+      <h2>🔒 계정 비밀번호</h2>
+      <p class="hint">아이가 로그인 화면에서 이름을 누를 때 직접 설정해요. 잊어버렸을 때만 여기서 지워주세요 - 지우면 다음 로그인 때 다시 설정할 수 있어요.</p>
+      <div id="adminChildPinList"></div>
+    </section>
+
+    <section class="card admin-child-settings-card">
+      <h2>🎮 게임 기회 관리</h2>
+      <p class="hint">트로피·별 스티커로 자동으로 쌓이는 기회예요. 잘못 줄었을 때만 손으로 더해주세요.</p>
+      <div id="adminGameCreditsList"></div>
+    </section>
+  </div>
 </main>
 
 <script>
@@ -141,8 +159,12 @@
     var STORAGE_KEY = "haingAdminSubtab";
     var subtabs = [
       { id: "word", btn: document.getElementById("subtabBtnWord"), panel: document.getElementById("subpanelWord") },
-      { id: "journeys", btn: document.getElementById("subtabBtnJourneys"), panel: document.getElementById("subpanelJourneys") }
+      { id: "journeys", btn: document.getElementById("subtabBtnJourneys"), panel: document.getElementById("subpanelJourneys") },
+      { id: "account", btn: document.getElementById("subtabBtnAccount"), panel: document.getElementById("subpanelAccount") }
     ];
+    var validIds = subtabs.map(function (t) {
+      return t.id;
+    });
 
     function activate(id) {
       subtabs.forEach(function (t) {
@@ -161,7 +183,7 @@
     });
 
     var saved = localStorage.getItem(STORAGE_KEY);
-    activate(saved === "journeys" ? "journeys" : "word");
+    activate(validIds.indexOf(saved) !== -1 ? saved : "word");
   })();
 
   // iframe src의 ?admin=1이 일부 브라우저 환경에서 유지되지 않는 경우를 대비해,
@@ -184,6 +206,7 @@
 <script src="js/firebase-init.js"></script>
 <script src="js/child-store.js"></script>
 <script src="js/child-auth-store.js"></script>
+<script src="js/admin-auth-store.js"></script>
 <script src="js/child-badge.js"></script>
 <script src="js/words-data.js"></script>
 <script src="js/elementary-words-data.js"></script>
