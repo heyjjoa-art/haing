@@ -3,11 +3,67 @@
 
   var listEl = document.getElementById("levelList");
   var emptyEl = document.getElementById("emptyState");
+  var tabsEl = document.getElementById("levelTabs");
+
+  var activeBook = null;
+
+  // 하정/하진이 각자 다른 책을 대표로 골라둘 수 있도록 아이별로 따로 저장한다.
+  function defaultBookKey() {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    return "journeysDefaultBook_" + (childId ? childId + "_" : "guest_");
+  }
+
+  // 체크해둔 책은 다음에 Journeys에 들어왔을 때 그 책부터 보여준다(탭 순서는 그대로 둠).
+  var defaultBook = localStorage.getItem(defaultBookKey()) || null;
 
   function escapeHtml(s) {
     var div = document.createElement("div");
     div.textContent = s;
     return div.innerHTML;
+  }
+
+  // "1.1", "1.2" 같은 레벨 문자열의 앞자리(책 번호)만 뽑아서 탭 단위로 묶는다.
+  function bookKey(level) {
+    var s = String(level || "미분류");
+    return s.split(".")[0] || "미분류";
+  }
+
+  function renderTabs(bookKeys) {
+    tabsEl.innerHTML = "";
+    tabsEl.hidden = bookKeys.length <= 1;
+    bookKeys.forEach(function (key) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "level-tab-btn" + (key === activeBook ? " active" : "");
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-selected", key === activeBook ? "true" : "false");
+
+      // 관리자 화면에서는 콘텐츠 관리가 목적이라 "대표 탭" 설정은 필요 없다.
+      if (!window.JOURNEYS_ADMIN_MODE) {
+        var check = document.createElement("span");
+        check.className = "level-tab-check";
+        check.textContent = key === defaultBook ? "☑" : "☐";
+        check.title = "대표 탭으로 설정";
+        check.addEventListener("click", function (e) {
+          e.stopPropagation();
+          defaultBook = key;
+          localStorage.setItem(defaultBookKey(), key);
+          activeBook = key;
+          render();
+        });
+        btn.appendChild(check);
+      }
+      var label = document.createElement("span");
+      label.className = "level-tab-label";
+      label.textContent = "Journeys " + key;
+      btn.appendChild(label);
+
+      btn.addEventListener("click", function () {
+        activeBook = key;
+        render();
+      });
+      tabsEl.appendChild(btn);
+    });
   }
 
   // 지금 로그인한 아이가 이 유닛에서 모은 도장 개수를 작게 보여준다.
@@ -27,11 +83,27 @@
     if (groups.length === 0) {
       emptyEl.textContent = "아직 등록된 유닛이 없어요.";
       emptyEl.hidden = false;
+      tabsEl.hidden = true;
+      tabsEl.innerHTML = "";
       return;
     }
     emptyEl.hidden = true;
 
+    var bookKeys = [];
     groups.forEach(function (group) {
+      var key = bookKey(group.level);
+      if (bookKeys.indexOf(key) === -1) bookKeys.push(key);
+    });
+    if (!activeBook || bookKeys.indexOf(activeBook) === -1) {
+      activeBook = defaultBook && bookKeys.indexOf(defaultBook) !== -1 ? defaultBook : bookKeys[0];
+    }
+    renderTabs(bookKeys);
+
+    var visibleGroups = groups.filter(function (group) {
+      return bookKey(group.level) === activeBook;
+    });
+
+    visibleGroups.forEach(function (group) {
       var section = document.createElement("section");
       section.className = "level-group";
 

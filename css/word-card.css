@@ -60,6 +60,19 @@
   letter-spacing: 1px;
 }
 
+.wc-star-empty {
+  color: var(--color-border);
+}
+
+.wc-star-filled {
+  animation: wc-star-pop 0.3s ease;
+}
+
+@keyframes wc-star-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 .wc-card-def {
   margin: 8px 4px 0;
   font-size: 0.8rem;
@@ -120,6 +133,27 @@
   background: #fff8e6;
   border-top-color: var(--color-gold);
   color: var(--color-accent-deep);
+  font-weight: bold;
+}
+
+/* Journeys에서 받은 트로피 카드 - Word 완전정복 카드와 구분되는 은색 톤 */
+.wc-card-trophy-silver {
+  border-color: var(--color-silver);
+  box-shadow: 0 2px 10px rgba(168, 173, 184, 0.35);
+}
+
+.wc-card-trophy-silver .wc-card-band {
+  background: linear-gradient(135deg, var(--color-silver-soft), var(--color-silver));
+}
+
+.wc-card-trophy-silver .wc-card-word {
+  color: #5a5f6a;
+}
+
+.wc-card-trophy-silver .wc-card-unit {
+  background: #f2f3f5;
+  border-top-color: var(--color-silver);
+  color: #5a5f6a;
   font-weight: bold;
 }
 
@@ -259,19 +293,94 @@
   display: none;
 }
 
+.wc-games-panel[hidden] {
+  display: none;
+}
+
+.wc-games-rule {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+  margin: -10px 0 18px;
+}
+
+.wc-games-locked {
+  background: #fff4e0;
+  border: 2px dashed var(--color-border);
+  border-radius: 16px;
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+.wc-games-locked[hidden] {
+  display: none;
+}
+
+.wc-games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.wc-games-grid[hidden] {
+  display: none;
+}
+
+.wc-game-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  padding: 18px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.wc-game-card:active {
+  border-color: var(--color-accent);
+}
+
+.wc-game-emoji {
+  font-size: 2rem;
+}
+
+.wc-game-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
 .wc-lightbox {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 300;
   background: rgba(58, 46, 38, 0.85);
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   padding: 20px;
 }
 
 .wc-lightbox.open {
   display: flex;
+}
+
+/* 트로피 카드의 단어 목록(#wcUnitLightbox) 위에서 단어 하나를 누르면 뜨는 확대
+   팝업(#wcLightbox)은 항상 그 목록보다 위에 떠야 한다 - 안 그러면 같은
+   z-index라 나중에 열린 목록 뒤에 깔려서 안 보인다. */
+#wcLightbox {
+  z-index: 301;
+}
+
+.wc-lightbox-replay[hidden] {
+  display: none;
 }
 
 .wc-lightbox-close {

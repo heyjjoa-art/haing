@@ -44,15 +44,62 @@ var WordCardView = (function () {
     return html;
   }
 
-  // 트로피 받은 유닛의 단어를 복습에서 또 맞히면(최대 5개) 카드에 붙는 별 스티커.
+  // Journeys 트로피 카드를 확대해서 볼 때 보여주는 꾸준함/성실 명언 - 매번 랜덤으로 하나.
+  var PERSEVERANCE_QUOTES = [
+    "꾸준함은 성공의 지름길이다.",
+    "천 리 길도 한 걸음부터.",
+    "작은 노력이 쌓여 큰 결과를 만든다.",
+    "포기하지 않는 자가 결국 이긴다.",
+    "매일 조금씩, 꾸준히 하는 것이 가장 빠른 길이다.",
+    "습관이 실력을 만든다.",
+    "느려도 꾸준히 가는 것이 멈추는 것보다 낫다.",
+    "오늘 하루도 최선을 다한 너는 이미 성공한 거야.",
+    "성실함은 배신하지 않는다.",
+    "한 걸음씩, 그러나 쉬지 않고."
+  ];
+
+  function randomPerseveranceQuote() {
+    return PERSEVERANCE_QUOTES[Math.floor(Math.random() * PERSEVERANCE_QUOTES.length)];
+  }
+
+  // Journeys 쪽에서 한 주(월~금) 도장을 다 채우면 받는 트로피 카드. Word의
+  // "완전정복!" 트로피 카드와 같은 모양(.wc-card-trophy)을 그대로 쓰되 문구만 다르다.
+  function journeysTrophyCardHtml(record, opts) {
+    var classes = "wc-card wc-card-trophy wc-card-trophy-silver" + (opts.large ? " wc-card-lg" : "");
+
+    var html = '<article class="' + classes + '">';
+    if (opts.isNew) html += '<span class="wc-card-new">NEW</span>';
+    html +=
+      '<div class="wc-card-band"><span class="wc-card-emoji">🏆</span></div>' +
+      '<div class="wc-card-body">' +
+      '<strong class="wc-card-word">Journeys</strong>' +
+      '<span class="wc-card-meaning">1 Week<br>' + escapeHtml(record.resultLabel || "Success") + "</span>";
+    if (opts.large) {
+      html += '<p class="wc-card-def">"' + escapeHtml(randomPerseveranceQuote()) + '"</p>';
+    }
+    html +=
+      "</div>" +
+      '<span class="wc-card-unit">' + escapeHtml(record.unitLabel || "") + "</span>" +
+      "</article>";
+    return html;
+  }
+
+  // 별 스티커 자리는 카드마다 5개 고정. 트로피 받은 유닛의 단어를 복습에서 또
+  // 맞히면 빈 별 자리가 하나씩 채워진다(최대 5개).
   function starsHtml(record) {
     var stars = Math.min(5, (record && record.stars) || 0);
-    if (stars <= 0) return "";
-    return '<span class="wc-card-stars">' + new Array(stars + 1).join("⭐") + "</span>";
+    var html = '<span class="wc-card-stars">';
+    for (var i = 0; i < 5; i++) {
+      html += i < stars
+        ? '<span class="wc-star wc-star-filled">⭐</span>'
+        : '<span class="wc-star wc-star-empty">☆</span>';
+    }
+    return html + "</span>";
   }
 
   function cardHtml(record, opts) {
     opts = opts || {};
+    if (record && record.journeysTrophy) return journeysTrophyCardHtml(record, opts);
     if (record && record.isTrophy) return trophyCardHtml(record, opts);
 
     var tone = toneIndex(record);

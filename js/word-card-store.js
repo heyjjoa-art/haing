@@ -131,6 +131,7 @@ var WordCardStore = (function () {
     record.stars = Math.min(5, (record.stars || 0) + 1);
     saveCollected(collected);
     syncToCloud();
+    if (typeof WordGameStore !== "undefined") WordGameStore.syncCredits();
     return record.stars;
   }
 
@@ -198,6 +199,39 @@ var WordCardStore = (function () {
     saveCollected(collected);
     pushPending(record);
     syncToCloud();
+    if (typeof WordGameStore !== "undefined") WordGameStore.syncCredits();
+    return record;
+  }
+
+  // Journeys 쪽에서 한 주(월~금) 도장을 다 채웠을 때 트로피 카드를 하나 준다.
+  // 같은 유닛의 같은 주는 한 번만(hasWord로 중복 방지 - 이 카드 자체가 "이미
+  // 줬는지"의 기록이라 따로 상태를 안 둬도 된다). Word 쪽 트로피와 같은 배열에
+  // 저장하되 journeysTrophy로 구분해서 WordCardView가 다르게 그리고,
+  // WordGameStore의 트로피 개수 집계에서도 빠지게 한다(기회는 여기서 직접 준다).
+  function journeysTrophyWordKey(unitId, weekStart) {
+    return "__journeystrophy_" + String(unitId) + "_" + String(weekStart);
+  }
+
+  function awardJourneysTrophy(unitId, weekStart, weekLabel, unitLabel) {
+    var key = journeysTrophyWordKey(unitId, weekStart);
+    if (hasWord(key)) return null;
+
+    var record = {
+      word: key,
+      isTrophy: true,
+      journeysTrophy: true,
+      unit: null,
+      weekLabel: weekLabel || "1week",
+      resultLabel: "Success",
+      unitLabel: unitLabel || "",
+      collectedAt: Date.now()
+    };
+    var collected = getCollected();
+    collected.push(record);
+    saveCollected(collected);
+    pushPending(record);
+    syncToCloud();
+    if (typeof WordGameStore !== "undefined") WordGameStore.grantCredits(3);
     return record;
   }
 
@@ -330,6 +364,7 @@ var WordCardStore = (function () {
     filterUncollected: filterUncollected,
     hasTrophy: hasTrophy,
     awardTrophyIfComplete: awardTrophyIfComplete,
+    awardJourneysTrophy: awardJourneysTrophy,
     getTrophyCards: getTrophyCards,
     getInProgressCards: getInProgressCards,
     getUnitWordCards: getUnitWordCards,

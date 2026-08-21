@@ -23,8 +23,6 @@
   var backLinkEl = document.getElementById("backLink");
   if (backLinkEl) backLinkEl.href = backHref;
 
-  var storyTitleEl = document.getElementById("storyTitle");
-  var levelSubtitleEl = document.getElementById("levelSubtitle");
   var storyImageCol = document.getElementById("storyImageCol");
   var storyPhotosEl = document.getElementById("storyPhotos");
   var storyTextArea = document.getElementById("storyTextArea");
@@ -99,9 +97,6 @@
   var fallbackIndex = 0;
 
   function render() {
-    levelSubtitleEl.textContent = "Level " + unit.level;
-    storyTitleEl.textContent = unit.title;
-
     // photos가 없는 옛날 데이터(단일 photoDataUrl)도 그대로 보여준다.
     var photos = unit.photos || (unit.photoDataUrl ? [unit.photoDataUrl] : []);
     if (photos.length > 0) {
@@ -139,6 +134,11 @@
 
     storyTextArea.innerHTML = "";
     wordSpans = [];
+
+    var titleEl = document.createElement("h2");
+    titleEl.className = "story-title";
+    titleEl.textContent = unit.title;
+    storyTextArea.appendChild(titleEl);
 
     var offset = 0;
     paragraphs.forEach(function (paragraph, pIdx) {
@@ -316,17 +316,25 @@
     step();
   }
 
+  // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다.
+  function buttonHtml(icon, label) {
+    return (
+      '<span class="listen-btn-icon">' + icon + "</span>" +
+      '<span class="listen-btn-label">' + label + "</span>"
+    );
+  }
+
   var BUTTONS = {
-    listen: { btn: listenBtn, label: "🔊 1. 음원 듣기", playingLabel: "⏸ 듣는 중 (다시 누르면 멈춤)" },
-    follow: { btn: followBtn, label: "✨ 2. 따라 읽기", playingLabel: "⏸ 따라 읽는 중 (다시 누르면 멈춤)" },
-    alone: { btn: aloneBtn, label: "📖 3. 혼자 읽기", playingLabel: "⏸ 혼자 읽는 중 (다시 누르면 멈춤)" }
+    listen: { btn: listenBtn, icon: "🔊", label: "음원 듣기", playingLabel: "다시 누르면 멈춤" },
+    follow: { btn: followBtn, icon: "✨", label: "따라 읽기", playingLabel: "다시 누르면 멈춤" },
+    alone: { btn: aloneBtn, icon: "📖", label: "혼자 읽기", playingLabel: "다시 누르면 멈춤" }
   };
 
   function resetButtons() {
     Object.keys(BUTTONS).forEach(function (key) {
       var b = BUTTONS[key];
       b.btn.classList.remove("playing");
-      b.btn.textContent = b.label;
+      b.btn.innerHTML = buttonHtml(b.icon, b.label);
     });
   }
 
@@ -343,7 +351,7 @@
     resetButtons();
     var b = BUTTONS[mode];
     b.btn.classList.add("playing");
-    b.btn.textContent = b.playingLabel;
+    b.btn.innerHTML = buttonHtml("⏸", b.playingLabel);
     activeMode = mode;
   }
 
@@ -367,6 +375,10 @@
     });
   }
 
+  // 월~금 도장 5개를 한 주 안에 다 채우면(개근) 그 주는 은색 트로피 줄이 되고,
+  // Word 도감의 "트로피 카드" 탭에도 이 유닛의 Journeys 트로피 카드가 하나 들어가며
+  // (처음 개근한 주에 한해) 보너스 게임 기회를 3회 준다. 중복 지급 방지는
+  // WordCardStore.awardJourneysTrophy 안에서 이 카드가 이미 있는지로 판단한다.
   function renderStampBoard() {
     if (typeof StampStore === "undefined") return;
     var weeks = StampStore.getWeekGrid(childId, unit.id);
@@ -374,6 +386,17 @@
     weeks.forEach(function (week) {
       var row = document.createElement("div");
       row.className = "stamp-week-row";
+
+      var weekComplete = week.days.every(function (day) {
+        return day.stamped;
+      });
+      if (weekComplete) {
+        row.classList.add("trophy");
+        if (childId && typeof WordCardStore !== "undefined") {
+          WordCardStore.awardJourneysTrophy(unit.id, week.weekStart, "1week", unit.level + " - " + unit.title);
+        }
+      }
+
       week.days.forEach(function (day) {
         var cell = document.createElement("div");
         cell.className = "stamp-day-cell";
