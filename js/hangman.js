@@ -269,6 +269,7 @@
       // 4번 게임은 어려운 단계까지 한 바퀴 마치면 완료로 친다.
       if (currentStageKey === "hard") {
         ProgressStore.markDone("hangman");
+        ProgressStore.markReviewStep("hangman");
         trophy = WordCardStore.awardTrophyIfComplete();
       }
     }

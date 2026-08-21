@@ -24,7 +24,9 @@
   }
 
   function completeStorybook() {
-    if (ProgressStore.markDone("storybook")) {
+    var firstTime = ProgressStore.markDone("storybook");
+    ProgressStore.markReviewStep("storybook");
+    if (firstTime) {
       PraisePopup.show("flashcards.html", "다음 단계로 ▶");
     }
   }

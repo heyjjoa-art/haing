@@ -2,9 +2,18 @@
 // 새 유닛을 시작하면 그 유닛만 다시 1번부터 잠기고, 예전에 깬 유닛의 완료 기록은 그대로 남는다.
 var ProgressStore = (function () {
   var STEPS = ["storybook", "flashcards", "memory", "hangman"];
+  // 초등 단어장 단계(초등1, 초등2...)는 본문이 없어서 스토리북을 건너뛰고 2~4번만 밟는다.
+  var VOCAB_ONLY_STEPS = ["flashcards", "memory", "hangman"];
 
   function unitKey() {
     return (typeof DataStore !== "undefined" && DataStore.resolveUnitKey()) || "unspecified";
+  }
+
+  function currentSteps() {
+    if (typeof DataStore !== "undefined" && DataStore.isElementaryUnit && DataStore.isElementaryUnit(unitKey())) {
+      return VOCAB_ONLY_STEPS;
+    }
+    return STEPS;
   }
 
   // 진행 상황은 아이(하정/하진)별로 따로 쌓인다. 유닛/단어 콘텐츠 자체는
@@ -20,6 +29,13 @@ var ProgressStore = (function () {
 
   function stepProgressKey() {
     return "haingStepProgress_" + childPrefix() + unitKey();
+  }
+
+  // 이 유닛을 한 번 완주한 뒤(=복습 모드)에도 1~4번을 순서대로 다시 밟게 하기 위한
+  // "이번 복습 한 바퀴" 진행 기록. 한 바퀴(1~4번)를 다 돌면 바로 비워서, 다음에
+  // 또 복습하려면 다시 1번부터 순서대로 밟아야 한다.
+  function reviewProgressKey() {
+    return "haingReviewProgress_" + childPrefix() + unitKey();
   }
 
   function load() {
@@ -47,22 +63,51 @@ var ProgressStore = (function () {
 
   function isAllDone() {
     var data = load();
-    return STEPS.every(function (s) {
+    return currentSteps().every(function (s) {
       return !!data[s];
     });
   }
 
+  function loadReviewProgress() {
+    var raw = localStorage.getItem(reviewProgressKey());
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // 복습 한 바퀴 중 한 단계를 마칠 때마다 호출한다. 4번까지 다 마치면(=한 바퀴 완주)
+  // 바로 기록을 비워, 다음 복습도 다시 1번부터 순서대로 밟도록 한다.
+  function markReviewStep(step) {
+    var review = loadReviewProgress();
+    review[step] = true;
+    var lapDone = currentSteps().every(function (s) {
+      return !!review[s];
+    });
+    if (lapDone) review = {};
+    localStorage.setItem(reviewProgressKey(), JSON.stringify(review));
+    syncToCloud();
+  }
+
   function isUnlocked(step) {
-    // 이 유닛을 한 번 완주한 뒤에는 순서 상관없이 자유롭게 복습할 수 있다.
-    if (isAllDone()) return true;
-    var idx = STEPS.indexOf(step);
+    var steps = currentSteps();
+    var idx = steps.indexOf(step);
     if (idx <= 0) return true;
+    // 한 번 완주한 유닛은(=복습 모드) 예전 완료 기록이 아니라 "이번 복습 한 바퀴"
+    // 진행 기록을 기준으로 순서를 따진다 - 그래야 복습할 때도 순서대로 밟는다.
+    if (isAllDone()) {
+      var review = loadReviewProgress();
+      return !!review[steps[idx - 1]];
+    }
     var data = load();
-    return !!data[STEPS[idx - 1]];
+    return !!data[steps[idx - 1]];
   }
 
   function reset() {
     localStorage.removeItem(progressKey());
+    localStorage.removeItem(reviewProgressKey());
   }
 
   // 중간에 나가도 홈 화면에서 얼마나 했는지 보여주기 위한 진행률(개수) 저장.
@@ -123,6 +168,7 @@ var ProgressStore = (function () {
       if (
         key.indexOf("haingProgress_" + prefix) === 0 ||
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
+        key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1)
       ) {
         entries[key] = localStorage.getItem(key);
@@ -148,6 +194,7 @@ var ProgressStore = (function () {
       var isProgressKey =
         key.indexOf("haingProgress_" + prefix) === 0 ||
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
+        key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1);
       if (isProgressKey && (!data || !data.entries || !(key in data.entries))) {
         localStorage.removeItem(key);
@@ -197,6 +244,7 @@ var ProgressStore = (function () {
     isDone: isDone,
     isUnlocked: isUnlocked,
     isAllDone: isAllDone,
+    markReviewStep: markReviewStep,
     reset: reset,
     setStepProgress: setStepProgress,
     getStepProgress: getStepProgress,

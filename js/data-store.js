@@ -328,7 +328,23 @@ var DataStore = (function () {
     return data.wordsAudioLink || null;
   }
 
+  // "초등1", "초등2"... 같은 초등 단어장 단계인지 본다. 이 단계는 사진으로 매주
+  // 올리는 유닛이 아니라 js/elementary-words-data.js에 고정으로 들어있는 값을 쓴다.
+  function isElementaryUnit(unitKey) {
+    var key = resolveUnitKey(unitKey);
+    return typeof ELEMENTARY_WORD_LEVELS !== "undefined" && !!ELEMENTARY_WORD_LEVELS[key];
+  }
+
+  // 홈 화면의 "초등 필수 단어" 선택 목록에 쓴다.
+  function getElementaryLevels() {
+    if (typeof ELEMENTARY_LEVEL_KEYS === "undefined") return [];
+    return ELEMENTARY_LEVEL_KEYS.map(function (key) {
+      return { level: key, count: ELEMENTARY_WORD_LEVELS[key].length };
+    });
+  }
+
   function getWords(unitKey) {
+    if (isElementaryUnit(unitKey)) return ELEMENTARY_WORD_LEVELS[resolveUnitKey(unitKey)];
     var data = load(unitKey);
     if (data.words && data.words.length) return data.words;
     return anyUnitsRegistered() ? [] : DEFAULT_WORDS_DATA;
@@ -352,6 +368,8 @@ var DataStore = (function () {
     getStoryParagraphs: getStoryParagraphs,
     getStoryAudioLink: getStoryAudioLink,
     getWordsAudioLink: getWordsAudioLink,
-    getWords: getWords
+    getWords: getWords,
+    isElementaryUnit: isElementaryUnit,
+    getElementaryLevels: getElementaryLevels
   };
 })();

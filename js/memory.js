@@ -168,7 +168,9 @@
         "🎉 20개 단어를 모두 익혔어요! 처음부터 다시 해볼까요?";
       nextRoundBtn.textContent = "처음부터 다시";
       nextRoundBtn.onclick = startNewCycle;
-      if (ProgressStore.markDone("memory")) {
+      var firstTime = ProgressStore.markDone("memory");
+      ProgressStore.markReviewStep("memory");
+      if (firstTime) {
         PraisePopup.show("hangman.html", "다음 단계로 ▶");
       }
     } else {

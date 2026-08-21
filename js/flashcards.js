@@ -115,7 +115,9 @@
       completedWords++;
       updateProgress();
       if (completedWords >= TOTAL_WORDS) {
-        if (ProgressStore.markDone("flashcards")) {
+        var firstTime = ProgressStore.markDone("flashcards");
+        ProgressStore.markReviewStep("flashcards");
+        if (firstTime) {
           PraisePopup.show("memory.html", "다음 단계로 ▶");
           return;
         }
