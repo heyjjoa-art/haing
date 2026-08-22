@@ -97,15 +97,14 @@ var WordGameStore = (function () {
     return credits === Infinity ? "무제한" : String(credits);
   }
 
-  // 게임 기회가 있어도, 오늘 저니스 1세트 + 단어 1세트를 먼저 끝내야 게임을 할 수
-  // 있다 - 공부보다 게임이 먼저가 되지 않도록. (관리자는 테스트를 위해 예외.)
+  // 게임 기회가 있어도, 오늘 단어 1세트를 먼저 끝내야 게임을 할 수 있다 -
+  // 공부보다 게임이 먼저가 되지 않도록. (관리자는 테스트를 위해 예외.)
   function hasStudiedTodayForGames() {
     if (isAdminActive()) return true;
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     if (!childId) return false;
-    var journeyDone = typeof StampStore !== "undefined" && StampStore.hasCompletedAnyToday(childId);
     var wordDone = typeof ProgressStore !== "undefined" && ProgressStore.hasCompletedSetToday && ProgressStore.hasCompletedSetToday();
-    return !!journeyDone && !!wordDone;
+    return !!wordDone;
   }
 
   // 게임을 하나 시작할 때 기회를 1회 쓴다. 오늘 공부를 안 했거나 남은 기회가 없으면 false.
