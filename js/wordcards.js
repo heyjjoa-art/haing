@@ -97,8 +97,11 @@
 
     if (!unlocked) {
       if (credits > 0 && !studiedToday) {
+        var isWeekend = typeof WordGameStore !== "undefined" && WordGameStore.isWeekendToday && WordGameStore.isWeekendToday();
         gamesLockedTitleEl.textContent = "🔒 오늘 공부를 먼저 끝내야 해요.";
-        gamesLockedHintEl.innerHTML = "단어 1세트를<br>오늘 안에 끝내면 게임이 열려요!";
+        gamesLockedHintEl.innerHTML = isWeekend
+          ? "단어 1세트를<br>오늘 안에 끝내면 게임이 열려요!"
+          : "저니스 1세트, 단어 1세트를<br>오늘 안에 끝내면 게임이 열려요!";
       } else {
         gamesLockedTitleEl.textContent = "🔒 아직 게임 기회가 없어요.";
         gamesLockedHintEl.innerHTML = "트로피 카드를 모으거나<br>복습에서 별 스티커를 모아보세요!";
