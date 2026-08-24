@@ -2,8 +2,15 @@
 // 모았는지(진행율 + 개수) 한눈에 보여준다. 로그인한 아이와 무관하게 두 아이를
 // 항상 같이 보여줘야 해서, ChildStore.getActive()에 묶인 WordCardStore의 기본
 // 조회 함수 대신 getCollectedForChild로 아이별 카드를 직접 읽는다.
+//
+// 진행율은 단어를 처음 모은 것(1회)뿐 아니라 트로피를 받은 뒤의 복습(별 스티커,
+// 단어당 최대 5개 - word-card-store.js의 addStar 참고)까지 합쳐서 센다. 단어 하나가
+// 낼 수 있는 최대 회차는 1(최초 수집) + 5(복습 별) = 6회라서, 유닛 전체가 꽉 차면
+// 진행율은 100%가 아니라 600%까지 올라간다.
 (function () {
   "use strict";
+
+  var MAX_ROUNDS_PER_WORD = 6;
 
   var listEl = document.getElementById("adminWordProgressList");
   if (!listEl) return;
@@ -27,23 +34,25 @@
     return units;
   }
 
-  // unit.key별 { count, hasTrophy } 맵을 이 아이의 카드 배열 하나만 훑어서 한 번에 만든다.
+  // unit.key별 { roundsSum, hasTrophy } 맵을 이 아이의 카드 배열 하나만 훑어서 한 번에 만든다.
+  // roundsSum은 그 유닛에서 모은 단어들의 (1 + 별 개수) 합 - 단어 하나당 최대 6.
   function buildUnitStatsMap(cards) {
     var map = {};
     cards.forEach(function (r) {
       var key = String(r.unit);
-      if (!map[key]) map[key] = { count: 0, hasTrophy: false };
+      if (!map[key]) map[key] = { roundsSum: 0, hasTrophy: false };
       if (r.isTrophy) map[key].hasTrophy = true;
-      else map[key].count++;
+      else map[key].roundsSum += 1 + (r.stars || 0);
     });
     return map;
   }
 
   function statsFor(unitStatsMap, unit) {
-    var entry = unitStatsMap[String(unit.key)] || { count: 0, hasTrophy: false };
-    var count = Math.min(entry.count, unit.total);
-    var pct = unit.total > 0 ? Math.round((count / unit.total) * 100) : 0;
-    return { count: count, total: unit.total, pct: pct, hasTrophy: entry.hasTrophy };
+    var entry = unitStatsMap[String(unit.key)] || { roundsSum: 0, hasTrophy: false };
+    var maxRounds = unit.total * MAX_ROUNDS_PER_WORD;
+    var roundsSum = Math.min(entry.roundsSum, maxRounds);
+    var pct = unit.total > 0 ? Math.round((roundsSum / unit.total) * 100) : 0;
+    return { total: unit.total, maxRounds: maxRounds, roundsSum: roundsSum, pct: pct, hasTrophy: entry.hasTrophy };
   }
 
   function childLine(child, stats) {
@@ -59,13 +68,14 @@
     bar.className = "admin-progress-bar";
     var fill = document.createElement("div");
     fill.className = "admin-progress-bar-fill";
-    fill.style.width = stats.pct + "%";
+    // 진행율 자체는 600%까지 가지만, 막대는 600%를 꽉 찬 것으로 보고 그 비율만큼만 채운다.
+    fill.style.width = Math.min(100, (stats.pct / (MAX_ROUNDS_PER_WORD * 100)) * 100) + "%";
     bar.appendChild(fill);
     line.appendChild(bar);
 
     var count = document.createElement("span");
     count.className = "admin-progress-child-count";
-    count.textContent = stats.count + "/" + stats.total + " · " + stats.pct + "%" + (stats.hasTrophy ? " 🏆" : "");
+    count.textContent = stats.roundsSum + "/" + stats.maxRounds + "회 · " + stats.pct + "%" + (stats.hasTrophy ? " 🏆" : "");
     line.appendChild(count);
 
     return line;
@@ -95,21 +105,21 @@
     summary.className = "admin-progress-summary";
     ChildStore.CHILDREN.forEach(function (child) {
       var totalWords = 0;
-      var collectedWords = 0;
+      var roundsSum = 0;
       var trophyCount = 0;
       units.forEach(function (unit) {
         var stats = statsFor(statsMapByChild[child.id], unit);
         totalWords += stats.total;
-        collectedWords += stats.count;
+        roundsSum += stats.roundsSum;
         if (stats.hasTrophy) trophyCount++;
       });
-      var pct = totalWords > 0 ? Math.round((collectedWords / totalWords) * 100) : 0;
+      var pct = totalWords > 0 ? Math.round((roundsSum / totalWords) * 100) : 0;
 
       var line = document.createElement("p");
       line.className = "admin-progress-summary-line";
       line.textContent =
         child.zodiacEmoji + " " + child.name + " 전체 " +
-        collectedWords + "/" + totalWords + "단어 (" + pct + "%) · 🏆 " + trophyCount + "개";
+        roundsSum + "/" + (totalWords * MAX_ROUNDS_PER_WORD) + "회 (" + pct + "%) · 🏆 " + trophyCount + "개";
       summary.appendChild(line);
     });
     listEl.appendChild(summary);
