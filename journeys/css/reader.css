@@ -93,6 +93,10 @@
 }
 
 /* 도장판(왼쪽)과 속도 조절(오른쪽)을 한 줄에 나란히 배치한다. */
+.reader-top-row[hidden] {
+  display: none;
+}
+
 .reader-top-row {
   display: flex;
   align-items: stretch;

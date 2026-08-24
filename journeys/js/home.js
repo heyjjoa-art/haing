@@ -5,7 +5,68 @@
   var emptyEl = document.getElementById("emptyState");
   var tabsEl = document.getElementById("levelTabs");
 
+  var topRowEl = document.getElementById("topStampSpeedRow");
+  var stampBoardWeeksEl = document.getElementById("stampBoardWeeks");
+  var speedButtons = Array.prototype.slice.call(document.querySelectorAll(".speed-btn"));
+
   var activeBook = null;
+
+  // 도장판은 특정 유닛이 아니라 "오늘 어느 유닛이든 하루 미션(듣기·따라읽기·혼자읽기)을
+  // 다 끝냈는지"로 채워진다 - 유닛마다 따로 보던 걸 Journeys 메뉴 맨 위에 하나로
+  // 모아서, 어느 책을 펴서 읽어도 오늘 몫을 채운 걸로 쳐준다.
+  function renderStampBoard() {
+    if (typeof StampStore === "undefined") return;
+    var childId = typeof ChildStore !== "undefined" ? ChildStore.getActive() : null;
+    topRowEl.hidden = !childId;
+    if (!childId) return;
+
+    var weeks = StampStore.getWeekGridAny(childId);
+    stampBoardWeeksEl.innerHTML = "";
+    weeks.forEach(function (week) {
+      var row = document.createElement("div");
+      row.className = "stamp-week-row";
+      var weekComplete = week.days.every(function (day) {
+        return day.stamped;
+      });
+      if (weekComplete) row.classList.add("trophy");
+
+      week.days.forEach(function (day) {
+        var cell = document.createElement("div");
+        cell.className = "stamp-day-cell";
+        if (day.stamped) cell.classList.add("stamped");
+        if (day.isMakeup) cell.classList.add("makeup");
+        if (day.isToday) cell.classList.add("today");
+        if (day.isFuture) cell.classList.add("future");
+        cell.innerHTML =
+          '<span class="stamp-day-label">' + day.label + "</span>" +
+          '<span class="stamp-day-icon">' + (day.isMakeup ? "주말" : day.stamped ? "성공" : "") + "</span>";
+        row.appendChild(cell);
+      });
+      stampBoardWeeksEl.appendChild(row);
+    });
+  }
+
+  var SPEED_KEY = "journeysReadSpeed";
+  var SPEED_RATES = { slow: 0.5, normal: 1, fast: 1.5 };
+  var currentSpeed = localStorage.getItem(SPEED_KEY);
+  if (!SPEED_RATES[currentSpeed]) currentSpeed = "normal";
+
+  function updateSpeedButtons() {
+    speedButtons.forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-speed") === currentSpeed);
+    });
+  }
+
+  speedButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var speed = btn.getAttribute("data-speed");
+      if (!SPEED_RATES[speed]) return;
+      currentSpeed = speed;
+      localStorage.setItem(SPEED_KEY, speed);
+      updateSpeedButtons();
+    });
+  });
+  updateSpeedButtons();
 
   // 하정/하진이 각자 다른 책을 대표로 골라둘 수 있도록 아이별로 따로 저장한다.
   function defaultBookKey() {
@@ -77,6 +138,8 @@
   }
 
   function render() {
+    renderStampBoard();
+
     var groups = JourneysStore.getGroupedByLevel();
     listEl.innerHTML = "";
 

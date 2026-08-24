@@ -126,16 +126,18 @@ var StampStore = (function () {
 
   // 그 주 월~금 중 못 채운 날이 있어도, 같은 주 토·일에 미션을 끝냈으면 그만큼
   // 앞에서부터(가장 이른 미완료 요일부터) 순서대로 도장을 채워준다 - 진짜 그날
-  // 한 것과 구분하도록 day.isMakeup으로 표시한다("성공" 대신 "주말").
-  function applyWeekendMakeup(days, weekStart, unitRecords) {
+  // 한 것과 구분하도록 day.isMakeup으로 표시한다("성공" 대신 "주말"). isStampedFn은
+  // 날짜 문자열을 받아 그날이 채워진 날인지 돌려주는 함수 - 유닛 하나만 볼 때와
+  // 어떤 유닛이든 볼 때가 이 함수 하나만 다르게 넘기면 되도록 분리해뒀다.
+  function applyWeekendMakeup(days, weekStart, isStampedFn) {
     var satDate = new Date(weekStart);
     satDate.setDate(weekStart.getDate() + 5);
     var sunDate = new Date(weekStart);
     sunDate.setDate(weekStart.getDate() + 6);
 
     var makeupCount = 0;
-    if (isDayComplete(unitRecords[toDateStr(satDate)])) makeupCount++;
-    if (isDayComplete(unitRecords[toDateStr(sunDate)])) makeupCount++;
+    if (isStampedFn(toDateStr(satDate))) makeupCount++;
+    if (isStampedFn(toDateStr(sunDate))) makeupCount++;
 
     for (var i = 0; i < days.length && makeupCount > 0; i++) {
       if (!days[i].stamped) {
@@ -146,14 +148,13 @@ var StampStore = (function () {
     }
   }
 
-  // 이 유닛의 기록이 시작된 주부터 이번 주까지, 월~금 5칸씩 주 단위로 묶어서 돌려준다.
-  // 기록이 없으면 최소 이번 주 한 줄은 항상 보여준다.
-  function getWeekGrid(childId, unitId) {
-    if (childId) ensureCloudSync(childId);
-    var unitRecords = childId ? loadAll(childId)[unitId] || {} : {};
-    var dateStrs = Object.keys(unitRecords);
+  // 기록이 시작된 주부터 이번 주까지, 월~금 5칸씩 주 단위로 묶어서 돌려준다. 기록이
+  // 없으면 최소 이번 주 한 줄은 항상 보여준다. recordedDateStrs는 그리드의 시작 주(가장
+  // 이른 기록)를 정하는 데만 쓰고, 실제 칸 채움은 isStampedFn(dateStr)로 판단한다.
+  function buildWeekGrid(recordedDateStrs, isStampedFn) {
     var today = todayDate();
     var todayKey = toDateStr(today);
+    var dateStrs = recordedDateStrs.slice();
     if (dateStrs.indexOf(todayKey) === -1) dateStrs.push(todayKey);
 
     var earliestKey = dateStrs.reduce(function (min, s) {
@@ -174,16 +175,51 @@ var StampStore = (function () {
         days.push({
           date: dStr,
           label: WEEKDAY_LABELS[i],
-          stamped: isDayComplete(unitRecords[dStr]),
+          stamped: isStampedFn(dStr),
           isToday: dStr === todayKey,
           isFuture: d > today
         });
       }
-      applyWeekendMakeup(days, cursor, unitRecords);
+      applyWeekendMakeup(days, cursor, isStampedFn);
       weeks.push({ weekStart: toDateStr(cursor), days: days });
       cursor.setDate(cursor.getDate() + 7);
     }
     return weeks;
+  }
+
+  function getWeekGrid(childId, unitId) {
+    if (childId) ensureCloudSync(childId);
+    var unitRecords = childId ? loadAll(childId)[unitId] || {} : {};
+    return buildWeekGrid(Object.keys(unitRecords), function (dStr) {
+      return isDayComplete(unitRecords[dStr]);
+    });
+  }
+
+  // 특정 유닛이 아니라 "오늘 어느 유닛이든 하루 미션을 다 끝냈는지"로 채워지는
+  // 도장판. Journeys 메뉴 맨 위에 유닛과 무관하게 하나만 보여줄 때 쓴다.
+  function getWeekGridAny(childId) {
+    if (childId) ensureCloudSync(childId);
+    var all = childId ? loadAll(childId) : {};
+    var dateStrs = [];
+    Object.keys(all).forEach(function (unitId) {
+      Object.keys(all[unitId] || {}).forEach(function (d) {
+        if (dateStrs.indexOf(d) === -1) dateStrs.push(d);
+      });
+    });
+    function isStampedAny(dStr) {
+      return Object.keys(all).some(function (unitId) {
+        return isDayComplete((all[unitId] || {})[dStr]);
+      });
+    }
+    return buildWeekGrid(dateStrs, isStampedAny);
+  }
+
+  // 트로피 카드에 적을 "8월 4주" 같은 표시용 라벨. 그 주 월요일이 그 달의 몇 번째
+  // 주(1~5)인지를 날짜/7 올림으로 정한다.
+  function weekLabel(weekStartStr) {
+    var d = new Date(weekStartStr + "T00:00:00");
+    var weekNum = Math.ceil(d.getDate() / 7);
+    return (d.getMonth() + 1) + "월 " + weekNum + "주";
   }
 
   // 홈 화면 유닛 카드에 쓸 간단한 누적 도장 개수.
@@ -245,6 +281,8 @@ var StampStore = (function () {
     getTodayStamps: getTodayStamps,
     markStageDone: markStageDone,
     getWeekGrid: getWeekGrid,
+    getWeekGridAny: getWeekGridAny,
+    weekLabel: weekLabel,
     getTotalStampedDays: getTotalStampedDays,
     hasCompletedAnyToday: hasCompletedAnyToday,
     getMonthDays: getMonthDays

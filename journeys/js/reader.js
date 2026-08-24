@@ -36,46 +36,15 @@
   var followBtn = document.getElementById("followBtn");
   var aloneBtn = document.getElementById("aloneBtn");
 
-  var stampBoardWeeksEl = document.getElementById("stampBoardWeeks");
-
+  // 읽는 속도 버튼 자체는 Journeys 메뉴 맨 위로 옮겨갔다(home.js) - 여기서는 그
+  // 설정값만 읽어서 재생 속도에 반영한다.
   var SPEED_KEY = "journeysReadSpeed";
   var SPEED_RATES = { slow: 0.5, normal: 1, fast: 1.5 };
-  var speedButtons = Array.prototype.slice.call(document.querySelectorAll(".speed-btn"));
-  var currentSpeed = localStorage.getItem(SPEED_KEY);
-  if (!SPEED_RATES[currentSpeed]) currentSpeed = "normal";
 
   function currentSpeedRate() {
-    return SPEED_RATES[currentSpeed];
+    var speed = localStorage.getItem(SPEED_KEY);
+    return SPEED_RATES[speed] || SPEED_RATES.normal;
   }
-
-  function updateSpeedButtons() {
-    speedButtons.forEach(function (btn) {
-      btn.classList.toggle("active", btn.getAttribute("data-speed") === currentSpeed);
-    });
-  }
-
-  // 속도를 바꾸면, 지금 읽던 중이었다면 그 자리에서 바로 새 속도로 이어서 읽어준다.
-  function setSpeed(speed) {
-    if (!SPEED_RATES[speed] || speed === currentSpeed) return;
-    var mode = activeMode;
-    var wordIndex = currentReadingEl ? findWordIndexByEl(currentReadingEl) : -1;
-
-    currentSpeed = speed;
-    localStorage.setItem(SPEED_KEY, speed);
-    updateSpeedButtons();
-
-    if (mode && wordIndex !== -1) {
-      stopAll();
-      resumeReading(mode, wordIndex);
-    }
-  }
-
-  speedButtons.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      setSpeed(btn.getAttribute("data-speed"));
-    });
-  });
-  updateSpeedButtons();
 
   var wordPopupEl = document.getElementById("wordPopup");
   var wordPopupWordEl = document.getElementById("wordPopupWord");
@@ -160,7 +129,7 @@
     pages = buildPages(unit);
     renderPage(0);
     renderStampButtons();
-    renderStampBoard();
+    checkAndAwardTrophies();
   }
 
   // 페이지를 넘기면 일단 재생 중이던 소리/형광펜은 멈춘다(stopAll) - 이전 페이지
@@ -434,7 +403,7 @@
     if (!childId || typeof StampStore === "undefined") return;
     var result = StampStore.markStageDone(childId, unit.id, stage);
     renderStampButtons();
-    renderStampBoard();
+    checkAndAwardTrophies();
     if (result.justCompletedAll) {
       showRewardModal();
     }
@@ -448,41 +417,22 @@
     });
   }
 
-  // 월~금 도장 5개를 한 주 안에 다 채우면(개근) 그 주는 은색 트로피 줄이 되고,
-  // Word 도감의 "트로피 카드" 탭에도 이 유닛의 Journeys 트로피 카드가 하나 들어가며
-  // (처음 개근한 주에 한해) 보너스 게임 기회를 3회 준다. 중복 지급 방지는
-  // WordCardStore.awardJourneysTrophy 안에서 이 카드가 이미 있는지로 판단한다.
-  function renderStampBoard() {
-    if (typeof StampStore === "undefined") return;
+  // 월~금 도장 5개를 한 주 안에 다 채우면(개근) Word 도감의 "트로피 카드" 탭에 이
+  // 유닛의 Journeys 트로피 카드가 하나 들어가며(처음 개근한 주에 한해) 보너스 게임
+  // 기회를 3회 준다. 주간 도장판 UI 자체는 Journeys 메뉴 맨 위로 옮겨갔지만(home.js,
+  // 유닛과 무관하게 "오늘 어느 유닛이든" 기준), 트로피는 여전히 이 유닛을 그 주
+  // 월~금 내내 읽었을 때만 준다. 중복 지급 방지는 WordCardStore.awardJourneysTrophy
+  // 안에서 이 카드가 이미 있는지로 판단한다.
+  function checkAndAwardTrophies() {
+    if (!childId || typeof StampStore === "undefined" || typeof WordCardStore === "undefined") return;
     var weeks = StampStore.getWeekGrid(childId, unit.id);
-    stampBoardWeeksEl.innerHTML = "";
     weeks.forEach(function (week) {
-      var row = document.createElement("div");
-      row.className = "stamp-week-row";
-
       var weekComplete = week.days.every(function (day) {
         return day.stamped;
       });
       if (weekComplete) {
-        row.classList.add("trophy");
-        if (childId && typeof WordCardStore !== "undefined") {
-          WordCardStore.awardJourneysTrophy(unit.id, week.weekStart, "1week", unit.level + " - " + unit.title);
-        }
+        WordCardStore.awardJourneysTrophy(unit.id, week.weekStart, "1week", StampStore.weekLabel(week.weekStart));
       }
-
-      week.days.forEach(function (day) {
-        var cell = document.createElement("div");
-        cell.className = "stamp-day-cell";
-        if (day.stamped) cell.classList.add("stamped");
-        if (day.isMakeup) cell.classList.add("makeup");
-        if (day.isToday) cell.classList.add("today");
-        if (day.isFuture) cell.classList.add("future");
-        cell.innerHTML =
-          '<span class="stamp-day-label">' + day.label + "</span>" +
-          '<span class="stamp-day-icon">' + (day.isMakeup ? "주말" : day.stamped ? "성공" : "") + "</span>";
-        row.appendChild(cell);
-      });
-      stampBoardWeeksEl.appendChild(row);
     });
   }
 
@@ -593,6 +543,6 @@
 
   window.__journeysRenderStamps = function () {
     renderStampButtons();
-    renderStampBoard();
+    checkAndAwardTrophies();
   };
 })();
