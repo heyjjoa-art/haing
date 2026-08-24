@@ -23,8 +23,14 @@
   var backLinkEl = document.getElementById("backLink");
   if (backLinkEl) backLinkEl.href = backHref;
 
-  var storyImageCol = document.getElementById("storyImageCol");
-  var storyPhotosEl = document.getElementById("storyPhotos");
+  var storyTitleEl = document.getElementById("storyTitleEl");
+  var pagePhotoWrap = document.getElementById("pagePhotoWrap");
+  var pagePhotoImg = document.getElementById("pagePhotoImg");
+  var pagePhotoBadge = document.getElementById("pagePhotoBadge");
+  var pageNav = document.getElementById("pageNav");
+  var prevPageBtn = document.getElementById("prevPageBtn");
+  var nextPageBtn = document.getElementById("nextPageBtn");
+  var pageIndicatorEl = document.getElementById("pageIndicator");
   var storyTextArea = document.getElementById("storyTextArea");
   var listenBtn = document.getElementById("listenBtn");
   var followBtn = document.getElementById("followBtn");
@@ -96,49 +102,82 @@
   var fallbackTimer = null;
   var fallbackIndex = 0;
 
-  function render() {
-    // photos가 없는 옛날 데이터(단일 photoDataUrl)도 그대로 보여준다.
+  var pages = []; // { photo, pageNumber, paragraphs }
+  var currentPageIndex = 0;
+
+  // 실제 책처럼 사진 한 장 = 페이지 한 장으로 묶는다. 사진별 본문이 따로 저장돼 있지
+  // 않아서(add.html은 문단만 빈 줄로 구분해 한 덩어리로 받는다), 문단 수를 사진 수로
+  // 비례 배분한다 - 지금 들어 있는 자료는 대부분 사진 1장당 문단 2개라 깔끔히 맞고,
+  // 비율이 안 맞는 자료는 문단이 앞/뒤 페이지에 몇 개씩 더/덜 배분될 뿐 크게 어긋나진 않는다.
+  function buildPages(unit) {
     var photos = unit.photos || (unit.photoDataUrl ? [unit.photoDataUrl] : []);
-    if (photos.length > 0) {
-      photos.forEach(function (src, idx) {
-        var wrap = document.createElement("div");
-        wrap.className = "story-photo";
-
-        var badge = document.createElement("span");
-        badge.className = "story-photo-badge";
-        badge.textContent = (idx + 1) + "페이지";
-        wrap.appendChild(badge);
-
-        var img = document.createElement("img");
-        img.src = src;
-        img.alt = "본문 사진 " + (idx + 1) + "페이지";
-        wrap.appendChild(img);
-
-        storyPhotosEl.appendChild(wrap);
-      });
-      storyImageCol.hidden = false;
-    }
-
-    buildStoryText(unit.text);
-    renderStampButtons();
-    renderStampBoard();
-  }
-
-  function buildStoryText(text) {
-    var paragraphs = text
+    var paragraphs = unit.text
       .split(/\n\s*\n/)
       .map(function (p) {
         return p.trim();
       })
       .filter(Boolean);
 
+    if (photos.length === 0) {
+      return [{ photo: null, pageNumber: null, paragraphs: paragraphs }];
+    }
+
+    var result = [];
+    var m = paragraphs.length;
+    var n = photos.length;
+    for (var i = 0; i < n; i++) {
+      var from = Math.floor((i * m) / n);
+      var to = Math.floor(((i + 1) * m) / n);
+      result.push({ photo: photos[i], pageNumber: i + 1, paragraphs: paragraphs.slice(from, to) });
+    }
+    return result;
+  }
+
+  function render() {
+    storyTitleEl.textContent = unit.title;
+    pages = buildPages(unit);
+    renderPage(0);
+    renderStampButtons();
+    renderStampBoard();
+  }
+
+  // 페이지를 넘기면 재생 중이던 소리/형광펜을 멈춰서(stopAll) 다음 페이지로 자동으로
+  // 이어 읽지 않게 한다 - 아이가 버튼을 눌러야만 다음 페이지로 넘어가므로, 페이지
+  // 사이마다 자연스럽게 쉬는 틈이 생긴다.
+  function renderPage(idx) {
+    stopAll();
+    currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
+    var page = pages[currentPageIndex];
+
+    if (page.photo) {
+      pagePhotoImg.src = page.photo;
+      pagePhotoImg.alt = "본문 사진 " + (page.pageNumber || currentPageIndex + 1) + "페이지";
+      pagePhotoBadge.textContent = (page.pageNumber || currentPageIndex + 1) + "페이지";
+      pagePhotoWrap.hidden = false;
+    } else {
+      pagePhotoWrap.hidden = true;
+    }
+
+    buildStoryText(page.paragraphs);
+
+    pageNav.hidden = pages.length <= 1;
+    pageIndicatorEl.textContent = (currentPageIndex + 1) + " / " + pages.length;
+    prevPageBtn.disabled = currentPageIndex === 0;
+    nextPageBtn.disabled = currentPageIndex === pages.length - 1;
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  prevPageBtn.addEventListener("click", function () {
+    renderPage(currentPageIndex - 1);
+  });
+  nextPageBtn.addEventListener("click", function () {
+    renderPage(currentPageIndex + 1);
+  });
+
+  function buildStoryText(paragraphs) {
     storyTextArea.innerHTML = "";
     wordSpans = [];
-
-    var titleEl = document.createElement("h2");
-    titleEl.className = "story-title";
-    titleEl.textContent = unit.title;
-    storyTextArea.appendChild(titleEl);
 
     var offset = 0;
     paragraphs.forEach(function (paragraph, pIdx) {
@@ -207,7 +246,7 @@
         currentSpeedRate(),
         function () {
           if (playToken !== myToken) return;
-          onStageCompleted("alone");
+          if (currentPageIndex === pages.length - 1) onStageCompleted("alone");
           stopAll();
         },
         wordIndex
@@ -473,7 +512,7 @@
       },
       onend: function () {
         if (playToken !== myToken) return;
-        onStageCompleted(mode);
+        if (currentPageIndex === pages.length - 1) onStageCompleted(mode);
         stopAll();
       }
     });
@@ -496,7 +535,7 @@
     setPlaying("alone");
     startFallbackHighlighter(currentSpeedRate(), function () {
       if (playToken !== myToken) return;
-      onStageCompleted("alone");
+      if (currentPageIndex === pages.length - 1) onStageCompleted("alone");
       stopAll();
     });
   });

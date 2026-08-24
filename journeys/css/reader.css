@@ -29,27 +29,55 @@
   color: var(--color-accent-deep);
 }
 
-.story-image-col {
+.page-photo-wrap {
+  position: relative;
   margin: 18px 0 0;
-  max-height: 50vh;
-  overflow-y: auto;
   border-radius: 14px;
   border: 3px solid var(--color-accent-soft);
+  overflow: hidden;
 }
 
-.story-photos {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.story-photo {
-  position: relative;
-}
-
-.story-photo img {
+.page-photo-img {
   width: 100%;
   display: block;
+}
+
+/* 페이지를 넘길 때 아이가 잠깐 쉬거나 다음 사진을 기대하며 볼 수 있게, 이전/다음
+   버튼 사이에 지금 몇 페이지인지를 계속 보여준다. 자동으로 다음 페이지로 안 넘어가고
+   버튼을 눌러야만 넘어가서, 페이지 사이마다 자연스럽게 쉬는 틈이 생긴다. */
+.page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--color-border-soft);
+}
+
+.page-nav-btn {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.page-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.page-nav-indicator {
+  flex: none;
+  font-size: 0.85rem;
+  color: var(--color-text-faint);
+  font-weight: bold;
+  min-width: 44px;
+  text-align: center;
 }
 
 .story-photo-badge {
