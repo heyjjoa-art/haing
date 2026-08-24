@@ -20,30 +20,32 @@
     topRowEl.hidden = !childId;
     if (!childId) return;
 
+    // 메뉴 맨 위에서는 지난 주 기록까지 다 볼 필요는 없어서, 이번 주 월~금 한 줄만 보여준다.
     var weeks = StampStore.getWeekGridAny(childId);
+    var thisWeek = weeks[weeks.length - 1];
     stampBoardWeeksEl.innerHTML = "";
-    weeks.forEach(function (week) {
-      var row = document.createElement("div");
-      row.className = "stamp-week-row";
-      var weekComplete = week.days.every(function (day) {
-        return day.stamped;
-      });
-      if (weekComplete) row.classList.add("trophy");
+    if (!thisWeek) return;
 
-      week.days.forEach(function (day) {
-        var cell = document.createElement("div");
-        cell.className = "stamp-day-cell";
-        if (day.stamped) cell.classList.add("stamped");
-        if (day.isMakeup) cell.classList.add("makeup");
-        if (day.isToday) cell.classList.add("today");
-        if (day.isFuture) cell.classList.add("future");
-        cell.innerHTML =
-          '<span class="stamp-day-label">' + day.label + "</span>" +
-          '<span class="stamp-day-icon">' + (day.isMakeup ? "주말" : day.stamped ? "성공" : "") + "</span>";
-        row.appendChild(cell);
-      });
-      stampBoardWeeksEl.appendChild(row);
+    var row = document.createElement("div");
+    row.className = "stamp-week-row";
+    var weekComplete = thisWeek.days.every(function (day) {
+      return day.stamped;
     });
+    if (weekComplete) row.classList.add("trophy");
+
+    thisWeek.days.forEach(function (day) {
+      var cell = document.createElement("div");
+      cell.className = "stamp-day-cell";
+      if (day.stamped) cell.classList.add("stamped");
+      if (day.isMakeup) cell.classList.add("makeup");
+      if (day.isToday) cell.classList.add("today");
+      if (day.isFuture) cell.classList.add("future");
+      cell.innerHTML =
+        '<span class="stamp-day-label">' + day.label + "</span>" +
+        '<span class="stamp-day-icon">' + (day.isMakeup ? "주말" : day.stamped ? "성공" : "") + "</span>";
+      row.appendChild(cell);
+    });
+    stampBoardWeeksEl.appendChild(row);
   }
 
   var SPEED_KEY = "journeysReadSpeed";
