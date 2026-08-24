@@ -38,6 +38,23 @@ var ProgressStore = (function () {
     return "haingReviewProgress_" + childPrefix() + unitKey();
   }
 
+  // 이 유닛을 지금까지 몇 바퀴(1~4번, 또는 초등의 2~4번) 완주했는지 - 처음 완주 +
+  // 이후 복습 한 바퀴마다 하나씩 늘어난다. 메모리 게임이 "몇 번째 학습/복습인지"에
+  // 따라 한글 뜻 매칭과 영영 설명 매칭을 가르는 데 쓴다(memory.js 참고).
+  function lapCountKey() {
+    return "haingUnitLaps_" + childPrefix() + unitKey();
+  }
+
+  function getCompletedLapCount() {
+    var n = parseInt(localStorage.getItem(lapCountKey()), 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function incrementLapCount() {
+    localStorage.setItem(lapCountKey(), String(getCompletedLapCount() + 1));
+    syncToCloud();
+  }
+
   // 하루에 몇 바퀴(=세트)나 단어 공부를 끝냈는지 - 유닛과 무관하게 아이 하나당 하루
   // 단위로 센다. 1~4번(또는 초등의 2~4번)을 처음 다 끝내거나, 복습을 한 바퀴 다시
   // 돌 때마다 1세트로 친다. 하루 3세트까지만 별/카드/게임 기회 같은 보상이 쌓이고,
@@ -107,6 +124,9 @@ var ProgressStore = (function () {
     data[step] = true;
     localStorage.setItem(progressKey(), JSON.stringify(data));
     // 이 단계를 끝내면서 유닛을 처음으로 다 끝냈다면(1~4번 완주) 오늘의 첫 세트로 센다.
+    // 바퀴 수는 여기서 안 늘린다 - 각 게임이 markDone과 markReviewStep을 같이 부르므로,
+    // 첫 완주 때는 review 쪽도 같은 타이밍에 다 채워져 markReviewStep의 lapDone에서
+    // 정확히 한 번만 늘어난다(여기서도 늘리면 첫 완주가 2바퀴로 이중 계산됨).
     if (currentSteps().every(function (s) { return !!data[s]; })) {
       recordWordSetCompleted();
     }
@@ -145,8 +165,11 @@ var ProgressStore = (function () {
     });
     if (lapDone) {
       review = {};
-      // 복습 한 바퀴를 다 돌았으니 오늘의 세트로 센다.
+      // 복습 한 바퀴를 다 돌았으니 오늘의 세트로 세고, 완주 바퀴 수도 하나 늘린다.
+      // 첫 완주도 각 게임이 markDone과 이 함수를 같은 타이밍에 부르는 덕에 여기서
+      // 정확히 한 번 걸린다(1바퀴 = 1회 증가).
       recordWordSetCompleted();
+      incrementLapCount();
     }
     localStorage.setItem(reviewProgressKey(), JSON.stringify(review));
     syncToCloud();
@@ -231,6 +254,7 @@ var ProgressStore = (function () {
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
+        key.indexOf("haingUnitLaps_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1)
       ) {
         entries[key] = localStorage.getItem(key);
@@ -258,6 +282,7 @@ var ProgressStore = (function () {
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
+        key.indexOf("haingUnitLaps_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1);
       if (isProgressKey && (!data || !data.entries || !(key in data.entries))) {
         localStorage.removeItem(key);
@@ -314,6 +339,7 @@ var ProgressStore = (function () {
     setCustomState: setCustomState,
     getCustomState: getCustomState,
     hasCompletedSetToday: hasCompletedSetToday,
-    reachedDailyWordCap: reachedDailyWordCap
+    reachedDailyWordCap: reachedDailyWordCap,
+    getCompletedLapCount: getCompletedLapCount
   };
 })();

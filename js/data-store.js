@@ -261,7 +261,8 @@ var DataStore = (function () {
       if (
         key.indexOf("haingProgress_") === 0 ||
         key.indexOf("haingStepProgress_") === 0 ||
-        key.indexOf("haingCustom_") === 0
+        key.indexOf("haingCustom_") === 0 ||
+        key.indexOf("haingUnitLaps_") === 0
       ) {
         if (key.slice(key.length - suffix.length) === suffix) {
           localStorage.removeItem(key);

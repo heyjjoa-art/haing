@@ -7,6 +7,34 @@
   var TOTAL_WORDS = ACTIVE_WORDS.length;
   var roundIndex = 0;
 
+  // 1~2번째(=처음 완주 + 첫 복습 한 바퀴)는 한글 뜻으로 매칭하고, 3번째 바퀴(=두 번째
+  // 복습)부터는 영영 설명으로 매칭한다 - 완주한 바퀴 수가 2 이상이면 지금이 3번째 이상.
+  var USE_DEFINITION_MODE =
+    typeof ProgressStore !== "undefined" && ProgressStore.getCompletedLapCount() >= 2;
+
+  // 영영 설명 문장 안에 정답 단어 자체가 그대로 들어있으면 안 보고도 맞힐 수 있어서,
+  // 단어(와 -s/-es/-ed/-ing 같은 흔한 변화형)를 빈칸으로 가려서 보여준다.
+  function maskWordInDefinition(text, word) {
+    if (!text) return "";
+    if (!word) return text;
+    var escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var variants = [escaped];
+    if (/e$/i.test(word)) {
+      var stem = escaped.slice(0, -1);
+      variants.push(stem + "ing", stem + "ed");
+    }
+    var pattern = new RegExp("\\b(" + variants.join("|") + ")(s|es|d|ed|ing|r|er|ers)?\\b", "gi");
+    return text.replace(pattern, "____");
+  }
+
+  // 영영 설명이 없는 단어(옛날에 등록된 유닛 등)는 그 카드만 한글 뜻으로 대신한다.
+  function meaningTextFor(w) {
+    if (USE_DEFINITION_MODE && w.definition) {
+      return maskWordInDefinition(w.definition, w.word);
+    }
+    return w.meaningKo;
+  }
+
   var gridEl = document.getElementById("memoryGrid");
   var cardTemplate = document.getElementById("cardTemplate");
   var moveCountEl = document.getElementById("moveCount");
@@ -66,7 +94,7 @@
     var cards = [];
     words.forEach(function (w, idx) {
       cards.push({ pairId: idx, type: "word", text: w.word });
-      cards.push({ pairId: idx, type: "meaning", text: w.meaningKo });
+      cards.push({ pairId: idx, type: "meaning", text: meaningTextFor(w) });
     });
     return shuffle(cards);
   }
@@ -93,6 +121,11 @@
       cardEl.dataset.type = cardData.type;
       if (cardData.type === "word") {
         cardEl.classList.add("word");
+      }
+      // 영영 설명은 한글 뜻보다 훨씬 길어서, 길이에 맞춰 글자 크기를 줄여 카드 안에 들어오게 한다.
+      if (cardData.type === "meaning" && cardData.text.length > 18) {
+        var scale = Math.max(0.55, Math.min(0.85, (18 / cardData.text.length) * 0.85));
+        frontEl.style.fontSize = scale.toFixed(2) + "rem";
       }
 
       cardEl.addEventListener("click", function () {
