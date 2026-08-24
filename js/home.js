@@ -124,7 +124,7 @@
             : entry.unit === "unspecified"
               ? "이름 없는 자료"
               : "Unit " + entry.unit;
-        if (category !== "elementary") label += reviewStarsLabel(entry.unit);
+        label += reviewStarsLabel(key);
         option.textContent = label + (key === currentUnit ? " (현재)" : "");
         numberSelect.appendChild(option);
         if (key === currentUnit) currentInThisCategory = true;
