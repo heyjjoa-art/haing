@@ -133,6 +133,14 @@ var Tts = (function () {
       utterance.rate = opts.rate != null ? opts.rate : 0.9;
       var voice = pickCuteVoice();
       if (voice) utterance.voice = voice;
+      // 청크(대략 문장 단위)가 실제로 소리 나기 시작하는 순간을 호출부에 알려준다.
+      // onboundary(단어 단위 실시간 위치)를 안 보내주는 음성이 많아서, 이 이벤트를
+      // 형광펜을 다시 맞추는 재동기화 지점으로 쓴다 - 오차가 나더라도 청크 하나(짧은
+      // 문장 하나) 분량을 못 벗어난다.
+      utterance.onstart = function () {
+        if (myToken !== activeSeq || !opts.onchunkstart) return;
+        opts.onchunkstart(offset, chunkText);
+      };
       utterance.onboundary = function (event) {
         if (myToken !== activeSeq || !opts.onboundary) return;
         opts.onboundary({

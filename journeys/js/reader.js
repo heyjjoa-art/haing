@@ -101,17 +101,24 @@
   var playToken = 0; // 모드를 바꿀 때마다 올려서, 이미 취소된 재생의 뒤늦은 콜백을 무시한다.
   var fallbackTimer = null;
   var fallbackIndex = 0;
+  var currentChunkBoundaryFired = null; // 지금 재생 중인 청크의 boundary 도착 여부를 표시하는 콜백
 
   var pages = []; // { photo, pageNumber, paragraphs }
   var currentPageIndex = 0;
 
+  var PAGE_BREAK_MARKER = "====";
+
   // 실제 책처럼 사진 한 장 = 페이지 한 장으로 묶는다. 사진별 본문이 따로 저장돼 있지
-  // 않아서(add.html은 문단만 빈 줄로 구분해 한 덩어리로 받는다), 문단 수를 사진 수로
-  // 비례 배분한다 - 지금 들어 있는 자료는 대부분 사진 1장당 문단 2개라 깔끔히 맞고,
-  // 비율이 안 맞는 자료는 문단이 앞/뒤 페이지에 몇 개씩 더/덜 배분될 뿐 크게 어긋나진 않는다.
+  // 않아서(add.html은 문단만 빈 줄로 구분해 한 덩어리로 받는다), 두 단계로 나눈다:
+  // 1) 문단 그룹 사이에 명시적으로 "====" 줄이 있고 그 개수가 사진 수와 정확히
+  //    맞아떨어지면 그 경계를 그대로 믿는다 - 사진 촬영 순서와 실제 글 순서가 다르거나
+  //    (예: 뒤 페이지 사진을 먼저 올린 경우), 페이지마다 문단 수가 들쭉날쭉해도 정확하다.
+  // 2) 마커가 없거나 개수가 안 맞는(마커 없이 저장된 옛날 자료 포함) 경우엔, 문단 수를
+  //    사진 수로 비례 배분하는 걸로 대신한다 - 사진 1장당 문단 2개로 딱 맞는 자료가
+  //    많아서 대부분 맞지만, 완벽히 정확하다는 보장은 없는 임시방편이다.
   function buildPages(unit) {
     var photos = unit.photos || (unit.photoDataUrl ? [unit.photoDataUrl] : []);
-    var paragraphs = unit.text
+    var rawParagraphs = unit.text
       .split(/\n\s*\n/)
       .map(function (p) {
         return p.trim();
@@ -119,16 +126,31 @@
       .filter(Boolean);
 
     if (photos.length === 0) {
-      return [{ photo: null, pageNumber: null, paragraphs: paragraphs }];
+      return [{ photo: null, pageNumber: null, paragraphs: rawParagraphs }];
+    }
+
+    var markedGroups = [[]];
+    rawParagraphs.forEach(function (p) {
+      if (p === PAGE_BREAK_MARKER) {
+        markedGroups.push([]);
+      } else {
+        markedGroups[markedGroups.length - 1].push(p);
+      }
+    });
+
+    if (markedGroups.length === photos.length) {
+      return markedGroups.map(function (group, i) {
+        return { photo: photos[i], pageNumber: i + 1, paragraphs: group };
+      });
     }
 
     var result = [];
-    var m = paragraphs.length;
+    var m = rawParagraphs.length;
     var n = photos.length;
     for (var i = 0; i < n; i++) {
       var from = Math.floor((i * m) / n);
       var to = Math.floor(((i + 1) * m) / n);
-      result.push({ photo: photos[i], pageNumber: i + 1, paragraphs: paragraphs.slice(from, to) });
+      result.push({ photo: photos[i], pageNumber: i + 1, paragraphs: rawParagraphs.slice(from, to) });
     }
     return result;
   }
@@ -141,10 +163,12 @@
     renderStampBoard();
   }
 
-  // 페이지를 넘기면 재생 중이던 소리/형광펜을 멈춰서(stopAll) 다음 페이지로 자동으로
-  // 이어 읽지 않게 한다 - 아이가 버튼을 눌러야만 다음 페이지로 넘어가므로, 페이지
-  // 사이마다 자연스럽게 쉬는 틈이 생긴다.
-  function renderPage(idx) {
+  // 페이지를 넘기면 일단 재생 중이던 소리/형광펜은 멈춘다(stopAll) - 이전 페이지
+  // 내용을 새 페이지로 이어서 읽지는 않는다. 다만 넘기기 전에 듣기/따라읽기 중이었다면
+  // (resumeMode) 새 페이지에서 그 모드를 자동으로 다시 시작해서, 버튼을 또 누르지
+  // 않아도 이어서 들을 수 있게 한다 - "다음 페이지"를 누르는 그 자체가 계속 듣고
+  // 싶다는 신호이고, 그 버튼을 누르는 순간이 페이지 사이의 자연스러운 쉬는 틈이 된다.
+  function renderPage(idx, resumeMode) {
     stopAll();
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
     var page = pages[currentPageIndex];
@@ -166,13 +190,15 @@
     nextPageBtn.disabled = currentPageIndex === pages.length - 1;
 
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    if (resumeMode) resumeReading(resumeMode, 0);
   }
 
   prevPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex - 1);
+    renderPage(currentPageIndex - 1, activeMode);
   });
   nextPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex + 1);
+    renderPage(currentPageIndex + 1, activeMode);
   });
 
   function buildStoryText(paragraphs) {
@@ -214,6 +240,13 @@
   function findWordIndexByEl(el) {
     for (var i = 0; i < wordSpans.length; i++) {
       if (wordSpans[i].el === el) return i;
+    }
+    return -1;
+  }
+
+  function findWordIndexAtChar(charIndex) {
+    for (var i = 0; i < wordSpans.length; i++) {
+      if (charIndex >= wordSpans[i].start && charIndex < wordSpans[i].end) return i;
     }
     return -1;
   }
@@ -384,6 +417,7 @@
     clearReadingHighlight();
     resetButtons();
     activeMode = null;
+    currentChunkBoundaryFired = null;
   }
 
   function setPlaying(mode) {
@@ -496,16 +530,38 @@
     var myToken = playToken;
     setPlaying(mode);
 
-    var boundaryFired = false;
     var startCharOffset = wordSpans[startWordIndex] ? wordSpans[startWordIndex].start : 0;
     var textToSpeak = joinedText.slice(startCharOffset);
 
     Tts.speak(textToSpeak, {
       rate: rate,
+      // Tts.speak()은 내부적으로 문장 단위(청크)로 잘라 순서대로 이어 말한다. 그
+      // 청크가 실제로 소리 나기 시작할 때마다(onchunkstart) 형광펜을 그 지점으로 다시
+      // 맞춘다 - onboundary(단어 단위 실시간 위치)를 지원하지 않는 음성(크롬 네트워크
+      // 보이스 등)이 많아서, 이렇게 자주 다시 맞춰 주지 않으면 뒤로 갈수록 어림잡은
+      // 시간과 실제 소리가 점점 어긋난다. 이러면 오차가 나더라도 청크 하나(짧은 문장
+      // 하나) 분량을 못 벗어난다.
+      onchunkstart: function (offset) {
+        if (playToken !== myToken) return;
+        var boundaryFiredForThisChunk = false;
+        stopFallbackHighlighter();
+        var absoluteChar = startCharOffset + offset;
+        highlightAt(absoluteChar);
+        fallbackTimer = setTimeout(function () {
+          if (playToken !== myToken || boundaryFiredForThisChunk) return;
+          var fromIndex = findWordIndexAtChar(absoluteChar);
+          if (fromIndex !== -1) startFallbackHighlighter(rate, null, fromIndex + 1);
+        }, 250);
+        // onboundary가 이 청크 안에서 한 번이라도 오면, 그 뒤로는 실시간 위치를
+        // 우선하고 어림잡은 타이머는 쓰지 않는다.
+        currentChunkBoundaryFired = function () {
+          boundaryFiredForThisChunk = true;
+        };
+      },
       onboundary: function (event) {
         if (playToken !== myToken) return;
         if (event.name === "word" || event.name === undefined) {
-          boundaryFired = true;
+          if (currentChunkBoundaryFired) currentChunkBoundaryFired();
           stopFallbackHighlighter();
           highlightAt(startCharOffset + event.charIndex);
         }
@@ -516,13 +572,6 @@
         stopAll();
       }
     });
-
-    // 태블릿/모바일 브라우저는 "지금 읽는 단어" 이벤트를 안 보내주는 경우가 많다.
-    // 0.6초 안에 진짜 이벤트가 안 오면 어림잡은 시간으로 대신 하이라이트를 넘긴다.
-    fallbackTimer = setTimeout(function () {
-      if (playToken !== myToken) return;
-      if (!boundaryFired) startFallbackHighlighter(rate, null, startWordIndex);
-    }, 600);
   }
 
   aloneBtn.addEventListener("click", function () {
