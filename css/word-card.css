@@ -355,6 +355,16 @@
   color: var(--color-text);
 }
 
+.wc-game-credits {
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+}
+
+.wc-game-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .wc-lightbox {
   display: none;
   position: fixed;

@@ -22,6 +22,9 @@
   var gameTetrisBtn = document.getElementById("wcGameTetris");
   var gameSudokuBtn = document.getElementById("wcGameSudoku");
   var gameCrosswordBtn = document.getElementById("wcGameCrossword");
+  var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
+  var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
+  var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
 
   var lightboxEl = document.getElementById("wcLightbox");
   var lightboxBodyEl = document.getElementById("wcLightboxBody");
@@ -86,7 +89,7 @@
 
   function renderGames() {
     var credits = typeof WordGameStore !== "undefined" ? WordGameStore.syncCredits() : 0;
-    gameCreditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : String(credits);
+    gameCreditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getTotalCreditsLabel() : String(credits);
 
     // 기회가 있어도, 오늘 단어 1세트를 먼저 끝내야 게임을 열어준다.
     var studiedToday = typeof WordGameStore !== "undefined" ? WordGameStore.hasStudiedTodayForGames() : false;
@@ -106,6 +109,19 @@
         gamesLockedTitleEl.textContent = "🔒 아직 게임 기회가 없어요.";
         gamesLockedHintEl.innerHTML = "트로피 카드를 모으거나<br>복습에서 별 스티커를 모아보세요!";
       }
+    } else {
+      // 게임별로 남은 기회를 따로 보여주고, 그 게임 몫이 0이면 버튼을 눌러도
+      // 못 들어가게 막는다(다른 게임에 기회가 남아있어도 이 게임엔 못 씀).
+      [
+        { btn: gameTetrisBtn, badge: gameTetrisCreditsEl, game: "tetris" },
+        { btn: gameSudokuBtn, badge: gameSudokuCreditsEl, game: "sudoku" },
+        { btn: gameCrosswordBtn, badge: gameCrosswordCreditsEl, game: "crossword" }
+      ].forEach(function (entry) {
+        var left = WordGameStore.getCredits(entry.game);
+        var label = WordGameStore.getCreditsLabel(entry.game);
+        entry.badge.textContent = label + "회";
+        entry.btn.disabled = left !== Infinity && left <= 0;
+      });
     }
   }
 
@@ -179,19 +195,19 @@
     activateTab("games");
   });
 
-  function startGame(url) {
-    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
+  function startGame(url, game) {
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit(game)) return;
     window.location.href = url;
   }
 
   gameTetrisBtn.addEventListener("click", function () {
-    startGame("tetris.html");
+    startGame("tetris.html", "tetris");
   });
   gameSudokuBtn.addEventListener("click", function () {
-    startGame("sudoku.html");
+    startGame("sudoku.html", "sudoku");
   });
   gameCrosswordBtn.addEventListener("click", function () {
-    startGame("crossword.html");
+    startGame("crossword.html", "crossword");
   });
 
   activateTab("words");

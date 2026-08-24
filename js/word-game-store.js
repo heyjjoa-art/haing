@@ -1,7 +1,10 @@
 // 트로피 카드 1장을 새로 받거나, 별 스티커가 20개씩 쌓일 때마다 미니게임 기회를
 // 3회씩 준다(둘 다 계속 반복해서 쌓인다 - 트로피 2장이면 6회, 별 40개면 6회, 등).
-// 기회는 게임 종류에 상관없이 공용으로 쓰는 하나의 주머니.
+// 기회는 게임 하나에 몰아쓰지 못하게, 생길 때마다 3개 게임(테트리스/스도쿠/
+// 가로세로 낱말)에 1회씩 고르게 나눠 준다 - 게임별로 따로 쌓이고 따로 줄어든다.
 var WordGameStore = (function () {
+  var GAMES = ["tetris", "sudoku", "crossword"];
+
   // 임시로 아이별 기회를 고정해두고 싶을 때 여기에 넣는다({ hajung: 3 } 처럼).
   // 하정은 실제로 완전정복 골드 카드를 받아서 고정을 풀고 이제부터는 실제로
   // 쌓이고 줄어드는 값을 그대로 보여준다.
@@ -21,8 +24,28 @@ var WordGameStore = (function () {
     return "haingGameCredits_" + childPrefix();
   }
 
+  function emptyCredits() {
+    return { tetris: 0, sudoku: 0, crossword: 0 };
+  }
+
+  // 예전에는 기회를 숫자 하나(공용 주머니)로 저장했다. 그 값이 남아있는
+  // 기기/클라우드 데이터를 만나면, 게임 3개에 고르게 나눠서 새 형식으로 바꿔준다.
+  function normalizeCredits(raw) {
+    var credits = emptyCredits();
+    if (raw && typeof raw === "object") {
+      GAMES.forEach(function (game) {
+        credits[game] = raw[game] || 0;
+      });
+    } else if (typeof raw === "number" && raw > 0) {
+      for (var i = 0; i < raw; i++) {
+        credits[GAMES[i % GAMES.length]] += 1;
+      }
+    }
+    return credits;
+  }
+
   function defaultState() {
-    return { credits: 0, trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0 };
+    return { credits: emptyCredits(), trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0 };
   }
 
   function getState() {
@@ -31,7 +54,7 @@ var WordGameStore = (function () {
     try {
       var parsed = JSON.parse(raw);
       return {
-        credits: parsed.credits || 0,
+        credits: normalizeCredits(parsed.credits),
         trophiesCounted: parsed.trophiesCounted || 0,
         starBlocksCounted: parsed.starBlocksCounted || 0,
         updatedAt: parsed.updatedAt || 0
@@ -54,11 +77,19 @@ var WordGameStore = (function () {
     }, 0);
   }
 
+  // n회를 게임 3개에 1회씩 돌아가며 나눠 담는다(3의 배수면 정확히 균등하게 나뉜다).
+  function addCreditsRoundRobin(state, n) {
+    for (var i = 0; i < n; i++) {
+      var game = GAMES[i % GAMES.length];
+      state.credits[game] += 1;
+    }
+  }
+
   // 트로피/별 상태가 바뀔 때마다(카드 저장소 쪽에서) 불러주면, 지난번에 이미 센
   // 트로피 수·별 20개 단위 수보다 늘어난 만큼만 3회씩 새로 얹는다. 여러 번 불러도
   // 안전(늘어난 만큼만 계산하므로 중복 지급 없음).
   function syncCredits() {
-    if (typeof WordCardStore === "undefined") return getState().credits;
+    if (typeof WordCardStore === "undefined") return getTotalCredits();
     var state = getState();
     // Journeys 주간 트로피는 여기서 안 센다 - 그건 받는 순간 grantCredits로 직접
     // 기회를 주므로, 여기서도 같이 세면 두 번 주는 셈이 된다.
@@ -71,12 +102,12 @@ var WordGameStore = (function () {
     var newStarMilestones = Math.max(0, starBlocks - state.starBlocksCounted);
 
     if (newTrophyMilestones > 0 || newStarMilestones > 0) {
-      state.credits += (newTrophyMilestones + newStarMilestones) * 3;
+      addCreditsRoundRobin(state, (newTrophyMilestones + newStarMilestones) * 3);
       state.trophiesCounted = trophyCount;
       state.starBlocksCounted = starBlocks;
       saveState(state);
     }
-    return getCredits();
+    return getTotalCredits();
   }
 
   // 관리자로 로그인해 있으면 게임 기회를 무한으로 쳐서 계속 테스트할 수 있게 한다.
@@ -84,16 +115,33 @@ var WordGameStore = (function () {
     return typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
   }
 
-  function getCredits() {
+  // 게임 하나(tetris/sudoku/crossword)에 남은 기회.
+  function getCredits(game) {
     if (isAdminActive()) return Infinity;
     var pinned = pinnedCreditsForActiveChild();
     if (pinned !== null) return pinned;
-    return getState().credits;
+    return getState().credits[game] || 0;
+  }
+
+  // 3개 게임을 합친 전체 남은 기회(게임 탭 상단 표시, 잠금 여부 판단용).
+  function getTotalCredits() {
+    if (isAdminActive()) return Infinity;
+    var pinned = pinnedCreditsForActiveChild();
+    if (pinned !== null) return pinned;
+    var credits = getState().credits;
+    return GAMES.reduce(function (sum, game) {
+      return sum + (credits[game] || 0);
+    }, 0);
   }
 
   // 화면에 그대로 찍기 좋은 문자열. 관리자는 "Infinity"라는 영어 대신 "무제한"으로 보여준다.
-  function getCreditsLabel() {
-    var credits = getCredits();
+  function getCreditsLabel(game) {
+    var credits = getCredits(game);
+    return credits === Infinity ? "무제한" : String(credits);
+  }
+
+  function getTotalCreditsLabel() {
+    var credits = getTotalCredits();
     return credits === Infinity ? "무제한" : String(credits);
   }
 
@@ -115,14 +163,15 @@ var WordGameStore = (function () {
     return !!journeyDone && !!wordDone;
   }
 
-  // 게임을 하나 시작할 때 기회를 1회 쓴다. 오늘 공부를 안 했거나 남은 기회가 없으면 false.
-  function spendCredit() {
+  // 게임을 하나 시작할 때 그 게임 몫의 기회를 1회 쓴다. 오늘 공부를 안 했거나
+  // 그 게임에 남은 기회가 없으면 false(다른 게임에 기회가 남아 있어도 안 됨).
+  function spendCredit(game) {
     if (isAdminActive()) return true;
     if (!hasStudiedTodayForGames()) return false;
     if (pinnedCreditsForActiveChild() !== null) return true;
     var state = getState();
-    if (state.credits <= 0) return false;
-    state.credits -= 1;
+    if (!state.credits[game] || state.credits[game] <= 0) return false;
+    state.credits[game] -= 1;
     saveState(state);
     return true;
   }
@@ -131,9 +180,9 @@ var WordGameStore = (function () {
   // 고정된 아이라도 실제 쌓이는 값은 뒤에서 그대로 늘어난다(화면 표시만 고정).
   function grantCredits(n) {
     var state = getState();
-    state.credits += n;
+    addCreditsRoundRobin(state, n);
     saveState(state);
-    return getCredits();
+    return getTotalCredits();
   }
 
   // 관리자 탭에서 "지금 로그인한 아이"와 무관하게 특정 아이의 기회를 직접
@@ -148,7 +197,7 @@ var WordGameStore = (function () {
     try {
       var parsed = JSON.parse(raw);
       return {
-        credits: parsed.credits || 0,
+        credits: normalizeCredits(parsed.credits),
         trophiesCounted: parsed.trophiesCounted || 0,
         starBlocksCounted: parsed.starBlocksCounted || 0
       };
@@ -158,22 +207,33 @@ var WordGameStore = (function () {
   }
 
   function getCreditsForChild(childId) {
-    return getStateFor(childId).credits;
+    var credits = getStateFor(childId).credits;
+    return GAMES.reduce(function (sum, game) {
+      return sum + (credits[game] || 0);
+    }, 0);
   }
 
-  // n을 더한다(복구용으로는 양수, 되돌릴 땐 음수도 가능 - 0 밑으로는 안 내려간다).
-  // 이후에도 트로피/별로 쌓이는 정상적인 카운트는 그대로 이어진다(고정이 아니다).
+  // n을 게임 3개에 1개씩 돌아가며 더한다(복구용으로는 양수, 되돌릴 땐 음수도
+  // 가능 - 게임별로 0 밑으로는 안 내려간다). 이후에도 트로피/별로 쌓이는 정상적인
+  // 카운트는 그대로 이어진다(고정이 아니다).
   function adminAddCredits(childId, n) {
     if (!childId) return 0;
     var state = getStateFor(childId);
-    state.credits = Math.max(0, state.credits + n);
+    var step = n >= 0 ? 1 : -1;
+    var count = Math.abs(n);
+    for (var i = 0; i < count; i++) {
+      var game = GAMES[i % GAMES.length];
+      state.credits[game] = Math.max(0, state.credits[game] + step);
+    }
     state.updatedAt = Date.now();
     localStorage.setItem(stateKeyFor(childId), JSON.stringify(state));
     if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
       HaingCloud.writeDoc("wordGameCredits/" + childId, state);
     }
     if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
-    return state.credits;
+    return GAMES.reduce(function (sum, game) {
+      return sum + (state.credits[game] || 0);
+    }, 0);
   }
 
   function cloudPath() {
@@ -197,7 +257,7 @@ var WordGameStore = (function () {
     var local = getState();
     if ((data.updatedAt || 0) < (local.updatedAt || 0)) return;
     localStorage.setItem(stateKey(), JSON.stringify({
-      credits: data.credits || 0,
+      credits: normalizeCredits(data.credits),
       trophiesCounted: data.trophiesCounted || 0,
       starBlocksCounted: data.starBlocksCounted || 0,
       updatedAt: data.updatedAt || 0
@@ -230,9 +290,12 @@ var WordGameStore = (function () {
   }
 
   return {
+    GAMES: GAMES,
     syncCredits: syncCredits,
     getCredits: getCredits,
+    getTotalCredits: getTotalCredits,
     getCreditsLabel: getCreditsLabel,
+    getTotalCreditsLabel: getTotalCreditsLabel,
     spendCredit: spendCredit,
     hasStudiedTodayForGames: hasStudiedTodayForGames,
     isWeekendToday: isWeekendToday,

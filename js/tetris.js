@@ -350,7 +350,7 @@
   function gameOver() {
     isGameOver = true;
     var isNewBest = score > 0 && score >= bestScore;
-    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits() : 0;
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("tetris") : 0;
     overlayTitleEl.textContent = "게임 오버!";
     overlayScoreEl.textContent =
       DIFFICULTIES[currentDifficulty].label + " · 점수 " + score + " · 지운 줄 " + linesTotal + "줄 · 레벨 " + level + (isNewBest ? " 🎉 신기록!" : "");
@@ -467,12 +467,12 @@
   });
 
   retryBtn.addEventListener("click", function () {
-    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
-    creditsEl.textContent = WordGameStore.getCreditsLabel();
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("tetris")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("tetris");
     resetGame();
   });
 
-  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : "0";
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("tetris") : "0";
   resetGame();
   requestAnimationFrame(tick);
 })();

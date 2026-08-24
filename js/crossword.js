@@ -515,7 +515,7 @@
     if (isNewBest) localStorage.setItem(key, String(elapsed));
     showBestTime();
 
-    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits() : 0;
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("crossword") : 0;
     overlayDescEl.textContent =
       CROSSWORD_WORD_BANK[currentLevel].label + " 낱말퍼즐 " + puzzle.placed.length + "개 단어를 " + formatTime(elapsed) + "만에 다 맞혔어요!" + (isNewBest ? " 🎉 신기록!" : "");
     retryBtn.hidden = creditsLeft <= 0;
@@ -650,11 +650,11 @@
   });
 
   retryBtn.addEventListener("click", function () {
-    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
-    creditsEl.textContent = WordGameStore.getCreditsLabel();
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("crossword")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("crossword");
     newGame(currentLevel);
   });
 
-  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : "0";
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("crossword") : "0";
   newGame("elementary");
 })();

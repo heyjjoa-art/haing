@@ -290,7 +290,7 @@
     if (isNewBest) localStorage.setItem(key, String(elapsed));
     showBestTime();
 
-    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits() : 0;
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("sudoku") : 0;
     overlayDescEl.textContent =
       LEVELS[currentLevel].label + " 스도쿠를 " + formatTime(elapsed) + "만에 다 풀었어요!" + (isNewBest ? " 🎉 신기록!" : "");
     retryBtn.hidden = creditsLeft <= 0;
@@ -353,11 +353,11 @@
   });
 
   retryBtn.addEventListener("click", function () {
-    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit()) return;
-    creditsEl.textContent = WordGameStore.getCreditsLabel();
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("sudoku")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("sudoku");
     newGame(currentLevel);
   });
 
-  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel() : "0";
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("sudoku") : "0";
   newGame("easy");
 })();
