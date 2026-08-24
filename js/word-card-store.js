@@ -226,6 +226,14 @@ var WordCardStore = (function () {
     var key = journeysTrophyWordKey(unitId, weekStart);
     if (hasWord(key)) return null;
 
+    var collected = getCollected();
+    // 확대보기에서 보여줄 명언(word-card-view.js)을 트로피를 줄 때 순서대로 하나
+    // 정해서 고정해둔다 - 이미 가진 Journeys 트로피 개수만큼 다음 명언으로 넘어가서,
+    // 볼 때마다 안 바뀌면서도 트로피끼리는 같은 명언이 연달아 나오지 않는다.
+    var existingJourneysTrophyCount = collected.filter(function (r) {
+      return r.journeysTrophy;
+    }).length;
+
     var record = {
       word: key,
       isTrophy: true,
@@ -234,9 +242,9 @@ var WordCardStore = (function () {
       weekLabel: weekLabel || "1week",
       resultLabel: "Success",
       unitLabel: unitLabel || "",
+      quoteIndex: existingJourneysTrophyCount,
       collectedAt: Date.now()
     };
-    var collected = getCollected();
     collected.push(record);
     saveCollected(collected);
     pushPending(record);

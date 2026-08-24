@@ -44,7 +44,12 @@ var WordCardView = (function () {
     return html;
   }
 
-  // Journeys 트로피 카드를 확대해서 볼 때 보여주는 꾸준함/성실 명언 - 매번 랜덤으로 하나.
+  // Journeys 트로피 카드를 확대해서 볼 때 보여주는 꾸준함/성실 명언. 카드마다 하나로
+  // 고정돼야 해서(볼 때마다 바뀌면 안 됨) 매번 랜덤으로 고르지 않는다 - 트로피를 줄 때
+  // word-card-store.js가 record.quoteIndex를 순서대로 매겨서(0,1,2...) 저장해두면,
+  // 다음 트로피는 자동으로 다음 명언을 받아 같은 걸 연달아 보지 않는다. quoteIndex가
+  // 없는 옛날 기록(이 필드가 생기기 전에 만들어진 트로피)은 카드 고유 키로 고정 인덱스를
+  // 만들어서, 최소한 "매번 안 바뀌는" 성질만은 지킨다.
   var PERSEVERANCE_QUOTES = [
     "꾸준함은 성공의 지름길이다.",
     "천 리 길도 한 걸음부터.",
@@ -58,8 +63,14 @@ var WordCardView = (function () {
     "한 걸음씩, 그러나 쉬지 않고."
   ];
 
-  function randomPerseveranceQuote() {
-    return PERSEVERANCE_QUOTES[Math.floor(Math.random() * PERSEVERANCE_QUOTES.length)];
+  function perseveranceQuoteFor(record) {
+    if (record && typeof record.quoteIndex === "number") {
+      return PERSEVERANCE_QUOTES[record.quoteIndex % PERSEVERANCE_QUOTES.length];
+    }
+    var key = (record && record.word) || "";
+    var sum = 0;
+    for (var i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+    return PERSEVERANCE_QUOTES[sum % PERSEVERANCE_QUOTES.length];
   }
 
   // Journeys 쪽에서 한 주(월~금) 도장을 다 채우면 받는 트로피 카드. Word의
@@ -75,7 +86,7 @@ var WordCardView = (function () {
       '<strong class="wc-card-word">Journeys</strong>' +
       '<span class="wc-card-meaning">1 Week<br>' + escapeHtml(record.resultLabel || "Success") + "</span>";
     if (opts.large) {
-      html += '<p class="wc-card-def">"' + escapeHtml(randomPerseveranceQuote()) + '"</p>';
+      html += '<p class="wc-card-def">"' + escapeHtml(perseveranceQuoteFor(record)) + '"</p>';
     }
     html +=
       "</div>" +
