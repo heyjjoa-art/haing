@@ -208,6 +208,37 @@ var StampStore = (function () {
     });
   }
 
+  // 관리자 진행 달력용 - 특정 날짜(오늘이 아니어도)에 이 아이가 어느 유닛이든
+  // 하루 미션을 끝냈는지. hasCompletedAnyToday와 같은 로직이지만 날짜를 직접 받는다.
+  function isDayCompleteFor(childId, dateStr) {
+    if (!childId) return false;
+    ensureCloudSync(childId);
+    var all = loadAll(childId);
+    return Object.keys(all).some(function (unitId) {
+      return isDayComplete((all[unitId] || {})[dateStr]);
+    });
+  }
+
+  // 관리자 진행 달력에 그대로 그릴 수 있게, year-month(1~12) 한 달치 날짜를
+  // 하루씩 돌려준다. 유닛과 무관하게 그날 어느 유닛이든 미션을 끝냈으면 completed.
+  function getMonthDays(childId, year, month) {
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var today = todayDate();
+    var days = [];
+    for (var d = 1; d <= daysInMonth; d++) {
+      var date = new Date(year, month - 1, d);
+      var dStr = toDateStr(date);
+      days.push({
+        date: dStr,
+        day: d,
+        weekday: date.getDay(),
+        isFuture: date > today,
+        completed: isDayCompleteFor(childId, dStr)
+      });
+    }
+    return days;
+  }
+
   return {
     STAGES: STAGES,
     WEEKDAY_LABELS: WEEKDAY_LABELS,
@@ -215,6 +246,7 @@ var StampStore = (function () {
     markStageDone: markStageDone,
     getWeekGrid: getWeekGrid,
     getTotalStampedDays: getTotalStampedDays,
-    hasCompletedAnyToday: hasCompletedAnyToday
+    hasCompletedAnyToday: hasCompletedAnyToday,
+    getMonthDays: getMonthDays
   };
 })();

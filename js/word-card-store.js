@@ -289,6 +289,19 @@ var WordCardStore = (function () {
     });
   }
 
+  // 관리자 진행 관리용 - 로그인한 아이와 무관하게 특정 아이의 카드를 직접 읽는다
+  // (renameUnitInCards가 쓰는 것과 같은 저장 키 규칙).
+  function getCollectedForChild(childId) {
+    if (!childId) return [];
+    var raw = localStorage.getItem("haingWordCards_" + childId + "_");
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   // 유닛 번호를 바꿀 때, 모든 아이(로그인 안 한 guest 포함)가 이미 모은 카드의 unit
   // 필드도 같이 옮겨준다. 안 옮기면 도감에서 카드가 예전 번호로 남아 트로피와 어긋난다.
   function renameUnitInCards(oldUnit, newUnit) {
@@ -391,6 +404,7 @@ var WordCardStore = (function () {
     getTrophyCards: getTrophyCards,
     getInProgressCards: getInProgressCards,
     getUnitWordCards: getUnitWordCards,
+    getCollectedForChild: getCollectedForChild,
     renameUnitInCards: renameUnitInCards,
     getPendingWords: getPendingWords,
     getPendingCards: getPendingCards,
