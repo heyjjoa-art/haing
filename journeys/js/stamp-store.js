@@ -124,6 +124,28 @@ var StampStore = (function () {
     return monday;
   }
 
+  // 그 주 월~금 중 못 채운 날이 있어도, 같은 주 토·일에 미션을 끝냈으면 그만큼
+  // 앞에서부터(가장 이른 미완료 요일부터) 순서대로 도장을 채워준다 - 진짜 그날
+  // 한 것과 구분하도록 day.isMakeup으로 표시한다("성공" 대신 "주말로").
+  function applyWeekendMakeup(days, weekStart, unitRecords) {
+    var satDate = new Date(weekStart);
+    satDate.setDate(weekStart.getDate() + 5);
+    var sunDate = new Date(weekStart);
+    sunDate.setDate(weekStart.getDate() + 6);
+
+    var makeupCount = 0;
+    if (isDayComplete(unitRecords[toDateStr(satDate)])) makeupCount++;
+    if (isDayComplete(unitRecords[toDateStr(sunDate)])) makeupCount++;
+
+    for (var i = 0; i < days.length && makeupCount > 0; i++) {
+      if (!days[i].stamped) {
+        days[i].stamped = true;
+        days[i].isMakeup = true;
+        makeupCount--;
+      }
+    }
+  }
+
   // 이 유닛의 기록이 시작된 주부터 이번 주까지, 월~금 5칸씩 주 단위로 묶어서 돌려준다.
   // 기록이 없으면 최소 이번 주 한 줄은 항상 보여준다.
   function getWeekGrid(childId, unitId) {
@@ -157,6 +179,7 @@ var StampStore = (function () {
           isFuture: d > today
         });
       }
+      applyWeekendMakeup(days, cursor, unitRecords);
       weeks.push({ weekStart: toDateStr(cursor), days: days });
       cursor.setDate(cursor.getDate() + 7);
     }

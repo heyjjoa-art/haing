@@ -401,11 +401,12 @@
         var cell = document.createElement("div");
         cell.className = "stamp-day-cell";
         if (day.stamped) cell.classList.add("stamped");
+        if (day.isMakeup) cell.classList.add("makeup");
         if (day.isToday) cell.classList.add("today");
         if (day.isFuture) cell.classList.add("future");
         cell.innerHTML =
           '<span class="stamp-day-label">' + day.label + "</span>" +
-          '<span class="stamp-day-icon">' + (day.stamped ? "성공" : "") + "</span>";
+          '<span class="stamp-day-icon">' + (day.isMakeup ? "주말로" : day.stamped ? "성공" : "") + "</span>";
         row.appendChild(cell);
       });
       stampBoardWeeksEl.appendChild(row);
