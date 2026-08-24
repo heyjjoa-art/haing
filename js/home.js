@@ -95,6 +95,20 @@
 
     var currentUnit = DataStore.getCurrentUnit();
 
+    // 트로피(완전정복)를 받은 유닛만 복습이 의미가 있다 - 그 전엔 별이 아직 하나도
+    // 안 붙는다. 유닛 전체가 "몇 바퀴째 복습 중"인지는 단어 하나하나의 별 개수가
+    // 다 똑같이 올라가지 않으므로(제일 늦게 따라오는 단어 기준), 가장 적게 모은
+    // 단어의 별 개수를 그 유닛의 복습 진행으로 본다 - isStarLimitReached와 같은 논리.
+    function reviewStarsLabel(unitKey) {
+      if (typeof WordCardStore === "undefined" || !WordCardStore.hasTrophy(unitKey)) return "";
+      var cards = WordCardStore.getUnitWordCards(unitKey);
+      if (cards.length === 0) return "";
+      var minStars = cards.reduce(function (min, r) {
+        return Math.min(min, r.stars || 0);
+      }, 5);
+      return " -복습 " + minStars + "/5";
+    }
+
     function populateNumberOptions() {
       var category = categorySelect.value;
       numberSelect.innerHTML = '<option value="">번호선택</option>';
@@ -110,6 +124,7 @@
             : entry.unit === "unspecified"
               ? "이름 없는 자료"
               : "Unit " + entry.unit;
+        if (category !== "elementary") label += reviewStarsLabel(entry.unit);
         option.textContent = label + (key === currentUnit ? " (현재)" : "");
         numberSelect.appendChild(option);
         if (key === currentUnit) currentInThisCategory = true;
