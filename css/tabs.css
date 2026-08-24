@@ -123,6 +123,73 @@
   margin-top: 0;
 }
 
+/* ── 게임 기회 관리 - 아이별 카드(게임 3개 각각 -1/+1 + 사용 기록) ──────────── */
+.admin-credits-child-card {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.admin-credits-child-card:last-child {
+  border-bottom: none;
+}
+
+.admin-credits-child-heading {
+  font-weight: bold;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.admin-credits-game-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.admin-credits-game-label {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.admin-credits-step-btn {
+  margin-top: 0;
+  padding: 4px 10px;
+  min-width: 40px;
+}
+
+.admin-credits-game-count {
+  min-width: 40px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+.admin-credits-history {
+  margin-top: 8px;
+}
+
+.admin-credits-history-toggle {
+  margin-top: 0;
+  font-size: 0.8rem;
+  padding: 5px 10px;
+}
+
+.admin-credits-history-list {
+  margin-top: 8px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.admin-credits-history-line {
+  margin: 3px 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
 .admin-unit-row {
   display: flex;
   flex-wrap: wrap;

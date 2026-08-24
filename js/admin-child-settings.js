@@ -69,45 +69,113 @@
     });
   }
 
+  var GAME_LABELS = { tetris: "🧱 테트리스", sudoku: "🔢 스도쿠", crossword: "📝 가로세로 낱말" };
+
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function formatSpentAt(ts) {
+    var d = new Date(ts);
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+
+  function buildGameRow(child, game) {
+    var row = document.createElement("div");
+    row.className = "admin-credits-game-row";
+
+    var label = document.createElement("span");
+    label.className = "admin-credits-game-label";
+    label.textContent = GAME_LABELS[game];
+    row.appendChild(label);
+
+    var minusBtn = document.createElement("button");
+    minusBtn.type = "button";
+    minusBtn.className = "secondary-btn admin-credits-step-btn";
+    minusBtn.textContent = "-1";
+    minusBtn.addEventListener("click", function () {
+      WordGameStore.adminAdjustGameCredit(child.id, game, -1);
+      renderCreditsList();
+    });
+    row.appendChild(minusBtn);
+
+    var count = document.createElement("span");
+    count.className = "admin-credits-game-count";
+    count.textContent = WordGameStore.getCreditsForChildByGame(child.id, game) + "회";
+    row.appendChild(count);
+
+    var plusBtn = document.createElement("button");
+    plusBtn.type = "button";
+    plusBtn.className = "secondary-btn admin-credits-step-btn";
+    plusBtn.textContent = "+1";
+    plusBtn.addEventListener("click", function () {
+      WordGameStore.adminAdjustGameCredit(child.id, game, 1);
+      renderCreditsList();
+    });
+    row.appendChild(plusBtn);
+
+    return row;
+  }
+
+  // 최근에 어느 게임을 언제 썼는지 - 기본은 접혀 있고 눌러야 펼쳐진다(평소엔 안 봐도 되는 정보라).
+  function buildHistorySection(child) {
+    var wrap = document.createElement("div");
+    wrap.className = "admin-credits-history";
+
+    var toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "secondary-btn admin-credits-history-toggle";
+    toggleBtn.textContent = "🕘 사용 기록 보기";
+
+    var list = document.createElement("div");
+    list.className = "admin-credits-history-list";
+    list.hidden = true;
+
+    var log = WordGameStore.getSpendLogForChild(child.id).slice().reverse();
+    if (log.length === 0) {
+      var empty = document.createElement("p");
+      empty.className = "hint";
+      empty.textContent = "아직 사용 기록이 없어요.";
+      list.appendChild(empty);
+    } else {
+      log.forEach(function (entry) {
+        var line = document.createElement("p");
+        line.className = "admin-credits-history-line";
+        line.textContent = formatSpentAt(entry.spentAt) + " · " + (GAME_LABELS[entry.game] || entry.game);
+        list.appendChild(line);
+      });
+    }
+
+    toggleBtn.addEventListener("click", function () {
+      list.hidden = !list.hidden;
+      toggleBtn.textContent = list.hidden ? "🕘 사용 기록 보기" : "🕘 사용 기록 숨기기";
+    });
+
+    wrap.appendChild(toggleBtn);
+    wrap.appendChild(list);
+    return wrap;
+  }
+
   function renderCreditsList() {
     if (!creditListEl || typeof WordGameStore === "undefined") return;
     creditListEl.innerHTML = "";
 
     ChildStore.CHILDREN.forEach(function (child) {
-      var row = document.createElement("div");
-      row.className = "admin-child-settings-row";
+      var card = document.createElement("div");
+      card.className = "admin-credits-child-card";
 
-      var label = document.createElement("span");
-      label.className = "admin-child-settings-name";
-      label.textContent = child.zodiacEmoji + " " + child.name;
+      var heading = document.createElement("div");
+      heading.className = "admin-credits-child-heading";
+      heading.textContent = child.zodiacEmoji + " " + child.name;
+      card.appendChild(heading);
 
-      var status = document.createElement("span");
-      status.className = "admin-child-settings-status";
-      status.textContent = "🎮 " + WordGameStore.getCreditsForChild(child.id) + "회";
-
-      var plusBtn = document.createElement("button");
-      plusBtn.type = "button";
-      plusBtn.className = "secondary-btn";
-      plusBtn.textContent = "+3 지급";
-      plusBtn.addEventListener("click", function () {
-        WordGameStore.adminAddCredits(child.id, 3);
-        renderCreditsList();
+      WordGameStore.GAMES.forEach(function (game) {
+        card.appendChild(buildGameRow(child, game));
       });
 
-      var minusBtn = document.createElement("button");
-      minusBtn.type = "button";
-      minusBtn.className = "danger-btn";
-      minusBtn.textContent = "-3";
-      minusBtn.addEventListener("click", function () {
-        WordGameStore.adminAddCredits(child.id, -3);
-        renderCreditsList();
-      });
+      card.appendChild(buildHistorySection(child));
 
-      row.appendChild(label);
-      row.appendChild(status);
-      row.appendChild(plusBtn);
-      row.appendChild(minusBtn);
-      creditListEl.appendChild(row);
+      creditListEl.appendChild(card);
     });
   }
 

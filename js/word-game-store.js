@@ -44,8 +44,17 @@ var WordGameStore = (function () {
     return credits;
   }
 
+  // "어디에 썼는지" 확인용 - 실제로 기회를 하나 쓸 때마다 {game, spentAt}을 남긴다.
+  // 문서가 한없이 커지지 않게 최근 것만 남긴다(오래된 기록은 그냥 잘려나감).
+  var MAX_LOG_ENTRIES = 30;
+
+  function normalizeLog(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(-MAX_LOG_ENTRIES);
+  }
+
   function defaultState() {
-    return { credits: emptyCredits(), trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0 };
+    return { credits: emptyCredits(), trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0, log: [] };
   }
 
   function getState() {
@@ -57,7 +66,8 @@ var WordGameStore = (function () {
         credits: normalizeCredits(parsed.credits),
         trophiesCounted: parsed.trophiesCounted || 0,
         starBlocksCounted: parsed.starBlocksCounted || 0,
-        updatedAt: parsed.updatedAt || 0
+        updatedAt: parsed.updatedAt || 0,
+        log: normalizeLog(parsed.log)
       };
     } catch (e) {
       return defaultState();
@@ -172,6 +182,7 @@ var WordGameStore = (function () {
     var state = getState();
     if (!state.credits[game] || state.credits[game] <= 0) return false;
     state.credits[game] -= 1;
+    state.log = normalizeLog(state.log.concat([{ game: game, spentAt: Date.now() }]));
     saveState(state);
     return true;
   }
@@ -199,7 +210,8 @@ var WordGameStore = (function () {
       return {
         credits: normalizeCredits(parsed.credits),
         trophiesCounted: parsed.trophiesCounted || 0,
-        starBlocksCounted: parsed.starBlocksCounted || 0
+        starBlocksCounted: parsed.starBlocksCounted || 0,
+        log: normalizeLog(parsed.log)
       };
     } catch (e) {
       return defaultState();
@@ -213,27 +225,30 @@ var WordGameStore = (function () {
     }, 0);
   }
 
-  // n을 게임 3개에 1개씩 돌아가며 더한다(복구용으로는 양수, 되돌릴 땐 음수도
-  // 가능 - 게임별로 0 밑으로는 안 내려간다). 이후에도 트로피/별로 쌓이는 정상적인
+  // 게임 하나(tetris/sudoku/crossword)에 남은 그 아이의 기회.
+  function getCreditsForChildByGame(childId, game) {
+    return getStateFor(childId).credits[game] || 0;
+  }
+
+  // 최근에 쓴 기회 기록 - {game, spentAt}, 오래된 순(가장 최근이 배열 맨 뒤).
+  function getSpendLogForChild(childId) {
+    return getStateFor(childId).log;
+  }
+
+  // 게임 하나의 기회를 1개 단위로 더하거나 뺀다(복구용으로는 양수, 되돌릴 땐
+  // 음수 - 0 밑으로는 안 내려간다). 이후에도 트로피/별로 쌓이는 정상적인
   // 카운트는 그대로 이어진다(고정이 아니다).
-  function adminAddCredits(childId, n) {
+  function adminAdjustGameCredit(childId, game, delta) {
     if (!childId) return 0;
     var state = getStateFor(childId);
-    var step = n >= 0 ? 1 : -1;
-    var count = Math.abs(n);
-    for (var i = 0; i < count; i++) {
-      var game = GAMES[i % GAMES.length];
-      state.credits[game] = Math.max(0, state.credits[game] + step);
-    }
+    state.credits[game] = Math.max(0, (state.credits[game] || 0) + delta);
     state.updatedAt = Date.now();
     localStorage.setItem(stateKeyFor(childId), JSON.stringify(state));
     if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
       HaingCloud.writeDoc("wordGameCredits/" + childId, state);
     }
     if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
-    return GAMES.reduce(function (sum, game) {
-      return sum + (state.credits[game] || 0);
-    }, 0);
+    return state.credits[game];
   }
 
   function cloudPath() {
@@ -260,7 +275,8 @@ var WordGameStore = (function () {
       credits: normalizeCredits(data.credits),
       trophiesCounted: data.trophiesCounted || 0,
       starBlocksCounted: data.starBlocksCounted || 0,
-      updatedAt: data.updatedAt || 0
+      updatedAt: data.updatedAt || 0,
+      log: normalizeLog(data.log)
     }));
     if (window.__haingRenderWordCards) window.__haingRenderWordCards();
   }
@@ -301,6 +317,8 @@ var WordGameStore = (function () {
     isWeekendToday: isWeekendToday,
     grantCredits: grantCredits,
     getCreditsForChild: getCreditsForChild,
-    adminAddCredits: adminAddCredits
+    getCreditsForChildByGame: getCreditsForChildByGame,
+    getSpendLogForChild: getSpendLogForChild,
+    adminAdjustGameCredit: adminAdjustGameCredit
   };
 })();
