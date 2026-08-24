@@ -126,7 +126,7 @@ var StampStore = (function () {
 
   // 그 주 월~금 중 못 채운 날이 있어도, 같은 주 토·일에 미션을 끝냈으면 그만큼
   // 앞에서부터(가장 이른 미완료 요일부터) 순서대로 도장을 채워준다 - 진짜 그날
-  // 한 것과 구분하도록 day.isMakeup으로 표시한다("성공" 대신 "주말로").
+  // 한 것과 구분하도록 day.isMakeup으로 표시한다("성공" 대신 "주말").
   function applyWeekendMakeup(days, weekStart, unitRecords) {
     var satDate = new Date(weekStart);
     satDate.setDate(weekStart.getDate() + 5);
