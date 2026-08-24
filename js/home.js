@@ -78,7 +78,13 @@
     var sectionEl = document.getElementById("unitHistorySection");
     if (!categorySelect || !numberSelect) return;
 
-    var weeklyUnits = DataStore.getAllUnits();
+    // getAllUnits()는 최신순(내림차순)으로 오는데, 이 드롭다운은 보기 편하게 오름차순으로 뒤집는다.
+    var weeklyUnits = DataStore.getAllUnits().slice().sort(function (a, b) {
+      var na = parseFloat(a.unit);
+      var nb = parseFloat(b.unit);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.unit < b.unit ? -1 : 1;
+    });
     var elementaryLevels = DataStore.getElementaryLevels();
 
     if (weeklyUnits.length === 0 && elementaryLevels.length === 0) {

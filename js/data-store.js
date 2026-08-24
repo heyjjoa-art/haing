@@ -139,6 +139,7 @@ var DataStore = (function () {
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderAdminWordUnits) window.__haingRenderAdminWordUnits();
     if (window.__haingRenderWordEdit) window.__haingRenderWordEdit();
+    if (window.__haingRenderStorybook) window.__haingRenderStorybook();
   }
 
   // 로컬에만 있고 클라우드엔 없는 유닛을 "방금 만들어서 아직 못 올라간 것"으로 봐줄
@@ -169,6 +170,7 @@ var DataStore = (function () {
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderAdminWordUnits) window.__haingRenderAdminWordUnits();
     if (window.__haingRenderWordEdit) window.__haingRenderWordEdit();
+    if (window.__haingRenderStorybook) window.__haingRenderStorybook();
   }
 
   // 이 기기가 클라우드에 처음 연결될 때: 클라우드가 비어있으면(가장 먼저 연결한 기기)

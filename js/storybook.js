@@ -209,4 +209,5 @@
   }
 
   render();
+  window.__haingRenderStorybook = render;
 })();
