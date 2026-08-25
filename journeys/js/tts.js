@@ -120,6 +120,10 @@ var Tts = (function () {
     var chunks = splitForSpeech(text, MAX_CHUNK_LEN);
     var myToken = ++activeSeq;
 
+    function startSpeaking() {
+      speakChunk(0, 0);
+    }
+
     function speakChunk(idx, offset) {
       if (myToken !== activeSeq) return;
       if (idx >= chunks.length) {
@@ -154,7 +158,13 @@ var Tts = (function () {
       window.speechSynthesis.speak(utterance);
     }
 
-    speakChunk(0, 0);
+    // 직전에 stop()으로 cancel()을 부른 직후(예: 페이지 넘기며 자동 재개)라면, 크롬은
+    // cancel()과 speak()가 같은 틱에 연달아 들어오면 새 발화를 그냥 씹어버리고 소리
+    // 없이 아무 일도 안 일어나는 버그가 있다. 한 틱 쉬었다 시작하면 이 문제를 피한다.
+    setTimeout(function () {
+      if (myToken !== activeSeq) return;
+      startSpeaking();
+    }, 80);
     return null;
   }
 

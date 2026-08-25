@@ -75,6 +75,23 @@
   var pages = []; // { photo, pageNumber, paragraphs }
   var currentPageIndex = 0;
 
+  // 긴 책(사진 10장 이상 등)은 한 번에 끝까지 못 읽고 나갔다 다시 들어오는 일이
+  // 흔해서, 마지막으로 보던 페이지를 아이별로 기억해뒀다가 다음에 들어오면 거기서부터
+  // 이어서 보여준다 - 매번 1페이지부터 다시 넘기지 않아도 되게.
+  function pagePosKey() {
+    return "journeysPagePos_" + (childId || "guest") + "_" + unit.id;
+  }
+
+  function saveCurrentPagePos() {
+    localStorage.setItem(pagePosKey(), String(currentPageIndex));
+  }
+
+  function loadSavedPagePos() {
+    var raw = localStorage.getItem(pagePosKey());
+    var n = raw != null ? parseInt(raw, 10) : 0;
+    return isNaN(n) ? 0 : n;
+  }
+
   var PAGE_BREAK_MARKER = "====";
 
   // 실제 책처럼 사진 한 장 = 페이지 한 장으로 묶는다. 사진별 본문이 따로 저장돼 있지
@@ -127,7 +144,7 @@
   function render() {
     storyTitleEl.textContent = unit.title;
     pages = buildPages(unit);
-    renderPage(0);
+    renderPage(loadSavedPagePos());
     renderStampButtons();
     checkAndAwardTrophies();
   }
@@ -141,6 +158,7 @@
     stopAll();
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
     resetButtons(); // stopAll()은 이전 페이지 번호로 이미 그려버렸으니 새 페이지 번호로 다시 그린다
+    saveCurrentPagePos();
     var page = pages[currentPageIndex];
 
     if (page.photo) {
