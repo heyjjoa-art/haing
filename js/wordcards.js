@@ -24,6 +24,7 @@
   var gameCrosswordBtn = document.getElementById("wcGameCrossword");
   var gameSmileyfindBtn = document.getElementById("wcGameSmileyfind");
   var gameHanoiBtn = document.getElementById("wcGameHanoi");
+  var gameSnakeBtn = document.getElementById("wcGameSnake");
   var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
   var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
   var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
@@ -131,6 +132,7 @@
     var isAdmin = typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
     gameSmileyfindBtn.hidden = !isAdmin;
     gameHanoiBtn.hidden = !isAdmin;
+    gameSnakeBtn.hidden = !isAdmin;
   }
 
   function render() {
@@ -222,6 +224,9 @@
   });
   gameHanoiBtn.addEventListener("click", function () {
     window.location.href = "hanoi.html";
+  });
+  gameSnakeBtn.addEventListener("click", function () {
+    window.location.href = "snake.html";
   });
 
   activateTab("words");
