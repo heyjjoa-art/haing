@@ -353,6 +353,10 @@
   font-size: 2rem;
 }
 
+.wc-game-icon {
+  display: block;
+}
+
 .wc-game-title {
   font-size: 0.85rem;
   font-weight: bold;
