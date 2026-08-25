@@ -149,12 +149,11 @@
     checkAndAwardTrophies();
   }
 
-  // 페이지를 넘기면 일단 재생 중이던 소리/형광펜은 멈춘다(stopAll) - 이전 페이지
-  // 내용을 새 페이지로 이어서 읽지는 않는다. 다만 넘기기 전에 듣기/따라읽기 중이었다면
-  // (resumeMode) 새 페이지에서 그 모드를 자동으로 다시 시작해서, 버튼을 또 누르지
-  // 않아도 이어서 들을 수 있게 한다 - "다음 페이지"를 누르는 그 자체가 계속 듣고
-  // 싶다는 신호이고, 그 버튼을 누르는 순간이 페이지 사이의 자연스러운 쉬는 틈이 된다.
-  function renderPage(idx, resumeMode) {
+  // 페이지를 넘기면 재생 중이던 소리/형광펜은 멈춘다(stopAll) - 이전 페이지 내용을
+  // 새 페이지로 이어서 읽지는 않는다. 이전/다음 페이지 버튼 자체가 재생 중에는
+  // updatePageNavDisabled()로 잠겨 있어서, 형광펜이 그 페이지를 끝까지 읽기 전에는
+  // 아예 눌리지 않는다 - 다 듣기 전에 건너뛰어서 다음 페이지로 넘기지 못 하게 하려는 것.
+  function renderPage(idx) {
     stopAll();
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
     resetButtons(); // stopAll()은 이전 페이지 번호로 이미 그려버렸으니 새 페이지 번호로 다시 그린다
@@ -174,20 +173,26 @@
 
     pageNav.hidden = pages.length <= 1;
     pageIndicatorEl.textContent = (currentPageIndex + 1) + " / " + pages.length;
-    prevPageBtn.disabled = currentPageIndex === 0;
-    nextPageBtn.disabled = currentPageIndex === pages.length - 1;
+    updatePageNavDisabled();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
-
-    if (resumeMode) resumeReading(resumeMode, 0);
   }
 
   prevPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex - 1, activeMode);
+    renderPage(currentPageIndex - 1);
   });
   nextPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex + 1, activeMode);
+    renderPage(currentPageIndex + 1);
   });
+
+  // 재생 중(activeMode)이거나 단어 뜻 팝업 때문에 잠깐 멈춘 중(pendingResumeMode, 아직
+  // 안 끝났고 곧 이어서 읽을 예정)이면 형광펜이 이 페이지를 다 읽지 않은 것으로 보고
+  // 이전/다음 페이지 버튼을 잠근다 - 다 듣기 전에 페이지를 넘겨버리는 걸 막는다.
+  function updatePageNavDisabled() {
+    var stillReading = !!activeMode || !!pendingResumeMode;
+    prevPageBtn.disabled = stillReading || currentPageIndex === 0;
+    nextPageBtn.disabled = stillReading || currentPageIndex === pages.length - 1;
+  }
 
   function buildStoryText(paragraphs) {
     storyTextArea.innerHTML = "";
@@ -414,6 +419,7 @@
     resetButtons();
     activeMode = null;
     currentChunkBoundaryFired = null;
+    updatePageNavDisabled();
   }
 
   function setPlaying(mode) {
@@ -422,6 +428,7 @@
     b.btn.classList.add("playing");
     b.btn.innerHTML = buttonHtml("⏸", b.playingLabel);
     activeMode = mode;
+    updatePageNavDisabled();
   }
 
   // 오늘 이 단계를 끝까지 마쳤을 때 호출. 오늘 1·2·3번을 모두 마치면 도장판에 도장이
