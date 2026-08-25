@@ -192,30 +192,54 @@
     }
   }
 
-  function generateCrossword(levelWords, targetCount) {
+  // unseenWords: 이 레벨에서 아직 안 나온(=남은 더미) 단어. seenWords: 이미 나온
+  // 단어들(같은 레벨의 나머지 전부) - 겹칠 자리를 찾는 "도우미" 후보로만 쓴다.
+  // unseenWords만 후보로 주면 더미가 줄어들수록 겹칠 상대가 씨가 말라서, 레벨 후반
+  // 판마다 단어가 한두 개만 놓이는 문제가 있었다. seenWords를 후보 풀에 같이 넣고
+  // unseenWords를 먼저 시도하게 해서, 새 단어를 우선하면서도 판 자체는 항상
+  // 풍성하게 유지한다(이미 나온 단어가 이번 판에 다시 보여도, "레벨을 다 썼는지"는
+  // unseenWords 쪽만 세므로 진행에는 영향 없다).
+  function generateCrossword(unseenWords, seenWords, targetCount) {
     var size = GRID_SIZE;
     var grid = [];
     for (var r = 0; r < size; r++) grid.push(new Array(size).fill(null));
 
-    var shuffled = shuffle(levelWords.slice()).map(function (w) {
-      return { word: w.word, clue: w.clue };
+    var unseenShuffled = shuffle(unseenWords.slice()).map(function (w) {
+      return { word: w.word, clue: w.clue, unseen: true };
     });
-    if (shuffled.length === 0) return null;
+    var seenShuffled = shuffle(seenWords.slice()).map(function (w) {
+      return { word: w.word, clue: w.clue, unseen: false };
+    });
+    if (unseenShuffled.length === 0 && seenShuffled.length === 0) return null;
 
-    // 시작 단어(맨 처음 놓는 닻 단어)를 매번 무작위로 골라야 "새 퍼즐"을 눌렀을 때
-    // 정말 다른 퍼즐이 나온다 - 길이순으로만 고르면 가장 긴 단어가 거의 항상 같아서
-    // (예: 초등 레벨엔 제일 긴 단어가 하나뿐) 매번 비슷한 퍼즐만 반복해서 나왔었다.
-    var first = shuffled[0];
-    // 닻 단어를 뺀 나머지는 긴 단어부터 시도해야 교차 자리를 더 잘 찾는다.
-    var candidates = shuffled.slice(1).sort(function (a, b) {
-      return b.word.length - a.word.length;
+    // 시작 단어(맨 처음 놓는 닻 단어)는 아직 안 나온 단어 중에서 무작위로 고른다
+    // (없으면 나온 단어 중에서) - 매번 다른 퍼즐이 나오면서도 새 단어를 우선한다.
+    var first = unseenShuffled.length > 0 ? unseenShuffled[0] : seenShuffled[0];
+    var restUnseen = unseenShuffled.filter(function (w) {
+      return w.word !== first.word;
     });
+    var restSeen = first.unseen
+      ? seenShuffled
+      : seenShuffled.filter(function (w) {
+          return w.word !== first.word;
+        });
+    // 닻 단어를 뺀 나머지는 "안 나온 단어(긴 것부터) → 나온 단어(긴 것부터)" 순으로
+    // 시도해야, 겹칠 자리를 찾을 때 새 단어가 먼저 채택된다.
+    var candidates = restUnseen
+      .sort(function (a, b) {
+        return b.word.length - a.word.length;
+      })
+      .concat(
+        restSeen.sort(function (a, b) {
+          return b.word.length - a.word.length;
+        })
+      );
 
     var placed = [];
     var startRow = Math.floor(size / 2);
     var startCol = Math.floor((size - first.word.length) / 2);
     placeWord(grid, first.word, startRow, startCol, "across");
-    placed.push({ word: first.word, clue: first.clue, row: startRow, col: startCol, dir: "across" });
+    placed.push({ word: first.word, clue: first.clue, row: startRow, col: startCol, dir: "across", unseen: first.unseen });
 
     // 한 번 훑어서 못 겹친 단어라도, 나중에 다른 단어가 놓이면 그제서야 겹칠 자리가
     // 생길 수 있다(예: "학생"이 먼저 시도될 때는 "학교"가 아직 없어 실패해도, "학교"가
@@ -245,7 +269,7 @@
         }
         if (best) {
           placeWord(grid, cand.word, best.row, best.col, best.dir);
-          placed.push({ word: cand.word, clue: cand.clue, row: best.row, col: best.col, dir: best.dir });
+          placed.push({ word: cand.word, clue: cand.clue, row: best.row, col: best.col, dir: best.dir, unseen: cand.unseen });
           remaining.splice(wi, 1);
           wi--;
           progress = true;
@@ -302,10 +326,10 @@
 
   // 한 번의 시도는 셔플 운에 따라 겹치는 단어 수가 들쭉날쭉하다(2~3개만 놓일 때도
   // 있음) - 몇 번 더 만들어보고 그중 가장 단어가 많이 들어간 퍼즐을 골라 쓴다.
-  function generateBestCrossword(levelWords, targetCount, attempts) {
+  function generateBestCrossword(unseenWords, seenWords, targetCount, attempts) {
     var best = null;
     for (var i = 0; i < attempts; i++) {
-      var result = generateCrossword(levelWords, targetCount);
+      var result = generateCrossword(unseenWords, seenWords, targetCount);
       if (!result) continue;
       // 단어 수가 같으면(동점) 항상 먼저 나온 걸 고르지 않고 절반 확률로 새 걸로
       // 바꿔서, 같은 판이 매번 반복되지 않고 동점 결과들 사이에서도 섞이게 한다.
@@ -666,17 +690,21 @@
     });
   }
 
+  // 이 레벨 전체 단어를 "아직 안 나온(unseen, 남은 더미)"과 "이미 나온(seen)"으로
+  // 나눠 돌려준다 - unseen은 이번 판의 새 단어 후보, seen은 겹칠 자리를 찾는 도우미로
+  // generateCrossword에 같이 넘긴다.
   function poolCandidates(mode, state) {
     var words = levelsFor(mode)[state.levelIndex].words;
-    var map = {};
-    words.forEach(function (w) {
-      map[w.word] = w;
-    });
-    var list = [];
+    var remainingSet = {};
     state.remaining.forEach(function (wstr) {
-      if (map[wstr]) list.push(map[wstr]);
+      remainingSet[wstr] = true;
     });
-    return list;
+    var unseen = [];
+    var seen = [];
+    words.forEach(function (w) {
+      (remainingSet[w.word] ? unseen : seen).push(w);
+    });
+    return { unseen: unseen, seen: seen };
   }
 
   function newGame(mode) {
@@ -696,14 +724,14 @@
 
     var state = loadPoolState(mode);
     var candidates = poolCandidates(mode, state);
-    if (candidates.length === 0) {
+    if (candidates.unseen.length === 0) {
       state = freshPool(mode, state.levelIndex);
       candidates = poolCandidates(mode, state);
     }
     var puzzleLevelIndex = state.levelIndex;
     updateLevelLabel(mode, puzzleLevelIndex);
 
-    var result = generateBestCrossword(candidates, TARGET_WORDS, GENERATE_ATTEMPTS);
+    var result = generateBestCrossword(candidates.unseen, candidates.seen, TARGET_WORDS, GENERATE_ATTEMPTS);
 
     if (!result || result.placed.length === 0) {
       emptyEl.hidden = false;
@@ -714,11 +742,13 @@
     playEl.hidden = false;
     startTimer();
 
-    // 이번 판에 실제로 칸에 놓인 단어는 이 레벨의 남은 더미에서 빼서, 같은 레벨
-    // 안에서는 이미 나온 단어가 다시 안 나오게 한다.
+    // 이번 판에 실제로 칸에 놓인 단어 중 "아직 안 나온" 단어만 이 레벨의 남은 더미에서
+    // 뺀다 - 겹칠 자리를 찾는 도우미로 쓰인 이미 나온 단어는 더미에서 뺄 게 없다
+    // (이미 없음). 이렇게 해야 새 단어 진행은 계속되면서도, 후반 판이 겹칠 상대가
+    // 없어서 단어 한두 개짜리로 쪼그라드는 일이 없다.
     var placedWordSet = {};
     result.placed.forEach(function (p) {
-      placedWordSet[p.word] = true;
+      if (p.unseen) placedWordSet[p.word] = true;
     });
     state.remaining = state.remaining.filter(function (w) {
       return !placedWordSet[w];
