@@ -345,6 +345,10 @@
   border-color: var(--color-accent);
 }
 
+.wc-game-dev {
+  border-style: dashed;
+}
+
 .wc-game-emoji {
   font-size: 2rem;
 }

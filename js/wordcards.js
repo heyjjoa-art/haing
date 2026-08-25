@@ -22,6 +22,8 @@
   var gameTetrisBtn = document.getElementById("wcGameTetris");
   var gameSudokuBtn = document.getElementById("wcGameSudoku");
   var gameCrosswordBtn = document.getElementById("wcGameCrossword");
+  var gameSmileyfindBtn = document.getElementById("wcGameSmileyfind");
+  var gameHanoiBtn = document.getElementById("wcGameHanoi");
   var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
   var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
   var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
@@ -123,6 +125,12 @@
         entry.btn.disabled = left !== Infinity && left <= 0;
       });
     }
+
+    // 해피 찾기 / 하노이의 탑은 아직 개발 중 - 게임 기회 시스템과 무관하게,
+    // 관리자로 로그인했을 때만 카드 자체를 보여준다(아이 계정에는 항상 숨김).
+    var isAdmin = typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
+    gameSmileyfindBtn.hidden = !isAdmin;
+    gameHanoiBtn.hidden = !isAdmin;
   }
 
   function render() {
@@ -208,6 +216,12 @@
   });
   gameCrosswordBtn.addEventListener("click", function () {
     startGame("crossword.html", "crossword");
+  });
+  gameSmileyfindBtn.addEventListener("click", function () {
+    window.location.href = "smileyfind.html";
+  });
+  gameHanoiBtn.addEventListener("click", function () {
+    window.location.href = "hanoi.html";
   });
 
   activateTab("words");

@@ -292,6 +292,13 @@
           btn.addEventListener("click", function () {
             onCellActivate(rr, cc);
           });
+          // 마우스 오른쪽 클릭(우클릭)은 지금 모드와 상관없이 항상 깃발 표시를
+          // 토글한다 - PC에서 지뢰찾기 하듯 바로 깃발을 꽂을 수 있게.
+          btn.addEventListener("contextmenu", function (e) {
+            e.preventDefault();
+            if (over) return;
+            handleFlagToggle(rr, cc);
+          });
         })(r, c);
         boardEl.appendChild(btn);
         rowEls.push(btn);

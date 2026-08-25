@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>단어 도감 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608251535">
-<link rel="stylesheet" href="css/word-card.css?v=202608251535">
+<link rel="stylesheet" href="css/style.css?v=202608251554">
+<link rel="stylesheet" href="css/word-card.css?v=202608251554">
 </head>
 <body>
 
@@ -55,6 +55,17 @@
         <span class="wc-game-title">가로세로 낱말</span>
         <span class="wc-game-credits" id="wcGameCrosswordCredits">0회</span>
       </button>
+      <!-- 개발 중 - 관리자로 로그인했을 때만 js/wordcards.js가 hidden을 풀어준다. -->
+      <button type="button" class="wc-game-card wc-game-dev" id="wcGameSmileyfind" hidden>
+        <span class="wc-game-emoji">🙂</span>
+        <span class="wc-game-title">해피 찾기</span>
+        <span class="wc-game-credits">🛠️ 개발중</span>
+      </button>
+      <button type="button" class="wc-game-card wc-game-dev" id="wcGameHanoi" hidden>
+        <span class="wc-game-emoji">🗼</span>
+        <span class="wc-game-title">하노이의 탑</span>
+        <span class="wc-game-credits">🛠️ 개발중</span>
+      </button>
     </div>
   </div>
 
@@ -77,16 +88,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608251535"></script>
-<script src="js/child-store.js?v=202608251535"></script>
-<script src="js/admin-auth-store.js?v=202608251535"></script>
-<script src="js/child-badge.js?v=202608251535"></script>
-<script src="js/word-card-store.js?v=202608251535"></script>
-<script src="js/word-card-view.js?v=202608251535"></script>
-<script src="js/progress-store.js?v=202608251535"></script>
-<script src="journeys/js/stamp-store.js?v=202608251535"></script>
-<script src="js/word-game-store.js?v=202608251535"></script>
-<script src="js/tts.js?v=202608251535"></script>
-<script src="js/wordcards.js?v=202608251535"></script>
+<script src="js/firebase-init.js?v=202608251554"></script>
+<script src="js/child-store.js?v=202608251554"></script>
+<script src="js/admin-auth-store.js?v=202608251554"></script>
+<script src="js/child-badge.js?v=202608251554"></script>
+<script src="js/word-card-store.js?v=202608251554"></script>
+<script src="js/word-card-view.js?v=202608251554"></script>
+<script src="js/progress-store.js?v=202608251554"></script>
+<script src="journeys/js/stamp-store.js?v=202608251554"></script>
+<script src="js/word-game-store.js?v=202608251554"></script>
+<script src="js/tts.js?v=202608251554"></script>
+<script src="js/wordcards.js?v=202608251554"></script>
 </body>
 </html>
