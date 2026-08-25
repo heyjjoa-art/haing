@@ -140,6 +140,7 @@
   function renderPage(idx, resumeMode) {
     stopAll();
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
+    resetButtons(); // stopAll()은 이전 페이지 번호로 이미 그려버렸으니 새 페이지 번호로 다시 그린다
     var page = pages[currentPageIndex];
 
     if (page.photo) {
@@ -357,11 +358,19 @@
     step();
   }
 
-  // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다.
+  // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다. 페이지가
+  // 여러 장인 유닛은 지금 몇 페이지째인지도 버튼에 함께 보여준다 - 도장은 "듣기/따라읽기/
+  // 혼자읽기"를 마지막 페이지까지 끝까지 재생해야만 찍히는데, 버튼만 봐서는 지금 페이지가
+  // 마지막인지 알기 어려워서 "다 들었는데 왜 도장이 안 찍히지"로 헷갈리기 쉬웠다.
   function buttonHtml(icon, label) {
+    var progressHtml =
+      pages.length > 1
+        ? '<span class="listen-btn-progress">' + (currentPageIndex + 1) + "/" + pages.length + "</span>"
+        : "";
     return (
       '<span class="listen-btn-icon">' + icon + "</span>" +
-      '<span class="listen-btn-label">' + label + "</span>"
+      '<span class="listen-btn-label">' + label + "</span>" +
+      progressHtml
     );
   }
 

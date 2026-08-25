@@ -212,6 +212,16 @@
   text-overflow: ellipsis;
 }
 
+.listen-btn-progress {
+  flex: none;
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .listen-btn.listen {
   background: var(--color-accent);
   color: var(--color-text);
