@@ -152,9 +152,37 @@ var Tts = (function () {
           charIndex: offset + (event.charIndex || 0)
         });
       };
-      utterance.onend = function () {
+
+      // 이 조각(청크) 하나를 "끝냈다"고 보고 다음 조각으로 넘어간다. onend/onerror
+      // 둘 중 먼저 온 쪽을 따르고, 워치독 타이머가 먼저 울렸으면 그것도 같은 취급을
+      // 한다 - 셋 중 뭐가 됐든 한 번만 넘어가도록 advanced 플래그로 막는다.
+      var advanced = false;
+      function advanceToNextChunk() {
+        if (advanced) return;
+        advanced = true;
+        clearTimeout(watchdogTimer);
         speakChunk(idx + 1, offset + chunkText.length);
+      }
+      utterance.onend = advanceToNextChunk;
+      // 크롬 일부 버전은 정상 종료 대신 error 이벤트(주로 "interrupted"/"canceled" 외의
+      // 원인 불명 오류)를 주기도 한다 - 이걸 무시하면 그 자리에서 영영 멈춘다.
+      utterance.onerror = function (event) {
+        // "canceled"/"interrupted"는 stop()이 정상적으로 cancel()을 부른 경우에도
+        // 흔히 같이 오는 값이라 경고를 찍지 않는다 - 진짜 예상 밖 오류만 남긴다.
+        var reason = event && event.error;
+        if (reason !== "canceled" && reason !== "interrupted") {
+          console.warn("[Tts] 발화 오류, 다음 조각으로 건너뜀", reason);
+        }
+        advanceToNextChunk();
       };
+
+      // 크롬은 가끔 onend도 onerror도 안 보내고 그냥 소리 없이 멈춰버리는 버그가 있다
+      // (실제로 관찰됨 - 특정 조각 경계에서 재생이 완전히 끊김). 글자 수로 어림잡은
+      // 예상 재생 시간보다 한참 지나도 끝났다는 신호가 안 오면 강제로 다음 조각으로
+      // 넘어가서, 앱이 "재생 중" 상태로 영원히 멈춰있지 않게 한다.
+      var estimatedMs = (chunkText.length / (10 * (utterance.rate || 1))) * 1000;
+      var watchdogTimer = setTimeout(advanceToNextChunk, Math.max(2500, estimatedMs) + 5000);
+
       window.speechSynthesis.speak(utterance);
     }
 
