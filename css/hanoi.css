@@ -16,6 +16,12 @@
   font-weight: bold;
 }
 
+.hanoi-level-line {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .hanoi-best {
   margin: 0 0 10px;
   font-size: 0.85rem;
@@ -23,28 +29,43 @@
   color: var(--color-gold);
 }
 
-.stage-tabs {
+.hanoi-level-picker {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.stage-tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: var(--radius-sm);
+.hanoi-level-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   border: 2px solid var(--color-border);
   background: var(--color-surface);
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   cursor: pointer;
   color: var(--color-text-muted);
 }
 
-.stage-tab.active {
+.hanoi-level-btn.current {
   border-color: var(--color-accent);
   background: #fff4e0;
   color: var(--color-accent-deep);
+}
+
+.hanoi-level-btn.cleared:not(.current) {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.hanoi-level-btn.locked {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-placeholder);
+  cursor: default;
+  font-size: 0.85rem;
 }
 
 .hanoi-status {
@@ -111,7 +132,7 @@
   align-items: center;
   gap: 2px;
   width: 100%;
-  min-height: 176px;
+  min-height: 210px;
 }
 
 .hanoi-disk {
@@ -131,6 +152,9 @@
 .hanoi-disk[data-size="3"] { background: #ffe066; }
 .hanoi-disk[data-size="4"] { background: #8fd3a3; }
 .hanoi-disk[data-size="5"] { background: #7dd3fc; }
+.hanoi-disk[data-size="6"] { background: #c77dff; }
+.hanoi-disk[data-size="7"] { background: #ff8f6b; }
+.hanoi-disk[data-size="8"] { background: #b0a8f0; }
 
 .hanoi-base {
   z-index: 1;
