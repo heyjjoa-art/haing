@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>가로세로 낱말 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608251535">
-<link rel="stylesheet" href="css/crossword.css?v=202608251535">
+<link rel="stylesheet" href="css/style.css?v=202608251554">
+<link rel="stylesheet" href="css/crossword.css?v=202608251554">
 </head>
 <body>
 
@@ -24,11 +24,10 @@
   <p class="crossword-total">🔥 지금까지 맞힌 단어 총 <strong id="crosswordTotalSolved">0</strong>개</p>
 
   <div class="stage-tabs">
-    <button type="button" class="stage-tab active" id="crosswordElementaryTab" data-level="elementary">🟢 초등</button>
-    <button type="button" class="stage-tab" id="crosswordMiddle1Tab" data-level="middle1">🟡 중1</button>
-    <button type="button" class="stage-tab" id="crosswordMiddle2Tab" data-level="middle2">🟠 중2</button>
-    <button type="button" class="stage-tab" id="crosswordMiddle3Tab" data-level="middle3">🔴 중3</button>
+    <button type="button" class="stage-tab active" id="crosswordElementaryTab" data-mode="elementary">🟢 초등</button>
+    <button type="button" class="stage-tab" id="crosswordMiddleTab" data-mode="middle">🟠 중등</button>
   </div>
+  <p class="crossword-level-label" id="crosswordLevelLabel"></p>
 
   <p class="crossword-empty" id="crosswordEmpty" hidden>
     낱말퍼즐을 만들지 못했어요.<br>다른 단계를 선택하거나 다시 시도해보세요!
@@ -66,15 +65,15 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608251535"></script>
-<script src="js/child-store.js?v=202608251535"></script>
-<script src="js/admin-auth-store.js?v=202608251535"></script>
-<script src="js/child-badge.js?v=202608251535"></script>
-<script src="js/word-card-store.js?v=202608251535"></script>
-<script src="js/progress-store.js?v=202608251535"></script>
-<script src="journeys/js/stamp-store.js?v=202608251535"></script>
-<script src="js/word-game-store.js?v=202608251535"></script>
-<script src="js/crossword-words.js?v=202608251535"></script>
-<script src="js/crossword.js?v=202608251535"></script>
+<script src="js/firebase-init.js?v=202608251554"></script>
+<script src="js/child-store.js?v=202608251554"></script>
+<script src="js/admin-auth-store.js?v=202608251554"></script>
+<script src="js/child-badge.js?v=202608251554"></script>
+<script src="js/word-card-store.js?v=202608251554"></script>
+<script src="js/progress-store.js?v=202608251554"></script>
+<script src="journeys/js/stamp-store.js?v=202608251554"></script>
+<script src="js/word-game-store.js?v=202608251554"></script>
+<script src="js/crossword-words.js?v=202608251554"></script>
+<script src="js/crossword.js?v=202608251554"></script>
 </body>
 </html>

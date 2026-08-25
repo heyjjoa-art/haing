@@ -50,6 +50,13 @@
   color: var(--color-accent-deep);
 }
 
+.crossword-level-label {
+  margin: -8px 0 14px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: var(--color-text-muted);
+}
+
 .crossword-empty {
   background: #fff4e0;
   border: 2px dashed var(--color-border);

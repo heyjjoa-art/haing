@@ -1,18 +1,29 @@
-// 세 번째 보너스 게임. 아이가 모은 단어카드가 아니라 초등/중1/중2/중3 교과서 수준별
+// 세 번째 보너스 게임. 아이가 모은 단어카드가 아니라 초등/중등 교과서 수준별
 // 단어은행(js/crossword-words.js)에서 골라 매번 새 낱말퍼즐을 짠다. 유일해나 최적
 // 밀도는 신경쓰지 않는 캐주얼 배치 알고리즘 - 겹칠 자리를 못 찾은 단어는 그냥 건너뛴다.
+//
+// 초등/중등 각각 학년(레벨) 순서로 단어 더미를 하나씩 다 써야(=그 레벨 단어가 거의
+// 다 나와야) 다음 레벨로 넘어간다. 그래서 한 판에서 실제로 칸에 놓인(=문제로 나온)
+// 단어는 그 레벨의 "남은 단어 더미"에서 바로 빼서, 같은 레벨 안에서는 이미 나온
+// 단어가 다시 안 나온다. 더미가 거의 바닥나면 다음 레벨로, 맨 마지막 레벨(중등이면
+// 중3, 초등이면 5~6학년)에서 바닥나면 그 레벨 단어를 다시 섞어서 계속 반복한다.
 (function () {
   "use strict";
 
-  var LEVEL_ORDER = ["elementary", "middle1", "middle2", "middle3"];
+  var MODE_ORDER = ["elementary", "middle"];
   var TARGET_WORDS = 12;
   var GENERATE_ATTEMPTS = 20;
   var GRID_SIZE = 15;
+  // 레벨의 남은 단어 더미가 이 개수 이하로 줄어들면(=거의 다 나왔으면) 다음 레벨로
+  // 넘어간다. 0이 될 때까지 기다리면 마지막 몇 개가 겹칠 자리를 못 찾아 영영 안
+  // 뽑힐 수 있어서, 소진 기준을 조금 여유 있게 잡았다.
+  var LEVEL_EXHAUST_THRESHOLD = 8;
 
   var creditsEl = document.getElementById("crosswordCredits");
   var bestEl = document.getElementById("crosswordBest");
   var timerEl = document.getElementById("crosswordTimer");
   var totalSolvedEl = document.getElementById("crosswordTotalSolved");
+  var levelLabelEl = document.getElementById("crosswordLevelLabel");
   var emptyEl = document.getElementById("crosswordEmpty");
   var playEl = document.getElementById("crosswordPlay");
   var boardEl = document.getElementById("crosswordBoard");
@@ -26,12 +37,11 @@
 
   var tabs = {
     elementary: document.getElementById("crosswordElementaryTab"),
-    middle1: document.getElementById("crosswordMiddle1Tab"),
-    middle2: document.getElementById("crosswordMiddle2Tab"),
-    middle3: document.getElementById("crosswordMiddle3Tab")
+    middle: document.getElementById("crosswordMiddleTab")
   };
 
-  var currentLevel = "elementary";
+  var currentMode = "elementary";
+  var pendingLevelUpLabel = null; // 이번 판 끝나고 다음 판부터는 다음 레벨이라는 걸 알려줄 문구
   var puzzle = null;
   var userGrid = [];
   var cellWordMap = [];
@@ -45,9 +55,9 @@
   var timerId = null;
   var countedThisPuzzle = {};
 
-  function bestTimeKey(level) {
+  function bestTimeKey(mode) {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
-    return "haingCrosswordBest_" + (childId ? childId + "_" : "guest_") + level;
+    return "haingCrosswordBest_" + (childId ? childId + "_" : "guest_") + mode;
   }
 
   function totalSolvedKey() {
@@ -64,8 +74,61 @@
   }
 
   function showBestTime() {
-    var raw = localStorage.getItem(bestTimeKey(currentLevel));
+    var raw = localStorage.getItem(bestTimeKey(currentMode));
     bestEl.textContent = raw ? formatTime(parseInt(raw, 10)) : "-";
+  }
+
+  // 레벨(학년 단계) 진행과, 그 레벨에서 아직 안 나온 단어 더미를 아이·모드별로
+  // 저장해둔다. 예전 haingCrosswordBest_*/haingCrosswordTotalSolved_* 기록은 이
+  // 기능과 무관한 별도 키라 전혀 건드리지 않는다 - 새 키(haingCrosswordPool_*)만
+  // 새로 쓴다.
+  function poolKey(mode) {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    return "haingCrosswordPool_" + (childId ? childId + "_" : "guest_") + mode;
+  }
+
+  function levelsFor(mode) {
+    return CROSSWORD_WORD_BANK[mode].levels;
+  }
+
+  function clampLevelIndex(mode, levelIndex) {
+    var levels = levelsFor(mode);
+    return Math.max(0, Math.min(levelIndex, levels.length - 1));
+  }
+
+  // 그 레벨의 단어 전체를 다시 섞어 "남은 단어 더미"로 삼는다 - 레벨을 처음 시작할
+  // 때나, 맨 마지막 레벨에서 더미가 바닥나 다시 도는 경우에 쓴다.
+  function freshPool(mode, levelIndex) {
+    levelIndex = clampLevelIndex(mode, levelIndex);
+    var words = levelsFor(mode)[levelIndex].words.map(function (w) {
+      return w.word;
+    });
+    return { levelIndex: levelIndex, remaining: shuffle(words) };
+  }
+
+  function loadPoolState(mode) {
+    var raw = localStorage.getItem(poolKey(mode));
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.levelIndex === "number" && Array.isArray(parsed.remaining)) {
+          parsed.levelIndex = clampLevelIndex(mode, parsed.levelIndex);
+          return parsed;
+        }
+      } catch (e) {
+        // no-op - 아래에서 새로 만든다
+      }
+    }
+    return freshPool(mode, 0);
+  }
+
+  function savePoolState(mode, state) {
+    localStorage.setItem(poolKey(mode), JSON.stringify(state));
+  }
+
+  function updateLevelLabel(mode, levelIndex) {
+    var levels = levelsFor(mode);
+    levelLabelEl.textContent = levels.length > 1 ? "📚 " + levels[clampLevelIndex(mode, levelIndex)].label : "";
   }
 
   function stopTimer() {
@@ -509,7 +572,7 @@
     isSolved = true;
     stopTimer();
     var elapsed = Math.floor((Date.now() - startTime) / 1000);
-    var key = bestTimeKey(currentLevel);
+    var key = bestTimeKey(currentMode);
     var prevBest = parseInt(localStorage.getItem(key), 10);
     var isNewBest = isNaN(prevBest) || elapsed < prevBest;
     if (isNewBest) localStorage.setItem(key, String(elapsed));
@@ -517,7 +580,8 @@
 
     var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("crossword") : 0;
     overlayDescEl.textContent =
-      CROSSWORD_WORD_BANK[currentLevel].label + " 낱말퍼즐 " + puzzle.placed.length + "개 단어를 " + formatTime(elapsed) + "만에 다 맞혔어요!" + (isNewBest ? " 🎉 신기록!" : "");
+      CROSSWORD_WORD_BANK[currentMode].label + " 낱말퍼즐 " + puzzle.placed.length + "개 단어를 " + formatTime(elapsed) + "만에 다 맞혔어요!" + (isNewBest ? " 🎉 신기록!" : "") +
+      (pendingLevelUpLabel ? " 🆙 다음 판부터 " + pendingLevelUpLabel + " 단계예요!" : "");
     retryBtn.hidden = creditsLeft <= 0;
     overlayNoteEl.hidden = creditsLeft > 0;
     overlayEl.hidden = false;
@@ -602,10 +666,23 @@
     });
   }
 
-  function newGame(level) {
-    currentLevel = level;
-    LEVEL_ORDER.forEach(function (key) {
-      tabs[key].classList.toggle("active", key === level);
+  function poolCandidates(mode, state) {
+    var words = levelsFor(mode)[state.levelIndex].words;
+    var map = {};
+    words.forEach(function (w) {
+      map[w.word] = w;
+    });
+    var list = [];
+    state.remaining.forEach(function (wstr) {
+      if (map[wstr]) list.push(map[wstr]);
+    });
+    return list;
+  }
+
+  function newGame(mode) {
+    currentMode = mode;
+    MODE_ORDER.forEach(function (key) {
+      tabs[key].classList.toggle("active", key === mode);
     });
 
     overlayEl.hidden = true;
@@ -613,11 +690,20 @@
     selected = null;
     direction = "across";
     countedThisPuzzle = {};
+    pendingLevelUpLabel = null;
     showBestTime();
     stopTimer();
 
-    var bank = CROSSWORD_WORD_BANK[level].words;
-    var result = generateBestCrossword(bank, TARGET_WORDS, GENERATE_ATTEMPTS);
+    var state = loadPoolState(mode);
+    var candidates = poolCandidates(mode, state);
+    if (candidates.length === 0) {
+      state = freshPool(mode, state.levelIndex);
+      candidates = poolCandidates(mode, state);
+    }
+    var puzzleLevelIndex = state.levelIndex;
+    updateLevelLabel(mode, puzzleLevelIndex);
+
+    var result = generateBestCrossword(candidates, TARGET_WORDS, GENERATE_ATTEMPTS);
 
     if (!result || result.placed.length === 0) {
       emptyEl.hidden = false;
@@ -627,6 +713,29 @@
     emptyEl.hidden = true;
     playEl.hidden = false;
     startTimer();
+
+    // 이번 판에 실제로 칸에 놓인 단어는 이 레벨의 남은 더미에서 빼서, 같은 레벨
+    // 안에서는 이미 나온 단어가 다시 안 나오게 한다.
+    var placedWordSet = {};
+    result.placed.forEach(function (p) {
+      placedWordSet[p.word] = true;
+    });
+    state.remaining = state.remaining.filter(function (w) {
+      return !placedWordSet[w];
+    });
+
+    var levels = levelsFor(mode);
+    if (state.remaining.length <= LEVEL_EXHAUST_THRESHOLD) {
+      if (puzzleLevelIndex < levels.length - 1) {
+        var nextIndex = puzzleLevelIndex + 1;
+        pendingLevelUpLabel = levels[nextIndex].label;
+        state = freshPool(mode, nextIndex);
+      } else {
+        // 맨 마지막 레벨: 단어 더미를 새로 섞어서 계속 반복한다.
+        state = freshPool(mode, puzzleLevelIndex);
+      }
+    }
+    savePoolState(mode, state);
 
     puzzle = result;
     cellWordMap = buildCellWordMap();
@@ -642,17 +751,17 @@
     updateProgress();
   }
 
-  LEVEL_ORDER.forEach(function (level) {
-    tabs[level].addEventListener("click", function () {
+  MODE_ORDER.forEach(function (mode) {
+    tabs[mode].addEventListener("click", function () {
       if (isSolved) return;
-      newGame(level);
+      newGame(mode);
     });
   });
 
   retryBtn.addEventListener("click", function () {
     if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("crossword")) return;
     creditsEl.textContent = WordGameStore.getCreditsLabel("crossword");
-    newGame(currentLevel);
+    newGame(currentMode);
   });
 
   creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("crossword") : "0";
