@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하노이의 탑 - Haing</title>
+<link rel="stylesheet" href="css/style.css?v=202608251535">
+<link rel="stylesheet" href="css/hanoi.css?v=202608251535">
+</head>
+<body>
+
+<!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
+     관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/hanoi-gate.js). -->
+<script src="js/admin-auth-store.js?v=202608251535"></script>
+<script src="js/hanoi-gate.js?v=202608251535"></script>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle">영어를 좋아하는</p>
+  <a class="wordcard-link-btn" href="wordcards.html">
+    <span class="wordcard-link-icon" aria-hidden="true">📔</span>
+    <span class="wordcard-link-label">단어도감</span>
+  </a>
+</header>
+
+<main class="hanoi-main">
+  <p class="hanoi-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+
+  <p class="hanoi-best">🏆 최소 이동 <strong id="hanoiBest">-</strong> · ⏱ <strong id="hanoiTimer">0:00</strong></p>
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="hanoiEasyTab" data-level="easy">🟢 쉬운 단계</button>
+    <button type="button" class="stage-tab" id="hanoiMediumTab" data-level="medium">🟡 중간 단계</button>
+    <button type="button" class="stage-tab" id="hanoiHardTab" data-level="hard">🔴 어려운 단계</button>
+  </div>
+
+  <p class="hanoi-status">
+    <span>👣 이동 횟수 <strong id="hanoiMoves">0</strong>회</span>
+    <span class="hanoi-status-sep">·</span>
+    <span>최소 <strong id="hanoiMinMoves">0</strong>회</span>
+  </p>
+
+  <p class="hanoi-hint" id="hanoiHint">기둥을 눌러 원반을 고르고, 옮길 기둥을 다시 눌러보세요.</p>
+
+  <div class="hanoi-board" id="hanoiBoard"></div>
+
+  <button type="button" class="secondary-btn hanoi-restart-btn" id="hanoiRestartBtn">🔄 다시 시작</button>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+
+  <div class="hanoi-overlay" id="hanoiOverlay" hidden>
+    <div class="hanoi-overlay-box">
+      <p class="hanoi-overlay-title" id="hanoiOverlayTitle">🎉 완성했어요!</p>
+      <p class="hanoi-overlay-desc" id="hanoiOverlayDesc"></p>
+      <button type="button" class="wc-popup-btn" id="hanoiRetryBtn">🔄 새 판</button>
+      <p class="back-link"><a href="index.html">← 홈으로</a></p>
+    </div>
+  </div>
+</main>
+
+<script src="js/child-store.js?v=202608251535"></script>
+<script src="js/hanoi.js?v=202608251535"></script>
+</body>
+</html>

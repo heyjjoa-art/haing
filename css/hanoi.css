@@ -1,0 +1,194 @@
+.hanoi-main {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 16px;
+  text-align: center;
+}
+
+.hanoi-dev-badge {
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: #fff4e0;
+  border: 1px dashed var(--color-accent);
+  color: var(--color-accent-deep);
+  font-size: 0.78rem;
+  font-weight: bold;
+}
+
+.hanoi-best {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-gold);
+}
+
+.stage-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stage-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.stage-tab.active {
+  border-color: var(--color-accent);
+  background: #fff4e0;
+  color: var(--color-accent-deep);
+}
+
+.hanoi-status {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.hanoi-status-sep {
+  margin: 0 6px;
+  color: var(--color-text-placeholder);
+}
+
+.hanoi-hint {
+  min-height: 1.2em;
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+}
+
+.hanoi-board {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  margin: 0 auto 16px;
+  padding: 0 4px;
+}
+
+.hanoi-peg {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding-top: 8px;
+}
+
+.hanoi-peg::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 14px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--color-text-placeholder);
+  z-index: 0;
+}
+
+.hanoi-peg.selected::before {
+  background: var(--color-accent);
+}
+
+.hanoi-peg.invalid {
+  animation: hanoi-shake 0.4s;
+}
+
+.hanoi-disks {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 176px;
+}
+
+.hanoi-disk {
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.hanoi-disk.lifted {
+  transform: translateY(-8px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.hanoi-disk[data-size="1"] { background: #ff8fa3; }
+.hanoi-disk[data-size="2"] { background: #ffb454; }
+.hanoi-disk[data-size="3"] { background: #ffe066; }
+.hanoi-disk[data-size="4"] { background: #8fd3a3; }
+.hanoi-disk[data-size="5"] { background: #7dd3fc; }
+
+.hanoi-base {
+  z-index: 1;
+  width: 100%;
+  height: 10px;
+  border-radius: 4px;
+  background: var(--color-text-placeholder);
+}
+
+.hanoi-peg.selected .hanoi-base {
+  background: var(--color-accent);
+}
+
+.hanoi-restart-btn {
+  display: block;
+  margin: 0 auto;
+}
+
+@keyframes hanoi-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.hanoi-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(58, 46, 38, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hanoi-overlay[hidden] {
+  display: none;
+}
+
+.hanoi-overlay-box {
+  background: #fff4e0;
+  border: 3px solid var(--color-accent);
+  border-radius: 20px;
+  padding: 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+}
+
+.hanoi-overlay-title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-accent-deep);
+}
+
+.hanoi-overlay-desc {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
