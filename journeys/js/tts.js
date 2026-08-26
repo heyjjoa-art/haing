@@ -181,7 +181,13 @@ var Tts = (function () {
       // 예상 재생 시간보다 한참 지나도 끝났다는 신호가 안 오면 강제로 다음 조각으로
       // 넘어가서, 앱이 "재생 중" 상태로 영원히 멈춰있지 않게 한다.
       var estimatedMs = (chunkText.length / (10 * (utterance.rate || 1))) * 1000;
-      var watchdogTimer = setTimeout(advanceToNextChunk, Math.max(2500, estimatedMs) + 5000);
+      var watchdogTimer = setTimeout(function () {
+        // onend/onerror가 둘 다 안 온 채로 여기까지 왔다는 뜻 - 실제로 크롬이 조용히
+        // 멈춘 경우. 어느 문장(조각)에서 이 버그가 실제로 발생하는지 나중에 확인할 수
+        // 있게 남겨둔다.
+        console.warn("[Tts] 응답 없음(워치독), 다음 조각으로 강제 진행:", chunkText.slice(0, 50));
+        advanceToNextChunk();
+      }, Math.max(2500, estimatedMs) + 5000);
 
       window.speechSynthesis.speak(utterance);
     }

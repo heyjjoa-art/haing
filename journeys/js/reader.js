@@ -56,6 +56,14 @@
   var pendingResumeMode = null; // 단어를 누르기 전에 읽고 있던 모드
   var pendingResumeWordIndex = -1; // 그때 읽고 있던 단어의 wordSpans 인덱스
 
+  // 재생 중에 버튼을 다시 눌러 직접 멈춘 경우(자동으로 다 끝난 게 아니라) 쓴다.
+  // 모드별로 멈춘 지점을 기억해뒀다가, 같은 버튼을 또 누르면 처음부터가 아니라
+  // 그 지점부터 이어서 읽는다. hasUnfinishedPlayback은 "이 페이지를 끝까지 재생해서
+  // 다 읽지는 않았다"는 표시로, updatePageNavDisabled()가 페이지 이동을 계속 잠그는
+  // 데 쓴다 - 멈춤 버튼으로 잠금을 피해가지 못하게(다 듣기 전엔 페이지 이동 금지).
+  var pausedWordIndex = { listen: 0, follow: 0, alone: 0 };
+  var hasUnfinishedPlayback = false;
+
   var rewardModalEl = document.getElementById("rewardModal");
   var rewardZodiacEl = document.getElementById("rewardZodiac");
   var rewardTextEl = document.getElementById("rewardText");
@@ -158,6 +166,8 @@
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
     resetButtons(); // stopAll()은 이전 페이지 번호로 이미 그려버렸으니 새 페이지 번호로 다시 그린다
     saveCurrentPagePos();
+    pausedWordIndex = { listen: 0, follow: 0, alone: 0 };
+    hasUnfinishedPlayback = false;
     var page = pages[currentPageIndex];
 
     if (page.photo) {
@@ -185,11 +195,12 @@
     renderPage(currentPageIndex + 1);
   });
 
-  // 재생 중(activeMode)이거나 단어 뜻 팝업 때문에 잠깐 멈춘 중(pendingResumeMode, 아직
-  // 안 끝났고 곧 이어서 읽을 예정)이면 형광펜이 이 페이지를 다 읽지 않은 것으로 보고
-  // 이전/다음 페이지 버튼을 잠근다 - 다 듣기 전에 페이지를 넘겨버리는 걸 막는다.
+  // 재생 중(activeMode)이거나, 단어 뜻 팝업 때문에 잠깐 멈춘 중(pendingResumeMode, 곧
+  // 이어서 읽을 예정)이거나, 다 안 끝났는데 멈춤 버튼으로 직접 멈춘 상태(hasUnfinishedPlayback)면
+  // 형광펜이 이 페이지를 다 읽지 않은 것으로 보고 이전/다음 페이지 버튼을 잠근다 -
+  // 멈춤 버튼을 눌러서 끝까지 안 듣고 페이지를 넘겨버리는 것도 막는다.
   function updatePageNavDisabled() {
-    var stillReading = !!activeMode || !!pendingResumeMode;
+    var stillReading = !!activeMode || !!pendingResumeMode || hasUnfinishedPlayback;
     prevPageBtn.disabled = stillReading || currentPageIndex === 0;
     nextPageBtn.disabled = stillReading || currentPageIndex === pages.length - 1;
   }
@@ -272,8 +283,7 @@
         currentSpeedRate(),
         function () {
           if (playToken !== myToken) return;
-          if (currentPageIndex === pages.length - 1) onStageCompleted("alone");
-          stopAll();
+          onReadingFinished("alone");
         },
         wordIndex
       );
@@ -431,6 +441,26 @@
     updatePageNavDisabled();
   }
 
+  // 재생 중에 버튼을 다시 눌러 직접 멈췄을 때 호출. 지금 읽던 단어 위치를 그 모드의
+  // "멈춘 지점"으로 기억해뒀다가, 같은 버튼을 또 누르면 거기서부터 이어서 읽는다.
+  // 끝까지 다 읽은 게 아니므로 hasUnfinishedPlayback을 세워서 페이지 이동도 계속 잠가둔다.
+  function pauseCurrentReading(mode) {
+    var idx = currentReadingEl ? findWordIndexByEl(currentReadingEl) : -1;
+    pausedWordIndex[mode] = idx > 0 ? idx : 0;
+    hasUnfinishedPlayback = true;
+    stopAll();
+  }
+
+  // 이 페이지를 (멈추지 않고) 끝까지 다 읽었을 때 호출 - 마지막 페이지면 오늘의
+  // 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시 처음부터 읽도록 멈춘
+  // 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
+  function onReadingFinished(mode) {
+    if (currentPageIndex === pages.length - 1) onStageCompleted(mode);
+    pausedWordIndex[mode] = 0;
+    hasUnfinishedPlayback = false;
+    stopAll();
+  }
+
   // 오늘 이 단계를 끝까지 마쳤을 때 호출. 오늘 1·2·3번을 모두 마치면 도장판에 도장이
   // 찍히고, 처음 다 채운 순간에만 보상(오늘의 운세)을 보여준다.
   function onStageCompleted(stage) {
@@ -488,18 +518,18 @@
 
   listenBtn.addEventListener("click", function () {
     if (activeMode === "listen") {
-      stopAll();
+      pauseCurrentReading("listen");
       return;
     }
-    playWithHighlight("listen", currentSpeedRate());
+    playWithHighlight("listen", currentSpeedRate(), pausedWordIndex.listen);
   });
 
   followBtn.addEventListener("click", function () {
     if (activeMode === "follow") {
-      stopAll();
+      pauseCurrentReading("follow");
       return;
     }
-    playWithHighlight("follow", currentSpeedRate());
+    playWithHighlight("follow", currentSpeedRate(), pausedWordIndex.follow);
   });
 
   // 1번(듣기)·2번(따라읽기) 공용: TTS로 전체를 읽으면서 지금 읽는 단어를 하이라이트한다.
@@ -552,15 +582,14 @@
       },
       onend: function () {
         if (playToken !== myToken) return;
-        if (currentPageIndex === pages.length - 1) onStageCompleted(mode);
-        stopAll();
+        onReadingFinished(mode);
       }
     });
   }
 
   aloneBtn.addEventListener("click", function () {
     if (activeMode === "alone") {
-      stopAll();
+      pauseCurrentReading("alone");
       return;
     }
     stopAll();
@@ -568,9 +597,8 @@
     setPlaying("alone");
     startFallbackHighlighter(currentSpeedRate(), function () {
       if (playToken !== myToken) return;
-      if (currentPageIndex === pages.length - 1) onStageCompleted("alone");
-      stopAll();
-    });
+      onReadingFinished("alone");
+    }, pausedWordIndex.alone);
   });
 
   render();
