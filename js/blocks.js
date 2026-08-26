@@ -43,9 +43,6 @@
   var topBadgeEl = document.getElementById("blocksTopBadge");
 
   var boardSvg = document.getElementById("blocksBoard");
-
-  var stackModeBtn = document.getElementById("blocksStackModeBtn");
-  var removeModeBtn = document.getElementById("blocksRemoveModeBtn");
   var restartBtn = document.getElementById("blocksRestartBtn");
 
   var overlayEl = document.getElementById("blocksOverlay");
@@ -57,7 +54,6 @@
   var maxHeight = 2;
   var current = [];        // 지금 아이가 쌓고 있는 높이 지도
   var targetViews = null;  // 목표 세 평면도 (front/side/top) - 정답 판정 기준
-  var mode = "stack";      // "stack" | "remove"
   var solved = false;
   var startTime = 0;
   var timerId = null;
@@ -331,13 +327,14 @@
     return { x: ground.x, y: ground.y - (k + 1) * CUBE_H };
   }
 
-  function createPolygon(points, cls, r, c) {
+  function createPolygon(points, cls, r, c, action) {
     var poly = document.createElementNS(SVG_NS, "polygon");
     poly.setAttribute("points", points.join(" "));
     poly.setAttribute("class", cls);
     if (r !== undefined) {
       poly.setAttribute("data-r", String(r));
       poly.setAttribute("data-c", String(c));
+      poly.setAttribute("data-action", action);
     }
     return poly;
   }
@@ -366,8 +363,10 @@
 
   // 뒤에서 앞으로(d = r+c 오름차순), 아래에서 위로(k 오름차순) 그려야 앞쪽
   // 큐브가 뒤쪽 큐브를 자연스럽게 가린다. 같은 d의 칸들은 화면에서 겹치지
-  // 않으므로 그 안의 순서는 상관없다. 맨 위 면(또는 빈 칸의 바닥 타일)만
-  // data-r/data-c를 달아 클릭 대상으로 삼는다.
+  // 않으므로 그 안의 순서는 상관없다. 모드 버튼 없이 클릭한 면으로 동작을
+  // 구분한다 - 맨 위 면(빈 칸의 바닥 타일 포함)을 누르면 쌓고(data-action="add"),
+  // 이미 쌓인 큐브의 옆면(왼쪽·오른쪽)을 누르면 그 칸의 맨 위 큐브를 뺀다
+  // (data-action="remove") - 어느 층의 옆면을 누르든 항상 맨 위 큐브가 빠진다.
   function renderBoard() {
     var geo = boardGeometry();
     boardSvg.setAttribute("viewBox", "0 0 " + geo.width + " " + geo.height);
@@ -387,17 +386,21 @@
         if (h === 0) {
           var floorCenter = groundCenter(r, c, geo);
           boardSvg.appendChild(
-            createPolygon(topFacePoints(floorCenter.x, floorCenter.y), "blocks-floor blocks-hit", r, c)
+            createPolygon(topFacePoints(floorCenter.x, floorCenter.y), "blocks-floor blocks-hit-add", r, c, "add")
           );
           continue;
         }
         for (var k = 0; k < h; k++) {
           var center = cubeTopCenter(r, c, k, geo);
-          boardSvg.appendChild(createPolygon(leftFacePoints(center.x, center.y), "blocks-face-left"));
-          boardSvg.appendChild(createPolygon(rightFacePoints(center.x, center.y), "blocks-face-right"));
+          boardSvg.appendChild(
+            createPolygon(leftFacePoints(center.x, center.y), "blocks-face-left blocks-hit-remove", r, c, "remove")
+          );
+          boardSvg.appendChild(
+            createPolygon(rightFacePoints(center.x, center.y), "blocks-face-right blocks-hit-remove", r, c, "remove")
+          );
           if (k === h - 1) {
             boardSvg.appendChild(
-              createPolygon(topFacePoints(center.x, center.y), "blocks-face-top blocks-hit", r, c)
+              createPolygon(topFacePoints(center.x, center.y), "blocks-face-top blocks-hit-add", r, c, "add")
             );
           }
         }
@@ -406,9 +409,9 @@
   }
 
   // ── 조작 ────────────────────────────────────────────────────────
-  function onCellActivate(r, c) {
+  function onCellActivate(r, c, action) {
     if (solved) return;
-    if (mode === "remove") {
+    if (action === "remove") {
       if (current[r][c] > 0) current[r][c]--;
     } else if (current[r][c] < maxHeight) {
       current[r][c]++;
@@ -423,8 +426,9 @@
     if (solved) return;
     var r = e.target.getAttribute("data-r");
     var c = e.target.getAttribute("data-c");
-    if (r === null || c === null) return;
-    onCellActivate(parseInt(r, 10), parseInt(c, 10));
+    var action = e.target.getAttribute("data-action");
+    if (r === null || c === null || action === null) return;
+    onCellActivate(parseInt(r, 10), parseInt(c, 10), action);
   });
 
   function onWin() {
@@ -472,24 +476,12 @@
     newGame();
   }
 
-  function setMode(next) {
-    mode = next;
-    stackModeBtn.classList.toggle("active", mode === "stack");
-    removeModeBtn.classList.toggle("active", mode === "remove");
-  }
-
   DIFFICULTY_ORDER.forEach(function (key) {
     difficultyTabs[key].addEventListener("click", function () {
       setDifficulty(key);
     });
   });
 
-  stackModeBtn.addEventListener("click", function () {
-    setMode("stack");
-  });
-  removeModeBtn.addEventListener("click", function () {
-    setMode("remove");
-  });
   restartBtn.addEventListener("click", resetBoard);
   nextBtn.addEventListener("click", newGame);
 

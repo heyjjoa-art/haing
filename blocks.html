@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>쌓기나무 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261614">
-<link rel="stylesheet" href="css/game-ui.css?v=202608261614">
-<link rel="stylesheet" href="css/blocks.css?v=202608261614">
+<link rel="stylesheet" href="css/style.css?v=202608261626">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261626">
+<link rel="stylesheet" href="css/blocks.css?v=202608261626">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/blocks-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261614"></script>
-<script src="js/blocks-gate.js?v=202608261614"></script>
+<script src="js/admin-auth-store.js?v=202608261626"></script>
+<script src="js/blocks-gate.js?v=202608261626"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -40,7 +40,7 @@
     <span>🧱 <strong id="blocksCount">0</strong>개</span>
   </div>
 
-  <p class="blocks-hint">앞·옆·위, 세 방향에서 본 모양이 모두 똑같아지도록 쌓기나무를 놓아보세요.</p>
+  <p class="blocks-hint">앞·옆·위, 세 방향에서 본 모양이 모두 똑같아지도록 쌓기나무를 놓아보세요.<br>큐브의 윗면을 누르면 쌓이고, 옆면을 누르면 맨 위 큐브가 빠져요.</p>
 
   <div class="blocks-views">
     <div class="blocks-view">
@@ -61,11 +61,6 @@
     <svg id="blocksBoard" class="blocks-board" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
 
-  <div class="blocks-mode-row">
-    <button type="button" class="blocks-mode-btn active" id="blocksStackModeBtn">🧱 쌓기 모드</button>
-    <button type="button" class="blocks-mode-btn" id="blocksRemoveModeBtn">🧹 빼기 모드</button>
-  </div>
-
   <button type="button" class="game-btn" id="blocksRestartBtn">🔄 다시 놓기</button>
 
   <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
@@ -80,7 +75,7 @@
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261614"></script>
-<script src="js/blocks.js?v=202608261614"></script>
+<script src="js/child-store.js?v=202608261626"></script>
+<script src="js/blocks.js?v=202608261626"></script>
 </body>
 </html>
