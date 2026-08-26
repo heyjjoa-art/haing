@@ -102,6 +102,21 @@ var ProgressStore = (function () {
     return getTodaySetInfo().count > 0;
   }
 
+  // 관리자 화면에서 로그인 중인 아이와 무관하게 특정 아이의 오늘 학습 여부를
+  // 확인할 때 쓴다(hasCompletedSetToday는 ChildStore.getActive()에 묶여 있어서
+  // 관리자로 로그인한 상태에서는 그대로 못 쓴다).
+  function hasCompletedSetTodayForChild(childId) {
+    if (!childId) return false;
+    var raw = localStorage.getItem("haingWordSetsToday_" + childId + "_");
+    if (!raw) return false;
+    try {
+      var parsed = JSON.parse(raw);
+      return !!parsed && parsed.date === todayStr() && (parsed.count || 0) > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // 오늘 하루치 보상 한도(3세트)를 다 채웠는지 - word-card-store.js가 별/카드
   // 지급 여부를 결정할 때 쓴다.
   function reachedDailyWordCap() {
@@ -339,6 +354,7 @@ var ProgressStore = (function () {
     setCustomState: setCustomState,
     getCustomState: getCustomState,
     hasCompletedSetToday: hasCompletedSetToday,
+    hasCompletedSetTodayForChild: hasCompletedSetTodayForChild,
     reachedDailyWordCap: reachedDailyWordCap,
     getCompletedLapCount: getCompletedLapCount
   };

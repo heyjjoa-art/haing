@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Haing - 하정 하진이의 영어</title>
-<link rel="stylesheet" href="css/style.css?v=202608261543">
-<link rel="stylesheet" href="css/home.css?v=202608261543">
-<link rel="stylesheet" href="css/upload.css?v=202608261543">
-<link rel="stylesheet" href="css/tabs.css?v=202608261543">
-<link rel="stylesheet" href="css/login.css?v=202608261543">
+<link rel="stylesheet" href="css/style.css?v=202608261612">
+<link rel="stylesheet" href="css/home.css?v=202608261612">
+<link rel="stylesheet" href="css/upload.css?v=202608261612">
+<link rel="stylesheet" href="css/tabs.css?v=202608261612">
+<link rel="stylesheet" href="css/login.css?v=202608261612">
 </head>
 <body>
 
@@ -109,7 +109,7 @@
   <nav class="subtab-bar" role="tablist">
     <button type="button" class="subtab-btn" id="subtabBtnWord" role="tab" aria-selected="true" aria-controls="subpanelWord">Word</button>
     <button type="button" class="subtab-btn" id="subtabBtnJourneys" role="tab" aria-selected="false" aria-controls="subpanelJourneys">Journeys</button>
-    <button type="button" class="subtab-btn" id="subtabBtnProgress" role="tab" aria-selected="false" aria-controls="subpanelProgress">진행관리</button>
+    <button type="button" class="subtab-btn" id="subtabBtnProgress" role="tab" aria-selected="false" aria-controls="subpanelProgress">학습</button>
     <button type="button" class="subtab-btn" id="subtabBtnAccount" role="tab" aria-selected="false" aria-controls="subpanelAccount">계정</button>
   </nav>
 
@@ -130,6 +130,13 @@
   </div>
 
   <div id="subpanelProgress" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnProgress" hidden>
+    <section class="card admin-glance-card">
+      <h2>👀 한눈에 보기</h2>
+      <p class="hint">아이를 고르면 이번주 저니스, 오늘 단어 공부, 유닛별 트로피·별 스티커를 한 화면에서 볼 수 있어요.</p>
+      <div class="admin-glance-child-tabs" id="adminGlanceChildTabs"></div>
+      <div id="adminGlanceBody"></div>
+    </section>
+
     <section class="card admin-word-progress-card">
       <h2>📈 Word - 진행 관리</h2>
       <p class="hint">유닛별로 하정이와 하진이가 단어를 각각 몇 개 모았는지 볼 수 있어요.<br>복습(별 스티커)까지 포함해서 계산해요 - 단어 하나당 최대 6회(최초 수집 1회 + 복습 5회)라 진행율은 600%까지 올라갈 수 있어요.</p>
@@ -146,22 +153,8 @@
   <div id="subpanelAccount" class="subtab-panel" role="tabpanel" aria-labelledby="subtabBtnAccount" hidden>
     <section class="card admin-child-settings-card">
       <h2>🔐 비밀번호 관리</h2>
-
-      <div class="admin-child-settings-block">
-        <h3>🔑 관리자 비밀번호</h3>
-        <p class="hint">이 관리자 탭에 들어올 때 물어보는 비밀번호예요. 바꾸려면 새 비밀번호를 입력하고 저장하세요. (이 기기에만 적용돼요)</p>
-        <div class="admin-child-settings-row">
-          <input type="password" inputmode="numeric" autocomplete="off" class="admin-child-settings-input" id="adminPinChangeInput" placeholder="새 관리자 비밀번호">
-          <button type="button" class="secondary-btn" id="adminPinChangeSaveBtn">저장</button>
-          <button type="button" class="danger-btn" id="adminPinChangeClearBtn">비밀번호 없애기</button>
-        </div>
-      </div>
-
-      <div class="admin-child-settings-block">
-        <h3>🔒 계정 비밀번호</h3>
-        <p class="hint">아이가 로그인 화면에서 이름을 누를 때 직접 설정해요. 잊어버렸을 때만 여기서 지워주세요 - 지우면 다음 로그인 때 다시 설정할 수 있어요.</p>
-        <div id="adminChildPinList"></div>
-      </div>
+      <p class="hint">관리자·하정·하진 비밀번호를 한곳에서 봐요. 관리자 비밀번호는 여기서 바로 새로 정할 수 있고, 아이 비밀번호는 로그인 화면에서 아이가 직접 정하는 거라 여기서는 지우기만 할 수 있어요(지우면 다음 로그인 때 다시 설정).</p>
+      <div id="adminPinList"></div>
     </section>
 
     <section class="card admin-child-settings-card">
@@ -210,6 +203,7 @@
       btn: document.getElementById("subtabBtnProgress"),
       panel: document.getElementById("subpanelProgress"),
       onActivate: function () {
+        if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
         if (window.__haingRenderAdminWordProgress) window.__haingRenderAdminWordProgress();
         if (window.__haingRenderAdminJourneysProgress) window.__haingRenderAdminJourneysProgress();
       }
@@ -234,24 +228,25 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608261543"></script>
-<script src="js/child-store.js?v=202608261543"></script>
-<script src="js/child-auth-store.js?v=202608261543"></script>
-<script src="js/admin-auth-store.js?v=202608261543"></script>
-<script src="js/child-badge.js?v=202608261543"></script>
-<script src="js/words-data.js?v=202608261543"></script>
-<script src="js/elementary-words-data.js?v=202608261543"></script>
-<script src="js/data-store.js?v=202608261543"></script>
-<script src="js/progress-store.js?v=202608261543"></script>
-<script src="js/word-card-store.js?v=202608261543"></script>
-<script src="js/word-game-store.js?v=202608261543"></script>
-<script src="journeys/js/stamp-store.js?v=202608261543"></script>
-<script src="js/home.js?v=202608261543"></script>
-<script src="js/admin-word-units.js?v=202608261543"></script>
-<script src="js/admin-word-progress.js?v=202608261543"></script>
-<script src="js/admin-journeys-progress.js?v=202608261543"></script>
-<script src="js/admin-child-settings.js?v=202608261543"></script>
-<script src="js/tabs.js?v=202608261543"></script>
-<script src="js/login.js?v=202608261543"></script>
+<script src="js/firebase-init.js?v=202608261612"></script>
+<script src="js/child-store.js?v=202608261612"></script>
+<script src="js/child-auth-store.js?v=202608261612"></script>
+<script src="js/admin-auth-store.js?v=202608261612"></script>
+<script src="js/child-badge.js?v=202608261612"></script>
+<script src="js/words-data.js?v=202608261612"></script>
+<script src="js/elementary-words-data.js?v=202608261612"></script>
+<script src="js/data-store.js?v=202608261612"></script>
+<script src="js/progress-store.js?v=202608261612"></script>
+<script src="js/word-card-store.js?v=202608261612"></script>
+<script src="js/word-game-store.js?v=202608261612"></script>
+<script src="journeys/js/stamp-store.js?v=202608261612"></script>
+<script src="js/home.js?v=202608261612"></script>
+<script src="js/admin-word-units.js?v=202608261612"></script>
+<script src="js/admin-glance.js?v=202608261612"></script>
+<script src="js/admin-word-progress.js?v=202608261612"></script>
+<script src="js/admin-journeys-progress.js?v=202608261612"></script>
+<script src="js/admin-child-settings.js?v=202608261612"></script>
+<script src="js/tabs.js?v=202608261612"></script>
+<script src="js/login.js?v=202608261612"></script>
 </body>
 </html>

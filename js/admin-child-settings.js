@@ -4,68 +4,104 @@
 (function () {
   "use strict";
 
-  var pinListEl = document.getElementById("adminChildPinList");
+  var pinListEl = document.getElementById("adminPinList");
   var creditListEl = document.getElementById("adminGameCreditsList");
   if (typeof ChildStore === "undefined") return;
 
-  // 아이 비밀번호는 이제 로그인 화면(이름을 누를 때)에서 직접 설정한다 - 여기서는
-  // 잊어버렸을 때 지워주는 것만 한다(지우면 다음 로그인 때 다시 설정할 수 있음).
-  function renderPinList() {
-    if (!pinListEl || typeof ChildAuthStore === "undefined") return;
-    pinListEl.innerHTML = "";
+  // 관리자 탭 자체를 지키는 비밀번호 행 - 관리자 탭 안(=이미 인증된 상태)에서만
+  // 바꿀 수 있으니 예전 비밀번호를 다시 물어보지 않는다. 입력창에 새 값을 넣고
+  // 저장하면 바로 바뀐다.
+  function buildAdminRow() {
+    var row = document.createElement("div");
+    row.className = "admin-child-settings-row";
 
-    ChildStore.CHILDREN.forEach(function (child) {
-      var row = document.createElement("div");
-      row.className = "admin-child-settings-row";
+    var label = document.createElement("span");
+    label.className = "admin-child-settings-name";
+    label.textContent = "🛠️ 관리자";
+    row.appendChild(label);
 
-      var label = document.createElement("span");
-      label.className = "admin-child-settings-name";
-      label.textContent = child.zodiacEmoji + " " + child.name;
+    var status = document.createElement("span");
+    status.className = "admin-child-settings-status";
+    var hasPin = AdminAuthStore.hasPin();
+    status.textContent = hasPin ? "🔒 설정됨" : "설정 안 됨";
+    row.appendChild(status);
 
-      var status = document.createElement("span");
-      status.className = "admin-child-settings-status";
-      var hasPin = ChildAuthStore.hasPin(child.id);
-      status.textContent = hasPin ? "🔒 설정됨" : "설정 안 됨";
+    var input = document.createElement("input");
+    input.type = "password";
+    input.inputMode = "numeric";
+    input.autocomplete = "off";
+    input.className = "admin-child-settings-input";
+    input.placeholder = "새 관리자 비밀번호";
+    row.appendChild(input);
 
-      var clearBtn = document.createElement("button");
-      clearBtn.type = "button";
-      clearBtn.className = "danger-btn";
-      clearBtn.textContent = "비밀번호 지우기";
-      clearBtn.hidden = !hasPin;
-      clearBtn.addEventListener("click", function () {
-        if (confirm(child.name + "의 비밀번호를 지울까요? 다음 로그인 때 다시 설정할 수 있어요.")) {
-          ChildAuthStore.setPin(child.id, "");
-          renderPinList();
-        }
-      });
-
-      row.appendChild(label);
-      row.appendChild(status);
-      row.appendChild(clearBtn);
-      pinListEl.appendChild(row);
-    });
-  }
-
-  // 관리자 탭 자체를 지키는 비밀번호. 관리자 탭 안(=이미 인증된 상태)에서만
-  // 바꿀 수 있으니 예전 비밀번호를 다시 물어보지 않는다.
-  function setupAdminPinControls() {
-    var input = document.getElementById("adminPinChangeInput");
-    var saveBtn = document.getElementById("adminPinChangeSaveBtn");
-    var clearBtn = document.getElementById("adminPinChangeClearBtn");
-    if (!input || !saveBtn || !clearBtn || typeof AdminAuthStore === "undefined") return;
-
+    var saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "secondary-btn";
+    saveBtn.textContent = "저장";
     saveBtn.addEventListener("click", function () {
       if (!input.value) return;
       AdminAuthStore.setPin(input.value);
       input.value = "";
       alert("관리자 비밀번호를 저장했어요.");
+      renderPinList();
     });
+    row.appendChild(saveBtn);
 
+    var clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "danger-btn";
+    clearBtn.textContent = "비밀번호 없애기";
+    clearBtn.hidden = !hasPin;
     clearBtn.addEventListener("click", function () {
       if (confirm("관리자 비밀번호를 없앨까요? 다음부터는 관리자 탭에 비밀번호 없이 들어올 수 있어요.")) {
         AdminAuthStore.setPin("");
-        input.value = "";
+        renderPinList();
       }
+    });
+    row.appendChild(clearBtn);
+
+    return row;
+  }
+
+  // 아이 비밀번호는 이제 로그인 화면(이름을 누를 때)에서 직접 설정한다 - 여기서는
+  // 잊어버렸을 때 지워주는 것만 한다(지우면 다음 로그인 때 다시 설정할 수 있음).
+  function buildChildRow(child) {
+    var row = document.createElement("div");
+    row.className = "admin-child-settings-row";
+
+    var label = document.createElement("span");
+    label.className = "admin-child-settings-name";
+    label.textContent = child.zodiacEmoji + " " + child.name;
+
+    var status = document.createElement("span");
+    status.className = "admin-child-settings-status";
+    var hasPin = ChildAuthStore.hasPin(child.id);
+    status.textContent = hasPin ? "🔒 설정됨" : "설정 안 됨";
+
+    var clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "danger-btn";
+    clearBtn.textContent = "비밀번호 지우기";
+    clearBtn.hidden = !hasPin;
+    clearBtn.addEventListener("click", function () {
+      if (confirm(child.name + "의 비밀번호를 지울까요? 다음 로그인 때 다시 설정할 수 있어요.")) {
+        ChildAuthStore.setPin(child.id, "");
+        renderPinList();
+      }
+    });
+
+    row.appendChild(label);
+    row.appendChild(status);
+    row.appendChild(clearBtn);
+    return row;
+  }
+
+  function renderPinList() {
+    if (!pinListEl || typeof ChildAuthStore === "undefined" || typeof AdminAuthStore === "undefined") return;
+    pinListEl.innerHTML = "";
+    pinListEl.appendChild(buildAdminRow());
+    ChildStore.CHILDREN.forEach(function (child) {
+      pinListEl.appendChild(buildChildRow(child));
     });
   }
 
@@ -181,7 +217,6 @@
 
   renderPinList();
   renderCreditsList();
-  setupAdminPinControls();
 
   window.__haingRenderAdminChildSettings = function () {
     renderPinList();
