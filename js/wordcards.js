@@ -28,6 +28,7 @@
   var gameBreakoutBtn = document.getElementById("wcGameBreakout");
   var gameMazeBtn = document.getElementById("wcGameMaze");
   var gamePacmanBtn = document.getElementById("wcGamePacman");
+  var gameBlocksBtn = document.getElementById("wcGameBlocks");
   var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
   var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
   var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
@@ -140,6 +141,7 @@
     gameBreakoutBtn.hidden = !isAdmin;
     gameMazeBtn.hidden = !isAdmin;
     gamePacmanBtn.hidden = !isAdmin;
+    gameBlocksBtn.hidden = !isAdmin;
   }
 
   function render() {
@@ -243,6 +245,9 @@
   });
   gamePacmanBtn.addEventListener("click", function () {
     window.location.href = "pacman.html";
+  });
+  gameBlocksBtn.addEventListener("click", function () {
+    window.location.href = "blocks.html";
   });
 
   // 게임을 끝내고 "도감으로" 돌아올 때(?tab=games) 단어 탭이 아니라 게임 목록

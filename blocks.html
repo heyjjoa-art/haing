@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>쌓기나무 - Haing</title>
+<link rel="stylesheet" href="css/style.css?v=202608261543">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261543">
+<link rel="stylesheet" href="css/blocks.css?v=202608261543">
+</head>
+<body>
+
+<!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
+     관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/blocks-gate.js). -->
+<script src="js/admin-auth-store.js?v=202608261543"></script>
+<script src="js/blocks-gate.js?v=202608261543"></script>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
+  <a class="wordcard-link-btn" href="wordcards.html">
+    <span class="wordcard-link-icon" aria-hidden="true">📔</span>
+    <span class="wordcard-link-label">단어도감</span>
+  </a>
+</header>
+
+<main class="game-main">
+  <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+  <h2 class="game-title">🧱 쌓기나무</h2>
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="blocksEasyTab" data-difficulty="easy">🟢 쉬움</button>
+    <button type="button" class="stage-tab" id="blocksMediumTab" data-difficulty="medium">🟡 보통</button>
+    <button type="button" class="stage-tab" id="blocksHardTab" data-difficulty="hard">🔴 어려움</button>
+  </div>
+
+  <div class="game-stats">
+    <span class="game-stat--best">🏆 최고 <strong id="blocksBest">-</strong></span>
+    <span>⏱ <strong id="blocksTimer">0:00</strong></span>
+    <span>🧱 <strong id="blocksCount">0</strong>개</span>
+  </div>
+
+  <p class="blocks-hint">앞·옆·위, 세 방향에서 본 모양이 모두 똑같아지도록 쌓기나무를 놓아보세요.</p>
+
+  <div class="blocks-views">
+    <div class="blocks-view">
+      <p class="blocks-view-label">앞 <span class="blocks-view-badge" id="blocksFrontBadge">✗</span></p>
+      <div class="blocks-view-grid" id="blocksFrontGrid"></div>
+    </div>
+    <div class="blocks-view">
+      <p class="blocks-view-label">옆 <span class="blocks-view-badge" id="blocksSideBadge">✗</span></p>
+      <div class="blocks-view-grid" id="blocksSideGrid"></div>
+    </div>
+    <div class="blocks-view">
+      <p class="blocks-view-label">위 <span class="blocks-view-badge" id="blocksTopBadge">✗</span></p>
+      <div class="blocks-view-grid" id="blocksTopGrid"></div>
+    </div>
+  </div>
+
+  <div class="blocks-board-wrap">
+    <svg id="blocksBoard" class="blocks-board" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="blocks-mode-row">
+    <button type="button" class="blocks-mode-btn active" id="blocksStackModeBtn">🧱 쌓기 모드</button>
+    <button type="button" class="blocks-mode-btn" id="blocksRemoveModeBtn">🧹 빼기 모드</button>
+  </div>
+
+  <button type="button" class="game-btn" id="blocksRestartBtn">🔄 다시 놓기</button>
+
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
+
+  <div class="game-overlay" id="blocksOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title" id="blocksOverlayTitle">🎉 완성했어요!</p>
+      <p class="game-overlay-desc" id="blocksOverlayDesc"></p>
+      <button type="button" class="game-btn game-btn--primary" id="blocksNextBtn">➡️ 다음 문제</button>
+      <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
+    </div>
+  </div>
+</main>
+
+<script src="js/child-store.js?v=202608261543"></script>
+<script src="js/blocks.js?v=202608261543"></script>
+</body>
+</html>

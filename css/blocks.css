@@ -1,0 +1,151 @@
+.blocks-hint {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+}
+
+/* ── 목표 평면도(앞·옆·위) - 작은 격자로 정답 모양을 보여주고, 배지로
+   지금 쌓은 모양이 그 방향에서 맞는지 실시간으로 알려준다. ── */
+.blocks-views {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  flex-wrap: wrap;
+}
+
+.blocks-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.blocks-view-label {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--color-text-muted);
+}
+
+.blocks-view-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-faint);
+}
+
+.blocks-view-badge.ok {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.blocks-view-badge.no {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.blocks-view-grid {
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.blocks-view-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--color-neutral-bg);
+}
+
+.blocks-view-cell.filled {
+  background: var(--color-accent);
+}
+
+/* ── 아이소메트릭 보드 - SVG 하나에 정육면체를 뒤에서 앞으로, 아래에서 위로
+   그려서 가림 순서를 맞춘다. 각 칸의 맨 위 면(또는 빈 칸의 바닥 타일)만
+   .blocks-hit 클래스로 클릭 대상이 된다. ── */
+.blocks-board-wrap {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 14px;
+}
+
+.blocks-board {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.blocks-hit {
+  cursor: pointer;
+}
+
+.blocks-floor {
+  fill: var(--color-neutral-bg);
+  stroke: var(--color-neutral-border);
+  stroke-width: 1;
+}
+
+.blocks-face-top {
+  fill: var(--color-accent-soft);
+  stroke: var(--color-accent-deep);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.blocks-face-left {
+  fill: var(--color-accent-deep);
+  opacity: 0.55;
+  stroke: var(--color-accent-deep);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.blocks-face-right {
+  fill: var(--color-accent);
+  opacity: 0.85;
+  stroke: var(--color-accent-deep);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+/* ── 쌓기 / 빼기 모드 전환 - 해피피 찾기의 열기/표시 모드 버튼과 같은 패턴. ── */
+.blocks-mode-row {
+  display: flex;
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 10px;
+}
+
+.blocks-mode-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.blocks-mode-btn.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-deep);
+}
