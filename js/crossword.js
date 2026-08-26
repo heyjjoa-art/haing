@@ -54,6 +54,26 @@
   var startTime = 0;
   var timerId = null;
   var countedThisPuzzle = {};
+  var hintLevelByIdx = {}; // 단어 idx별 힌트 단계(0=아직 안 씀, 1=첫 글자 초성, 2=둘째 글자까지)
+
+  // 한글 음절 하나에서 초성(첫 자음)만 뽑아낸다. 힌트를 "학교" 대신 "ㅎㄱ"처럼
+  // 자음만 보여주는 데 쓴다 - 답을 그대로 알려주지 않으면서 실마리는 준다.
+  var CHOSEONG_LIST = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+  function choseongOf(ch) {
+    var code = ch.charCodeAt(0) - 0xac00;
+    if (code < 0 || code > 11171) return ch; // 한글 음절이 아니면(숫자 등) 그대로
+    return CHOSEONG_LIST[Math.floor(code / (21 * 28))];
+  }
+
+  // 힌트 단계에 맞춰 "ㅎ ○ ○" 같은 표시 문자열을 만든다. level번째 글자까지는
+  // 초성을, 나머지는 자리만 차지하는 빈 동그라미로 보여준다.
+  function hintText(word, level) {
+    var parts = [];
+    for (var i = 0; i < word.length; i++) {
+      parts.push(i < level ? choseongOf(word[i]) : "○");
+    }
+    return parts.join(" ");
+  }
 
   function bestTimeKey(mode) {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
@@ -675,10 +695,34 @@
     function buildLi(entry, listEl) {
       var li = document.createElement("li");
       li.className = "crossword-clue-item";
-      li.textContent = entry.p.number + ". " + entry.p.clue;
-      li.addEventListener("click", function () {
+
+      var textEl = document.createElement("span");
+      textEl.className = "crossword-clue-text";
+      textEl.textContent = entry.p.number + ". " + entry.p.clue;
+      textEl.addEventListener("click", function () {
         selectWord(entry.idx);
       });
+      li.appendChild(textEl);
+
+      // 힌트 버튼: 누를 때마다 초성 힌트가 한 단계씩(첫 글자 → 둘째 글자까지) 늘어나고,
+      // 2단계에서 멈춘다 - 정답을 그대로 알려주지 않으면서 실마리만 준다.
+      var hintBtn = document.createElement("button");
+      hintBtn.type = "button";
+      hintBtn.className = "crossword-hint-btn";
+      hintBtn.textContent = "💡 힌트";
+      var hintDisplayEl = document.createElement("span");
+      hintDisplayEl.className = "crossword-hint-display";
+      hintBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var maxLevel = Math.min(2, entry.p.word.length);
+        var level = Math.min((hintLevelByIdx[entry.idx] || 0) + 1, maxLevel);
+        hintLevelByIdx[entry.idx] = level;
+        hintDisplayEl.textContent = hintText(entry.p.word, level);
+        if (level >= maxLevel) hintBtn.disabled = true;
+      });
+      li.appendChild(hintBtn);
+      li.appendChild(hintDisplayEl);
+
       listEl.appendChild(li);
       clueElByIdx[entry.idx] = li;
     }
@@ -718,6 +762,7 @@
     selected = null;
     direction = "across";
     countedThisPuzzle = {};
+    hintLevelByIdx = {};
     pendingLevelUpLabel = null;
     showBestTime();
     stopTimer();

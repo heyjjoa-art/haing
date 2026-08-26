@@ -229,6 +229,10 @@
     window.location.href = "snake.html";
   });
 
-  activateTab("words");
+  // 게임을 끝내고 "도감으로" 돌아올 때(?tab=games) 단어 탭이 아니라 게임 목록
+  // 탭이 바로 보이게 한다 - 게임 하나 끝내고 다른 게임을 고르려는 건데 매번 단어
+  // 탭에서 다시 게임 탭을 눌러야 하면 번거롭다.
+  var initialTab = new URLSearchParams(location.search).get("tab") === "games" ? "games" : "words";
+  activateTab(initialTab);
   window.__haingRenderWordCards = render;
 })();
