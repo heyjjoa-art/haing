@@ -4,29 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>벽돌깨기 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261416">
-<link rel="stylesheet" href="css/breakout.css?v=202608261416">
+<link rel="stylesheet" href="css/style.css?v=202608261532">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261532">
+<link rel="stylesheet" href="css/breakout.css?v=202608261532">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/breakout-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261416"></script>
-<script src="js/breakout-gate.js?v=202608261416"></script>
+<script src="js/admin-auth-store.js?v=202608261532"></script>
+<script src="js/breakout-gate.js?v=202608261532"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
-  <p class="subtitle">영어를 좋아하는</p>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
   <a class="wordcard-link-btn" href="wordcards.html">
     <span class="wordcard-link-icon" aria-hidden="true">📔</span>
     <span class="wordcard-link-label">단어도감</span>
   </a>
 </header>
 
-<main class="brk-main">
-  <p class="brk-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
-
-  <p class="brk-best">🏆 나의 최고 점수 <strong id="brkBest">0</strong></p>
+<main class="game-main">
+  <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+  <h2 class="game-title">🧱 벽돌깨기</h2>
 
   <div class="stage-tabs">
     <button type="button" class="stage-tab active" id="brkEasyTab" data-difficulty="easy">🟢 쉬움</button>
@@ -34,35 +34,36 @@
     <button type="button" class="stage-tab" id="brkHardTab" data-difficulty="hard">🔴 어려움</button>
   </div>
 
-  <div class="brk-stats">
+  <div class="game-stats">
+    <span class="game-stat--best">🏆 최고 <strong id="brkBest">0</strong></span>
     <span>점수 <strong id="brkScore">0</strong></span>
     <span>기회 <strong id="brkLives">3</strong></span>
   </div>
 
   <div class="brk-board-wrap">
     <canvas id="brkBoard" class="brk-board" width="320" height="420"></canvas>
-    <button type="button" class="secondary-btn brk-pause-btn" id="brkPauseBtn" aria-label="일시정지">⏸</button>
-    <div class="brk-pause-veil" id="brkPauseVeil" hidden>⏸ 일시정지</div>
+    <button type="button" class="game-icon-btn" id="brkPauseBtn" aria-label="일시정지">⏸</button>
+    <div class="game-veil" id="brkPauseVeil" hidden>⏸ 일시정지</div>
   </div>
 
   <div class="brk-pad-row">
-    <button type="button" class="brk-btn brk-pad-left" id="brkLeftBtn" aria-label="왼쪽으로">◀</button>
-    <button type="button" class="brk-btn brk-pad-right" id="brkRightBtn" aria-label="오른쪽으로">▶</button>
+    <button type="button" class="brk-btn" id="brkLeftBtn" aria-label="왼쪽으로">◀</button>
+    <button type="button" class="brk-btn" id="brkRightBtn" aria-label="오른쪽으로">▶</button>
   </div>
 
   <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
-  <div class="brk-overlay" id="brkOverlay" hidden>
-    <div class="brk-overlay-box">
-      <p class="brk-overlay-title" id="brkOverlayTitle">게임 오버!</p>
-      <p class="brk-overlay-score" id="brkOverlayScore"></p>
-      <button type="button" class="brk-retry-btn" id="brkRetryBtn">🔄 다시 하기</button>
+  <div class="game-overlay" id="brkOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title" id="brkOverlayTitle">게임 오버!</p>
+      <p class="game-overlay-desc" id="brkOverlayScore"></p>
+      <button type="button" class="game-btn game-btn--primary" id="brkRetryBtn">🔄 다시 하기</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261416"></script>
-<script src="js/breakout.js?v=202608261416"></script>
+<script src="js/child-store.js?v=202608261532"></script>
+<script src="js/breakout.js?v=202608261532"></script>
 </body>
 </html>

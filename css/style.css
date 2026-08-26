@@ -41,10 +41,18 @@
   --color-neutral-bg: #eef2f6;
   --color-neutral-border: #d7dee6;
 
+  --color-accent-tint: #fff4e0;
+
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 10px;
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* 게임 화면 공용 치수(css/game-ui.css) - 패드에서도 손가락으로 편하게 누르도록
+     탭/버튼 최소 높이를 48px로 통일한다. */
+  --game-max: 460px;
+  --game-max-wide: 640px;
+  --tap-min: 48px;
 }
 
 * {
@@ -303,4 +311,26 @@ audio {
   font-size: 0.75rem;
   color: var(--color-text-placeholder);
   margin-top: 6px;
+}
+
+/* ── 페이지 하단 나가기 링크 · 진행률 한 줄(게임/학습 화면 공용) ─────────
+   전에는 word-card.css/upload.css 등 여러 곳에 복붙돼 있어서 그 CSS를
+   안 불러오는 페이지(스도쿠·크로스워드·테트리스·스네이크·하노이·해피피찾기)
+   에서는 이 링크가 스타일 없는 파란 밑줄로 보였다. 여기 한 곳으로 통일. */
+.back-link {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.back-link a {
+  color: var(--color-text-faint);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.progress-line {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-faint);
+  margin-bottom: 12px;
 }

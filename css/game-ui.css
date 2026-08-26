@@ -1,0 +1,307 @@
+/* ── 게임 공용 UI 셸 ──────────────────────────────────────────────────
+   12개 게임(스도쿠·크로스워드·테트리스·스네이크·하노이·해피피찾기·메모리·
+   스펠링·벽돌깨기·미로찾기·팩맨)이 공유하는 골격: 제목 → 난이도 탭 →
+   점수/최고기록 → 보드 → 조작부 → 나가기 → 결과 팝업. 색·모서리 값은
+   css/style.css :root 토큰을 그대로 쓴다. 보드 배경색·전용 그리드처럼
+   게임마다 정말 다른 부분만 각 css/<game>.css에 남겨둔다. */
+
+.game-main {
+  max-width: var(--game-max);
+  margin: 0 auto;
+  padding: 16px;
+  text-align: center;
+}
+
+.game-main--wide {
+  max-width: var(--game-max-wide);
+  text-align: left;
+}
+
+.game-title {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.game-dev-badge {
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-tint);
+  border: 1px dashed var(--color-accent);
+  color: var(--color-accent-deep);
+  font-size: 0.78rem;
+  font-weight: bold;
+}
+
+/* ── 난이도 / 단계 탭 (항상 제목 바로 아래) ──────────────────────────── */
+.stage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.stage-tab {
+  flex: 1;
+  min-width: 64px;
+  min-height: var(--tap-min);
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-weight: bold;
+  font-size: 0.88rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stage-tab.active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-deep);
+}
+
+/* 하노이 단계 잠금(1~N 원형 버튼)도 같은 탭 셸 안에서, 모양만 원형으로. */
+.stage-tabs--levels {
+  justify-content: center;
+}
+
+.stage-tab--level {
+  flex: 0 0 auto;
+  width: var(--tap-min);
+  min-width: 0;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.stage-tab--level.current {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-deep);
+}
+
+.stage-tab--level.cleared:not(.current) {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.stage-tab--level.locked {
+  background: var(--color-neutral-bg);
+  color: var(--color-text-placeholder);
+  cursor: default;
+  font-size: 0.85rem;
+}
+
+/* ── 점수 / 최고기록 / 타이머 / 크레딧 한 줄 ─────────────────────────── */
+.game-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.game-stats strong {
+  color: var(--color-text);
+}
+
+.game-stat--credits {
+  font-weight: bold;
+  color: var(--color-accent-deep);
+}
+
+.game-stat--best {
+  font-weight: bold;
+  color: var(--color-gold);
+}
+
+/* ── 보드가 앉는 무대: 위에 떠 있는 아이콘 버튼(일시정지)과 반투명 베일 ── */
+.game-stage {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.game-icon-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  margin-top: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(2px);
+  color: var(--color-text);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-icon-btn:active {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.game-veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(58, 46, 38, 0.75);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: var(--radius-md);
+}
+
+.game-veil[hidden] {
+  display: none;
+}
+
+/* ── 조작부: 방향 패드 ────────────────────────────────────────────── */
+.game-pad {
+  margin: 16px auto 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.game-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  gap: 6px;
+}
+
+.game-dpad-btn {
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-border);
+  background: var(--color-neutral-bg);
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.game-dpad-btn:active {
+  background: var(--color-accent-soft);
+}
+
+.game-dpad-up { grid-column: 2; grid-row: 1; }
+.game-dpad-left { grid-column: 1; grid-row: 2; }
+.game-dpad-right { grid-column: 3; grid-row: 2; }
+.game-dpad-down { grid-column: 2; grid-row: 3; }
+
+/* ── 결과 팝업 (게임오버 / 완성) ──────────────────────────────────── */
+.game-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(58, 46, 38, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.game-overlay[hidden] {
+  display: none;
+}
+
+.game-overlay-box {
+  background: var(--color-accent-tint);
+  border: 3px solid var(--color-accent);
+  border-radius: 20px;
+  padding: 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+}
+
+.game-overlay-title {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-accent-deep);
+}
+
+.game-overlay-desc {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.game-overlay-note {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+}
+
+.game-overlay-note[hidden] {
+  display: none;
+}
+
+.game-btn {
+  display: inline-block;
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-neutral-border);
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game-btn--primary {
+  background: var(--color-accent);
+  color: var(--color-text);
+  border: none;
+}
+
+.game-btn--primary:active {
+  background: var(--color-accent-active);
+}
+
+/* ── 태블릿 이상: 패드에서 조작하기 쉽게 살짝 키운다 ─────────────────── */
+@media (min-width: 768px) {
+  .game-main {
+    max-width: 560px;
+  }
+
+  .game-main--wide {
+    max-width: 720px;
+  }
+
+  .game-dpad {
+    grid-template-columns: repeat(3, 64px);
+    grid-template-rows: repeat(3, 64px);
+    gap: 8px;
+  }
+
+  .game-dpad-btn {
+    font-size: 1.5rem;
+  }
+
+  .stage-tab {
+    font-size: 0.95rem;
+  }
+}

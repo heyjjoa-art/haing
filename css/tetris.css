@@ -1,91 +1,6 @@
-.tetris-main {
-  max-width: 380px;
-  margin: 0 auto;
-  padding: 16px;
-  text-align: center;
-}
-
-.tetris-credits {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--color-accent-deep);
-}
-
-.stage-tabs {
-  display: flex;
-  gap: 6px;
-  margin: 0 0 10px;
-}
-
-.stage-tab {
-  flex: 1;
-  padding: 8px 4px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--color-border);
-  background: var(--color-surface);
-  font-weight: bold;
-  font-size: 0.8rem;
-  cursor: pointer;
-  color: var(--color-text-muted);
-}
-
-.stage-tab.active {
-  border-color: var(--color-accent);
-  background: #fff4e0;
-  color: var(--color-accent-deep);
-}
-
-.tetris-best {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--color-gold);
-}
-
-.tetris-stats {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin: 0 0 12px;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-}
-
 /* 다음 블록/일시정지를 보드 바깥이 아니라 화면(캔버스) 안쪽 위에 떠 있는 채로
    얹는다 - 라벨/글자 없이 다음 블록 모양은 좌측 상단에, 일시정지는 아이콘만
    우측 상단에. 각자 살짝 투명한 배경을 깔아서 뒤에 블록이 있어도 읽힌다. */
-.tetris-top-bar {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.tetris-pause-btn {
-  margin-top: 0;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 999px;
-  border: none;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(2px);
-  color: var(--color-text);
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tetris-pause-btn:active {
-  background: rgba(255, 255, 255, 0.8);
-}
-
 .tetris-board-wrap {
   position: relative;
   width: 100%;
@@ -102,21 +17,22 @@
   box-shadow: var(--shadow-card);
 }
 
-.tetris-pause-veil {
+.tetris-top-bar {
   position: absolute;
-  inset: 0;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(58, 46, 38, 0.75);
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: var(--radius-md);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-.tetris-pause-veil[hidden] {
-  display: none;
+/* 다른 게임의 일시정지 버튼(.game-icon-btn)은 보드 위 우측 상단에 절대
+   배치되지만, 테트리스는 다음 블록 미리보기와 한 줄에 나란히 놓여야 해서
+   위치만 top-bar의 flex 배치에 맡긴다. */
+.tetris-top-bar .game-icon-btn {
+  position: static;
 }
 
 .tetris-next {
@@ -136,48 +52,6 @@
   margin: 14px auto 8px;
 }
 
-.tetris-dpad {
-  display: grid;
-  grid-template-columns: repeat(3, 44px);
-  grid-template-rows: repeat(3, 44px);
-  gap: 6px;
-}
-
-.tetris-dpad-up {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.tetris-dpad-left {
-  grid-column: 1;
-  grid-row: 2;
-}
-
-.tetris-dpad-right {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-.tetris-dpad-down {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.tetris-btn {
-  padding: 0;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-neutral-border);
-  background: var(--color-neutral-bg);
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.tetris-btn:active {
-  background: var(--color-accent-soft);
-}
-
 .tetris-drop-btn {
   flex: 0 0 auto;
   width: 90px;
@@ -191,56 +65,10 @@
   line-height: 1.5;
   font-weight: bold;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tetris-drop-btn:active {
   background: var(--color-accent-active);
-}
-
-.tetris-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(58, 46, 38, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.tetris-overlay[hidden] {
-  display: none;
-}
-
-.tetris-overlay-box {
-  background: #fff4e0;
-  border: 3px solid var(--color-accent);
-  border-radius: 20px;
-  padding: 24px 20px;
-  max-width: 320px;
-  width: 100%;
-  text-align: center;
-}
-
-.tetris-overlay-title {
-  margin: 0 0 8px;
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: var(--color-accent-deep);
-}
-
-.tetris-overlay-score {
-  margin: 0 0 16px;
-  font-size: 0.95rem;
-  color: var(--color-text-muted);
-}
-
-.tetris-overlay-note {
-  margin: 10px 0 0;
-  font-size: 0.8rem;
-  color: var(--color-text-faint);
-}
-
-.tetris-overlay-note[hidden] {
-  display: none;
 }

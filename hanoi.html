@@ -4,32 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>하노이의 탑 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261416">
-<link rel="stylesheet" href="css/hanoi.css?v=202608261416">
+<link rel="stylesheet" href="css/style.css?v=202608261532">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261532">
+<link rel="stylesheet" href="css/hanoi.css?v=202608261532">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/hanoi-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261416"></script>
-<script src="js/hanoi-gate.js?v=202608261416"></script>
+<script src="js/admin-auth-store.js?v=202608261532"></script>
+<script src="js/hanoi-gate.js?v=202608261532"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
-  <p class="subtitle">영어를 좋아하는</p>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
   <a class="wordcard-link-btn" href="wordcards.html">
     <span class="wordcard-link-icon" aria-hidden="true">📔</span>
     <span class="wordcard-link-label">단어도감</span>
   </a>
 </header>
 
-<main class="hanoi-main">
-  <p class="hanoi-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+<main class="game-main">
+  <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+  <h2 class="game-title">🗼 하노이의 탑</h2>
 
   <p class="hanoi-level-line">레벨 <strong id="hanoiLevelNum">1</strong> / <span id="hanoiLevelTotal">6</span></p>
-  <p class="hanoi-best">🏆 최소 이동 <strong id="hanoiBest">-</strong> · ⏱ <strong id="hanoiTimer">0:00</strong></p>
 
-  <div class="hanoi-level-picker" id="hanoiLevelPicker"></div>
+  <div class="stage-tabs stage-tabs--levels" id="hanoiLevelPicker"></div>
+
+  <div class="game-stats">
+    <span class="game-stat--best">🏆 최소 이동 <strong id="hanoiBest">-</strong></span>
+    <span>⏱ <strong id="hanoiTimer">0:00</strong></span>
+  </div>
 
   <p class="hanoi-status">
     <span>👣 이동 횟수 <strong id="hanoiMoves">0</strong>회</span>
@@ -41,22 +47,22 @@
 
   <div class="hanoi-board" id="hanoiBoard"></div>
 
-  <button type="button" class="secondary-btn hanoi-restart-btn" id="hanoiRestartBtn">🔄 다시 시작</button>
+  <button type="button" class="game-btn" id="hanoiRestartBtn">🔄 다시 시작</button>
 
-  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
-  <div class="hanoi-overlay" id="hanoiOverlay" hidden>
-    <div class="hanoi-overlay-box">
-      <p class="hanoi-overlay-title" id="hanoiOverlayTitle">🎉 완성했어요!</p>
-      <p class="hanoi-overlay-desc" id="hanoiOverlayDesc"></p>
-      <button type="button" class="wc-popup-btn" id="hanoiNextBtn" hidden>➡️ 다음 단계</button>
-      <button type="button" class="secondary-btn" id="hanoiRetryBtn">🔄 같은 단계 다시</button>
+  <div class="game-overlay" id="hanoiOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title" id="hanoiOverlayTitle">🎉 완성했어요!</p>
+      <p class="game-overlay-desc" id="hanoiOverlayDesc"></p>
+      <button type="button" class="game-btn game-btn--primary" id="hanoiNextBtn" hidden>➡️ 다음 단계</button>
+      <button type="button" class="game-btn" id="hanoiRetryBtn">🔄 같은 단계 다시</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261416"></script>
-<script src="js/hanoi.js?v=202608261416"></script>
+<script src="js/child-store.js?v=202608261532"></script>
+<script src="js/hanoi.js?v=202608261532"></script>
 </body>
 </html>

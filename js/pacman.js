@@ -363,18 +363,10 @@
     });
   });
 
-  upBtn.addEventListener("click", function () {
-    tryMove("N");
-  });
-  downBtn.addEventListener("click", function () {
-    tryMove("S");
-  });
-  leftBtn.addEventListener("click", function () {
-    tryMove("W");
-  });
-  rightBtn.addEventListener("click", function () {
-    tryMove("E");
-  });
+  GameUI.bindHold(upBtn, function () { tryMove("N"); });
+  GameUI.bindHold(downBtn, function () { tryMove("S"); });
+  GameUI.bindHold(leftBtn, function () { tryMove("W"); });
+  GameUI.bindHold(rightBtn, function () { tryMove("E"); });
   pauseBtn.addEventListener("click", function () {
     setPaused(!paused);
   });

@@ -1,64 +1,12 @@
-.crossword-main {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 16px;
-  text-align: center;
-}
-
-.crossword-credits {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--color-accent-deep);
-}
-
-.crossword-best {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--color-gold);
-}
-
-.crossword-total {
-  margin: 0 0 10px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: var(--color-accent-deep-2);
-}
-
-.stage-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.stage-tab {
-  flex: 1;
-  padding: 9px 4px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--color-border);
-  background: var(--color-surface);
-  font-weight: bold;
-  font-size: 0.78rem;
-  cursor: pointer;
-  color: var(--color-text-muted);
-}
-
-.stage-tab.active {
-  border-color: var(--color-accent);
-  background: #fff4e0;
-  color: var(--color-accent-deep);
-}
-
 .crossword-level-label {
-  margin: -8px 0 14px;
+  margin: -4px 0 14px;
   font-size: 0.78rem;
   font-weight: bold;
   color: var(--color-text-muted);
 }
 
 .crossword-empty {
-  background: #fff4e0;
+  background: var(--color-accent-tint);
   border: 2px dashed var(--color-border);
   border-radius: 16px;
   padding: 28px 16px;
@@ -128,7 +76,7 @@
 }
 
 .cw-cell-wrap.in-word {
-  background: #fff4e0;
+  background: var(--color-accent-tint);
 }
 
 /* 단어 칸을 다 채웠는데 틀렸을 때만 표시한다(중간에 글자 하나씩 넣을 때는 안 보여줘야
@@ -224,52 +172,4 @@
 .crossword-clue-item.wrong {
   color: var(--color-danger);
   font-weight: bold;
-}
-
-.crossword-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(58, 46, 38, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.crossword-overlay[hidden] {
-  display: none;
-}
-
-.crossword-overlay-box {
-  background: #fff4e0;
-  border: 3px solid var(--color-accent);
-  border-radius: 20px;
-  padding: 24px 20px;
-  max-width: 320px;
-  width: 100%;
-  text-align: center;
-}
-
-.crossword-overlay-title {
-  margin: 0 0 8px;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--color-accent-deep);
-}
-
-.crossword-overlay-desc {
-  margin: 0 0 16px;
-  font-size: 0.95rem;
-  color: var(--color-text-muted);
-}
-
-.crossword-overlay-note {
-  margin: 10px 0 0;
-  font-size: 0.8rem;
-  color: var(--color-text-faint);
-}
-
-.crossword-overlay-note[hidden] {
-  display: none;
 }

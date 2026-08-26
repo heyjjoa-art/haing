@@ -450,15 +450,3 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
-/* wordcards.html 전용 뒤로가기 링크 (다른 게임 페이지들과 같은 스타일) */
-.back-link {
-  text-align: center;
-  margin-top: 16px;
-}
-
-.back-link a {
-  color: var(--color-text-faint);
-  text-decoration: none;
-  font-size: 0.9rem;
-}

@@ -4,29 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>스네이크 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261416">
-<link rel="stylesheet" href="css/snake.css?v=202608261416">
+<link rel="stylesheet" href="css/style.css?v=202608261532">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261532">
+<link rel="stylesheet" href="css/snake.css?v=202608261532">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/snake-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261416"></script>
-<script src="js/snake-gate.js?v=202608261416"></script>
+<script src="js/admin-auth-store.js?v=202608261532"></script>
+<script src="js/snake-gate.js?v=202608261532"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
-  <p class="subtitle">영어를 좋아하는</p>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
   <a class="wordcard-link-btn" href="wordcards.html">
     <span class="wordcard-link-icon" aria-hidden="true">📔</span>
     <span class="wordcard-link-label">단어도감</span>
   </a>
 </header>
 
-<main class="snake-main">
-  <p class="snake-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
-
-  <p class="snake-best">🏆 나의 최고 점수 <strong id="snakeBest">0</strong></p>
+<main class="game-main">
+  <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+  <h2 class="game-title">🐍 스네이크</h2>
 
   <div class="stage-tabs">
     <button type="button" class="stage-tab active" id="snakeEasyTab" data-difficulty="easy">🟢 쉬움</button>
@@ -34,38 +34,39 @@
     <button type="button" class="stage-tab" id="snakeHardTab" data-difficulty="hard">🔴 어려움</button>
   </div>
 
-  <div class="snake-stats">
+  <div class="game-stats">
+    <span class="game-stat--best">🏆 최고 <strong id="snakeBest">0</strong></span>
     <span>점수 <strong id="snakeScore">0</strong></span>
   </div>
 
   <div class="snake-board-wrap">
     <canvas id="snakeBoard" class="snake-board" width="320" height="320"></canvas>
-    <button type="button" class="secondary-btn snake-pause-btn" id="snakePauseBtn" aria-label="일시정지">⏸</button>
-    <div class="snake-pause-veil" id="snakePauseVeil" hidden>⏸ 일시정지</div>
+    <button type="button" class="game-icon-btn" id="snakePauseBtn" aria-label="일시정지">⏸</button>
+    <div class="game-veil" id="snakePauseVeil" hidden>⏸ 일시정지</div>
   </div>
 
-  <div class="snake-dpad-row">
-    <div class="snake-dpad">
-      <button type="button" class="snake-btn snake-dpad-up" id="snakeUpBtn" aria-label="위로">▲</button>
-      <button type="button" class="snake-btn snake-dpad-left" id="snakeLeftBtn" aria-label="왼쪽으로">◀</button>
-      <button type="button" class="snake-btn snake-dpad-right" id="snakeRightBtn" aria-label="오른쪽으로">▶</button>
-      <button type="button" class="snake-btn snake-dpad-down" id="snakeDownBtn" aria-label="아래로">▼</button>
+  <div class="game-pad">
+    <div class="game-dpad">
+      <button type="button" class="game-dpad-btn game-dpad-up" id="snakeUpBtn" aria-label="위로">▲</button>
+      <button type="button" class="game-dpad-btn game-dpad-left" id="snakeLeftBtn" aria-label="왼쪽으로">◀</button>
+      <button type="button" class="game-dpad-btn game-dpad-right" id="snakeRightBtn" aria-label="오른쪽으로">▶</button>
+      <button type="button" class="game-dpad-btn game-dpad-down" id="snakeDownBtn" aria-label="아래로">▼</button>
     </div>
   </div>
 
-  <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
-  <div class="snake-overlay" id="snakeOverlay" hidden>
-    <div class="snake-overlay-box">
-      <p class="snake-overlay-title">게임 오버!</p>
-      <p class="snake-overlay-score" id="snakeOverlayScore"></p>
-      <button type="button" class="wc-popup-btn" id="snakeRetryBtn">🔄 다시 하기</button>
+  <div class="game-overlay" id="snakeOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title">게임 오버!</p>
+      <p class="game-overlay-desc" id="snakeOverlayScore"></p>
+      <button type="button" class="game-btn game-btn--primary" id="snakeRetryBtn">🔄 다시 하기</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261416"></script>
-<script src="js/snake.js?v=202608261416"></script>
+<script src="js/child-store.js?v=202608261532"></script>
+<script src="js/snake.js?v=202608261532"></script>
 </body>
 </html>

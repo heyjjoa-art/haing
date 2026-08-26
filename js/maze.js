@@ -144,13 +144,13 @@
   function draw() {
     var tile = BOARD_PX / size;
     boardCtx.clearRect(0, 0, BOARD_PX, BOARD_PX);
-    boardCtx.fillStyle = "#2a2a3a";
+    boardCtx.fillStyle = "#f8ecd2"; // 강아지가 걸어다니는 흙길
     boardCtx.fillRect(0, 0, BOARD_PX, BOARD_PX);
 
-    var wallW = Math.max(2, tile * 0.09);
-    boardCtx.strokeStyle = "#f4f6fb";
+    var wallW = Math.max(2, tile * 0.14);
+    boardCtx.strokeStyle = "#5fa848"; // 길을 막아선 울타리(정원 산울타리) 색
     boardCtx.lineWidth = wallW;
-    boardCtx.lineCap = "square";
+    boardCtx.lineCap = "round";
 
     for (var x = 0; x < size; x++) {
       for (var y = 0; y < size; y++) {
@@ -184,20 +184,15 @@
       }
     }
 
-    // 도착 지점
-    boardCtx.font = Math.floor(tile * 0.7) + "px sans-serif";
+    // 도착 지점 - 강아지가 찾아가는 집
     boardCtx.textAlign = "center";
     boardCtx.textBaseline = "middle";
-    boardCtx.fillText("🏁", goal.x * tile + tile / 2, goal.y * tile + tile / 2);
+    boardCtx.font = Math.floor(tile * 0.75) + "px sans-serif";
+    boardCtx.fillText("🏠", goal.x * tile + tile / 2, goal.y * tile + tile / 2 + tile * 0.03);
 
-    // 플레이어
-    boardCtx.beginPath();
-    boardCtx.arc(player.x * tile + tile / 2, player.y * tile + tile / 2, tile * 0.3, 0, Math.PI * 2);
-    boardCtx.fillStyle = "#ffd93d";
-    boardCtx.fill();
-    boardCtx.strokeStyle = "#e0a72f";
-    boardCtx.lineWidth = 2;
-    boardCtx.stroke();
+    // 플레이어 - 귀여운 강아지
+    boardCtx.font = Math.floor(tile * 0.75) + "px sans-serif";
+    boardCtx.fillText("🐶", player.x * tile + tile / 2, player.y * tile + tile / 2 + tile * 0.03);
   }
 
   function tryMove(dir) {
@@ -237,18 +232,10 @@
     });
   });
 
-  upBtn.addEventListener("click", function () {
-    tryMove("N");
-  });
-  downBtn.addEventListener("click", function () {
-    tryMove("S");
-  });
-  leftBtn.addEventListener("click", function () {
-    tryMove("W");
-  });
-  rightBtn.addEventListener("click", function () {
-    tryMove("E");
-  });
+  GameUI.bindHold(upBtn, function () { tryMove("N"); });
+  GameUI.bindHold(downBtn, function () { tryMove("S"); });
+  GameUI.bindHold(leftBtn, function () { tryMove("W"); });
+  GameUI.bindHold(rightBtn, function () { tryMove("E"); });
 
   document.addEventListener("keydown", function (e) {
     switch (e.key) {

@@ -4,34 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>해피피 찾기 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261416">
-<link rel="stylesheet" href="css/smileyfind.css?v=202608261416">
+<link rel="stylesheet" href="css/style.css?v=202608261532">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261532">
+<link rel="stylesheet" href="css/smileyfind.css?v=202608261532">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/smileyfind-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261416"></script>
-<script src="js/smileyfind-gate.js?v=202608261416"></script>
+<script src="js/admin-auth-store.js?v=202608261532"></script>
+<script src="js/smileyfind-gate.js?v=202608261532"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
-  <p class="subtitle">영어를 좋아하는</p>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
   <a class="wordcard-link-btn" href="wordcards.html">
     <span class="wordcard-link-icon" aria-hidden="true">📔</span>
     <span class="wordcard-link-label">단어도감</span>
   </a>
 </header>
 
-<main class="sf-main">
-  <p class="sf-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
-
-  <p class="sf-best">🏆 나의 최고 기록 <strong id="sfBest">-</strong> · ⏱ <strong id="sfTimer">0:00</strong></p>
+<main class="game-main">
+  <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+  <h2 class="game-title">🙂 해피피 찾기</h2>
 
   <div class="stage-tabs">
-    <button type="button" class="stage-tab active" id="sfEasyTab" data-level="easy">🟢 쉬운 단계</button>
-    <button type="button" class="stage-tab" id="sfMediumTab" data-level="medium">🟡 중간 단계</button>
-    <button type="button" class="stage-tab" id="sfHardTab" data-level="hard">🔴 어려운 단계</button>
+    <button type="button" class="stage-tab active" id="sfEasyTab" data-level="easy">🟢 쉬움</button>
+    <button type="button" class="stage-tab" id="sfMediumTab" data-level="medium">🟡 보통</button>
+    <button type="button" class="stage-tab" id="sfHardTab" data-level="hard">🔴 어려움</button>
+  </div>
+
+  <div class="game-stats">
+    <span class="game-stat--best">🏆 최고 <strong id="sfBest">-</strong></span>
+    <span>⏱ <strong id="sfTimer">0:00</strong></span>
   </div>
 
   <p class="sf-status">
@@ -46,19 +51,19 @@
   </div>
   <p class="sf-mode-hint">표시 모드에서 칸을 누르면(또는 마우스 오른쪽 클릭하면) "스마일이 있을 것 같은 칸"에 깃발을 꽂아둘 수 있어요.</p>
 
-  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
   <div class="sf-overlay" id="sfOverlay" hidden>
     <div class="sf-overlay-box">
       <p class="sf-overlay-title" id="sfOverlayTitle">🎉 모두 찾았어요!</p>
       <p class="sf-overlay-desc" id="sfOverlayDesc"></p>
-      <button type="button" class="wc-popup-btn" id="sfRetryBtn">🔄 새 판</button>
+      <button type="button" class="game-btn game-btn--primary" id="sfRetryBtn">🔄 새 판</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261416"></script>
-<script src="js/smileyfind.js?v=202608261416"></script>
+<script src="js/child-store.js?v=202608261532"></script>
+<script src="js/smileyfind.js?v=202608261532"></script>
 </body>
 </html>

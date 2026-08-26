@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>가로세로 낱말 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261416">
-<link rel="stylesheet" href="css/crossword.css?v=202608261416">
+<link rel="stylesheet" href="css/style.css?v=202608261532">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261532">
+<link rel="stylesheet" href="css/crossword.css?v=202608261532">
 </head>
 <body>
 
@@ -18,16 +19,21 @@
   </a>
 </header>
 
-<main class="crossword-main">
-  <p class="crossword-credits">🎮 남은 게임 기회 <strong id="crosswordCredits">0</strong>회</p>
-  <p class="crossword-best">🏆 나의 최고 기록 <strong id="crosswordBest">-</strong> · ⏱ <strong id="crosswordTimer">0:00</strong></p>
-  <p class="crossword-total">🔥 지금까지 맞힌 단어 총 <strong id="crosswordTotalSolved">0</strong>개</p>
+<main class="game-main">
+  <h2 class="game-title">✏️ 가로세로 낱말</h2>
 
   <div class="stage-tabs">
     <button type="button" class="stage-tab active" id="crosswordElementaryTab" data-mode="elementary">🟢 초등</button>
     <button type="button" class="stage-tab" id="crosswordMiddleTab" data-mode="middle">🟠 중등</button>
   </div>
   <p class="crossword-level-label" id="crosswordLevelLabel"></p>
+
+  <div class="game-stats">
+    <span class="game-stat--credits">🎮 기회 <strong id="crosswordCredits">0</strong>회</span>
+    <span class="game-stat--best">🏆 최고 <strong id="crosswordBest">-</strong></span>
+    <span>⏱ <strong id="crosswordTimer">0:00</strong></span>
+    <span>🔥 총 <strong id="crosswordTotalSolved">0</strong>개</span>
+  </div>
 
   <p class="crossword-empty" id="crosswordEmpty" hidden>
     낱말퍼즐을 만들지 못했어요.<br>다른 단계를 선택하거나 다시 시도해보세요!
@@ -50,14 +56,14 @@
     </div>
   </div>
 
-  <p class="back-link"><a href="wordcards.html">← 도감으로</a></p>
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
-  <div class="crossword-overlay" id="crosswordOverlay" hidden>
-    <div class="crossword-overlay-box">
-      <p class="crossword-overlay-title">🎉 낱말퍼즐을 완성했어요!</p>
-      <p class="crossword-overlay-desc" id="crosswordOverlayDesc"></p>
-      <button type="button" class="wc-popup-btn" id="crosswordRetryBtn">🔄 새 퍼즐</button>
-      <p class="crossword-overlay-note" id="crosswordOverlayNote" hidden>게임 기회를 모두 썼어요! 트로피 카드나 별 스티커를 더 모으면 기회가 또 생겨요.</p>
+  <div class="game-overlay" id="crosswordOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title">🎉 낱말퍼즐을 완성했어요!</p>
+      <p class="game-overlay-desc" id="crosswordOverlayDesc"></p>
+      <button type="button" class="game-btn game-btn--primary" id="crosswordRetryBtn">🔄 새 퍼즐</button>
+      <p class="game-overlay-note" id="crosswordOverlayNote" hidden>게임 기회를 모두 썼어요! 트로피 카드나 별 스티커를 더 모으면 기회가 또 생겨요.</p>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
@@ -65,15 +71,15 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608261416"></script>
-<script src="js/child-store.js?v=202608261416"></script>
-<script src="js/admin-auth-store.js?v=202608261416"></script>
-<script src="js/child-badge.js?v=202608261416"></script>
-<script src="js/word-card-store.js?v=202608261416"></script>
-<script src="js/progress-store.js?v=202608261416"></script>
-<script src="journeys/js/stamp-store.js?v=202608261416"></script>
-<script src="js/word-game-store.js?v=202608261416"></script>
-<script src="js/crossword-words.js?v=202608261416"></script>
-<script src="js/crossword.js?v=202608261416"></script>
+<script src="js/firebase-init.js?v=202608261532"></script>
+<script src="js/child-store.js?v=202608261532"></script>
+<script src="js/admin-auth-store.js?v=202608261532"></script>
+<script src="js/child-badge.js?v=202608261532"></script>
+<script src="js/word-card-store.js?v=202608261532"></script>
+<script src="js/progress-store.js?v=202608261532"></script>
+<script src="journeys/js/stamp-store.js?v=202608261532"></script>
+<script src="js/word-game-store.js?v=202608261532"></script>
+<script src="js/crossword-words.js?v=202608261532"></script>
+<script src="js/crossword.js?v=202608261532"></script>
 </body>
 </html>

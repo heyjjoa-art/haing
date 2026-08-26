@@ -112,7 +112,7 @@
         var btn = document.createElement("button");
         btn.type = "button";
         var locked = lv > unlocked;
-        var classes = ["hanoi-level-btn"];
+        var classes = ["stage-tab", "stage-tab--level"];
         if (lv === currentLevel) classes.push("current");
         if (locked) classes.push("locked");
         else if (localStorage.getItem(bestMovesKey(lv))) classes.push("cleared");

@@ -408,28 +408,9 @@
     requestAnimationFrame(tick);
   }
 
-  function bindHold(el, action) {
-    var intervalId = null;
-    function start(e) {
-      e.preventDefault();
-      action();
-      intervalId = setInterval(action, 130);
-    }
-    function stop() {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-    }
-    el.addEventListener("pointerdown", start);
-    el.addEventListener("pointerup", stop);
-    el.addEventListener("pointerleave", stop);
-    el.addEventListener("pointercancel", stop);
-  }
-
-  bindHold(leftBtn, moveLeft);
-  bindHold(rightBtn, moveRight);
-  bindHold(downBtn, softDrop);
+  GameUI.bindHold(leftBtn, moveLeft);
+  GameUI.bindHold(rightBtn, moveRight);
+  GameUI.bindHold(downBtn, softDrop);
   rotateBtn.addEventListener("click", rotatePiece);
   dropBtn.addEventListener("click", hardDrop);
   pauseBtn.addEventListener("click", function () {

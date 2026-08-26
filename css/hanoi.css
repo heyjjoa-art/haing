@@ -1,71 +1,7 @@
-.hanoi-main {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 16px;
-  text-align: center;
-}
-
-.hanoi-dev-badge {
-  margin: 0 0 12px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  background: #fff4e0;
-  border: 1px dashed var(--color-accent);
-  color: var(--color-accent-deep);
-  font-size: 0.78rem;
-  font-weight: bold;
-}
-
 .hanoi-level-line {
   margin: 0 0 4px;
   font-size: 0.85rem;
   color: var(--color-text-muted);
-}
-
-.hanoi-best {
-  margin: 0 0 10px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: var(--color-gold);
-}
-
-.hanoi-level-picker {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.hanoi-level-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--color-border);
-  background: var(--color-surface);
-  font-weight: bold;
-  font-size: 0.95rem;
-  cursor: pointer;
-  color: var(--color-text-muted);
-}
-
-.hanoi-level-btn.current {
-  border-color: var(--color-accent);
-  background: #fff4e0;
-  color: var(--color-accent-deep);
-}
-
-.hanoi-level-btn.cleared:not(.current) {
-  border-color: var(--color-success-border);
-  background: var(--color-success-bg);
-  color: var(--color-success);
-}
-
-.hanoi-level-btn.locked {
-  background: var(--color-neutral-bg);
-  color: var(--color-text-placeholder);
-  cursor: default;
-  font-size: 0.85rem;
 }
 
 .hanoi-status {
@@ -168,51 +104,8 @@
   background: var(--color-accent);
 }
 
-.hanoi-restart-btn {
-  display: block;
-  margin: 0 auto;
-}
-
 @keyframes hanoi-shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
-}
-
-.hanoi-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(58, 46, 38, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.hanoi-overlay[hidden] {
-  display: none;
-}
-
-.hanoi-overlay-box {
-  background: #fff4e0;
-  border: 3px solid var(--color-accent);
-  border-radius: 20px;
-  padding: 24px 20px;
-  max-width: 320px;
-  width: 100%;
-  text-align: center;
-}
-
-.hanoi-overlay-title {
-  margin: 0 0 8px;
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: var(--color-accent-deep);
-}
-
-.hanoi-overlay-desc {
-  margin: 0 0 16px;
-  font-size: 0.95rem;
-  color: var(--color-text-muted);
 }
