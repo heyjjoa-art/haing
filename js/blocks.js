@@ -11,9 +11,12 @@
   var SVG_NS = "http://www.w3.org/2000/svg";
 
   // 아이소메트릭 투영 상수 - 칸 하나(TILE_W x TILE_H 마름모)와 정육면체 높이(CUBE_H).
-  var TILE_W = 28;
-  var TILE_H = 16;
-  var CUBE_H = 32;
+  // 난이도가 바뀌어도 나무토막 하나의 화면 크기는 항상 이 값 그대로다 - SVG를
+  // width:100%로 컨테이너에 맞춰 늘이지 않고, 이 단위를 그대로 픽셀 크기로 써서
+  // 그리기 때문에(renderBoard 참고) 난이도별로 달라지는 건 칸 개수뿐이다.
+  var TILE_W = 36;
+  var TILE_H = 20;
+  var CUBE_H = 40;
 
   var DIFFICULTIES = {
     easy: { label: "쉬움", size: 2, maxHeight: 2, minCount: 3, maxCount: 5 },
@@ -305,17 +308,27 @@
   // ── 아이소메트릭 보드 (SVG) ──────────────────────────────────────
   function boardGeometry() {
     var originX = size * TILE_W;
-    var originY = TILE_H + maxHeight * CUBE_H;
+    var originY = maxHeight * CUBE_H + 2 * TILE_H;
     var width = 2 * size * TILE_W;
-    var height = originY + (2 * size - 1) * TILE_H + CUBE_H + TILE_H;
+    var height = originY + (2 * size - 1) * TILE_H;
     return { originX: originX, originY: originY, width: width, height: height };
   }
 
-  function cubeCenter(r, c, k, geo) {
+  // 바닥(빈 칸일 때 평평한 마름모가 놓이는 기준면)의 중심.
+  function groundCenter(r, c, geo) {
     return {
       x: geo.originX + (c - r) * TILE_W,
-      y: geo.originY + (c + r) * TILE_H - k * CUBE_H
+      y: geo.originY + (c + r) * TILE_H
     };
+  }
+
+  // k번째(0부터) 정육면체 윗면의 중심 - 바닥에서 위로 (k+1)*CUBE_H만큼 떠 있다.
+  // 큐브의 옆면은 이 점에서 아래로 CUBE_H만큼 그려 바닥(또는 그 아래 큐브의
+  // 윗면)까지 맞닿게 한다(leftFacePoints/rightFacePoints 참고) - 그래서 쌓을수록
+  // 화면에서 위로 자라지, 바닥 아래로 파고들지 않는다.
+  function cubeTopCenter(r, c, k, geo) {
+    var ground = groundCenter(r, c, geo);
+    return { x: ground.x, y: ground.y - (k + 1) * CUBE_H };
   }
 
   function createPolygon(points, cls, r, c) {
@@ -358,6 +371,11 @@
   function renderBoard() {
     var geo = boardGeometry();
     boardSvg.setAttribute("viewBox", "0 0 " + geo.width + " " + geo.height);
+    // width:100%로 컨테이너에 맞춰 늘이지 않고 실제 픽셀 크기를 그대로 준다 -
+    // 그래야 난이도가 바뀌어도(칸 개수만 다름) 나무토막 하나의 화면 크기가 항상
+    // 똑같이 유지된다.
+    boardSvg.setAttribute("width", String(geo.width));
+    boardSvg.setAttribute("height", String(geo.height));
     while (boardSvg.firstChild) boardSvg.removeChild(boardSvg.firstChild);
 
     var maxD = 2 * (size - 1);
@@ -367,14 +385,14 @@
         if (c < 0 || c >= size) continue;
         var h = current[r][c];
         if (h === 0) {
-          var floorCenter = cubeCenter(r, c, 0, geo);
+          var floorCenter = groundCenter(r, c, geo);
           boardSvg.appendChild(
             createPolygon(topFacePoints(floorCenter.x, floorCenter.y), "blocks-floor blocks-hit", r, c)
           );
           continue;
         }
         for (var k = 0; k < h; k++) {
-          var center = cubeCenter(r, c, k, geo);
+          var center = cubeTopCenter(r, c, k, geo);
           boardSvg.appendChild(createPolygon(leftFacePoints(center.x, center.y), "blocks-face-left"));
           boardSvg.appendChild(createPolygon(rightFacePoints(center.x, center.y), "blocks-face-right"));
           if (k === h - 1) {

@@ -77,15 +77,19 @@
 /* ── 아이소메트릭 보드 - SVG 하나에 정육면체를 뒤에서 앞으로, 아래에서 위로
    그려서 가림 순서를 맞춘다. 각 칸의 맨 위 면(또는 빈 칸의 바닥 타일)만
    .blocks-hit 클래스로 클릭 대상이 된다. ── */
+/* 보드는 늘이지 않고 SVG가 가진 실제 픽셀 크기 그대로 그린다(js/blocks.js의
+   renderBoard가 width/height 속성을 직접 준다) - 그래야 난이도가 바뀌어
+   칸 개수가 달라져도 나무토막 하나의 화면 크기는 항상 똑같다. */
 .blocks-board-wrap {
   width: 100%;
-  max-width: 320px;
-  margin: 0 auto 14px;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 14px;
 }
 
 .blocks-board {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
 }
 
