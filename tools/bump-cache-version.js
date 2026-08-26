@@ -17,12 +17,17 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 
 const HTML_FILES = [
+  "breakout.html",
   "crossword.html",
   "flashcards.html",
   "hangman.html",
   "hanoi.html",
   "index.html",
+  "maze.html",
   "memory.html",
+  "pacman.html",
+  "smileyfind.html",
+  "snake.html",
   "storybook.html",
   "sudoku.html",
   "tetris.html",

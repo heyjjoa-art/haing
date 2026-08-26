@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미로찾기 - Haing</title>
+<link rel="stylesheet" href="css/style.css?v=202608261345">
+<link rel="stylesheet" href="css/maze.css?v=202608261345">
+</head>
+<body>
+
+<!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
+     관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/maze-gate.js). -->
+<script src="js/admin-auth-store.js?v=202608261345"></script>
+<script src="js/maze-gate.js?v=202608261345"></script>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle">영어를 좋아하는</p>
+  <a class="wordcard-link-btn" href="wordcards.html">
+    <span class="wordcard-link-icon" aria-hidden="true">📔</span>
+    <span class="wordcard-link-label">단어도감</span>
+  </a>
+</header>
+
+<main class="maze-main">
+  <p class="maze-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
+
+  <p class="maze-best">🏆 나의 최고 기록 <strong id="mazeBest">-</strong></p>
+
+  <div class="stage-tabs">
+    <button type="button" class="stage-tab active" id="mazeEasyTab" data-difficulty="easy">🟢 쉬움</button>
+    <button type="button" class="stage-tab" id="mazeNormalTab" data-difficulty="normal">🟡 보통</button>
+    <button type="button" class="stage-tab" id="mazeHardTab" data-difficulty="hard">🔴 어려움</button>
+  </div>
+
+  <div class="maze-stats">
+    <span>⏱ <strong id="mazeTimer">0:00.0</strong></span>
+  </div>
+
+  <div class="maze-board-wrap">
+    <canvas id="mazeBoard" class="maze-board" width="320" height="320"></canvas>
+  </div>
+
+  <div class="maze-dpad-row">
+    <div class="maze-dpad">
+      <button type="button" class="maze-btn maze-dpad-up" id="mazeUpBtn" aria-label="위로">▲</button>
+      <button type="button" class="maze-btn maze-dpad-left" id="mazeLeftBtn" aria-label="왼쪽으로">◀</button>
+      <button type="button" class="maze-btn maze-dpad-right" id="mazeRightBtn" aria-label="오른쪽으로">▶</button>
+      <button type="button" class="maze-btn maze-dpad-down" id="mazeDownBtn" aria-label="아래로">▼</button>
+    </div>
+  </div>
+
+  <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록으로</a></p>
+
+  <div class="maze-overlay" id="mazeOverlay" hidden>
+    <div class="maze-overlay-box">
+      <p class="maze-overlay-title">🎉 도착했어요!</p>
+      <p class="maze-overlay-score" id="mazeOverlayScore"></p>
+      <button type="button" class="maze-retry-btn" id="mazeRetryBtn">🔄 새 미로</button>
+      <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록으로</a></p>
+    </div>
+  </div>
+</main>
+
+<script src="js/child-store.js?v=202608261345"></script>
+<script src="js/maze.js?v=202608261345"></script>
+</body>
+</html>
