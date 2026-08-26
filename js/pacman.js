@@ -45,12 +45,14 @@
     W: { dx: -1, dy: 0, opposite: "E" }
   };
   var DIR_KEYS = Object.keys(DIRS);
+  var FACING_ANGLE = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
+  var MOUTH_RAD = 0.28 * Math.PI;
 
   var size = 7;
   var cells = [];
   var dotEaten = [];
   var dotsLeft = 0;
-  var player = { x: 0, y: 0 };
+  var player = { x: 0, y: 0, dir: "E" };
   var ghosts = [];
   var score = 0;
   var lives = 3;
@@ -140,7 +142,7 @@
   }
 
   function resetPositions() {
-    player = { x: 0, y: 0 };
+    player = { x: 0, y: 0, dir: "E" };
     var conf = DIFFICULTIES[currentDifficulty];
     ghosts = ghostHomes(conf.ghosts).map(function (home, i) {
       return { x: home.x, y: home.y, color: GHOST_COLORS[i % GHOST_COLORS.length], dir: null };
@@ -227,6 +229,7 @@
     var d = DIRS[dir];
     player.x += d.dx;
     player.y += d.dy;
+    player.dir = dir;
 
     if (!dotEaten[player.x][player.y]) {
       dotEaten[player.x][player.y] = true;
@@ -317,8 +320,13 @@
       boardCtx.fill();
     });
 
+    var pcx = player.x * tile + tile / 2;
+    var pcy = player.y * tile + tile / 2;
+    var facing = FACING_ANGLE[player.dir] || 0;
     boardCtx.beginPath();
-    boardCtx.arc(player.x * tile + tile / 2, player.y * tile + tile / 2, tile * 0.32, 0, Math.PI * 2);
+    boardCtx.moveTo(pcx, pcy);
+    boardCtx.arc(pcx, pcy, tile * 0.36, facing + MOUTH_RAD, facing - MOUTH_RAD + Math.PI * 2, false);
+    boardCtx.closePath();
     boardCtx.fillStyle = "#ffd93d";
     boardCtx.fill();
   }
