@@ -46,7 +46,7 @@
   };
   var DIR_KEYS = Object.keys(DIRS);
   var FACING_ANGLE = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 };
-  var MOUTH_RAD = 0.28 * Math.PI;
+  var MOUTH_RAD = 0.28 * 0.8 * Math.PI;
 
   var size = 7;
   var cells = [];
