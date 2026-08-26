@@ -12,40 +12,25 @@
   // 바꿀 수 있으니 예전 비밀번호를 다시 물어보지 않는다. 입력창에 새 값을 넣고
   // 저장하면 바로 바뀐다.
   function buildAdminRow() {
-    var row = document.createElement("div");
-    row.className = "admin-child-settings-row";
+    // 하정·하진 행과 첫 줄(이름/상태/지우기)이 똑같아 보이도록 같은
+    // .admin-child-settings-row를 두 줄로 나눠 쓴다 - 새 비밀번호 입력/저장은
+    // 아랫줄로 뺀다.
+    var block = document.createElement("div");
+    block.className = "admin-child-settings-admin-block";
+
+    var mainRow = document.createElement("div");
+    mainRow.className = "admin-child-settings-row";
 
     var label = document.createElement("span");
     label.className = "admin-child-settings-name";
     label.textContent = "🛠️ 관리자";
-    row.appendChild(label);
+    mainRow.appendChild(label);
 
     var status = document.createElement("span");
     status.className = "admin-child-settings-status";
     var hasPin = AdminAuthStore.hasPin();
     status.textContent = hasPin ? "🔒 설정됨" : "설정 안 됨";
-    row.appendChild(status);
-
-    var input = document.createElement("input");
-    input.type = "password";
-    input.inputMode = "numeric";
-    input.autocomplete = "off";
-    input.className = "admin-child-settings-input";
-    input.placeholder = "새 관리자 비밀번호";
-    row.appendChild(input);
-
-    var saveBtn = document.createElement("button");
-    saveBtn.type = "button";
-    saveBtn.className = "secondary-btn";
-    saveBtn.textContent = "저장";
-    saveBtn.addEventListener("click", function () {
-      if (!input.value) return;
-      AdminAuthStore.setPin(input.value);
-      input.value = "";
-      alert("관리자 비밀번호를 저장했어요.");
-      renderPinList();
-    });
-    row.appendChild(saveBtn);
+    mainRow.appendChild(status);
 
     var clearBtn = document.createElement("button");
     clearBtn.type = "button";
@@ -58,9 +43,35 @@
         renderPinList();
       }
     });
-    row.appendChild(clearBtn);
+    mainRow.appendChild(clearBtn);
 
-    return row;
+    var editRow = document.createElement("div");
+    editRow.className = "admin-child-settings-row admin-child-settings-row-edit";
+
+    var input = document.createElement("input");
+    input.type = "password";
+    input.inputMode = "numeric";
+    input.autocomplete = "off";
+    input.className = "admin-child-settings-input";
+    input.placeholder = "새 관리자 비밀번호";
+    editRow.appendChild(input);
+
+    var saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "secondary-btn";
+    saveBtn.textContent = "저장";
+    saveBtn.addEventListener("click", function () {
+      if (!input.value) return;
+      AdminAuthStore.setPin(input.value);
+      input.value = "";
+      alert("관리자 비밀번호를 저장했어요.");
+      renderPinList();
+    });
+    editRow.appendChild(saveBtn);
+
+    block.appendChild(mainRow);
+    block.appendChild(editRow);
+    return block;
   }
 
   // 아이 비밀번호는 이제 로그인 화면(이름을 누를 때)에서 직접 설정한다 - 여기서는

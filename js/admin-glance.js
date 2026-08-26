@@ -117,7 +117,6 @@
     if (!selectedChildId) return;
 
     var studiedToday = ProgressStore.hasCompletedSetTodayForChild(selectedChildId);
-    var journeyToday = StampStore.hasCompletedAnyToday(selectedChildId);
 
     var section1 = document.createElement("div");
     section1.className = "admin-glance-section";
@@ -130,8 +129,6 @@
     section2.innerHTML =
       "<h3>✏️ 오늘 단어 공부</h3><p class=\"admin-glance-today-line\">" +
       (studiedToday ? "✅ 오늘 단어 공부를 끝냈어요." : "❌ 아직 안 했어요.") +
-      "</p><p class=\"admin-glance-today-line\">" +
-      (journeyToday ? "✅ 오늘 저니스 미션도 끝냈어요." : "❌ 오늘 저니스 미션은 아직이에요.") +
       "</p>";
     bodyEl.appendChild(section2);
 

@@ -113,6 +113,27 @@
   border-bottom: none;
 }
 
+/* 관리자 행만 두 줄 - 첫 줄(이름/상태/지우기)은 하정·하진 행과 똑같은
+   .admin-child-settings-row를 그대로 쓰고, 새 비밀번호 입력/저장은 아랫줄에
+   둔다. 바깥 블록이 구분선·여백을 담당하니 안쪽 두 줄은 자체 테두리를 뺀다. */
+.admin-child-settings-admin-block {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.admin-child-settings-admin-block:last-child {
+  border-bottom: none;
+}
+
+.admin-child-settings-admin-block .admin-child-settings-row {
+  padding: 0;
+  border-bottom: none;
+}
+
+.admin-child-settings-row-edit {
+  margin-top: 8px;
+}
+
 .admin-child-settings-name {
   font-weight: bold;
   color: var(--color-text);
