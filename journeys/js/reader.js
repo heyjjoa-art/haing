@@ -478,6 +478,79 @@
     step();
   }
 
+  var voiceGateTimer = null;
+  var voiceGateIndex = 0;
+
+  function stopVoiceGatedHighlighter() {
+    if (voiceGateTimer) {
+      clearTimeout(voiceGateTimer);
+      voiceGateTimer = null;
+    }
+  }
+
+  // 혼자읽기 전용: 정해진 속도로 그냥 넘기는 게 아니라, 실제로 그 단어를 소리 내어
+  // 읽는 낌새(마이크 음량, RecordingStore.isVoiceActive)가 감지돼야 다음 단어로
+  // 넘어간다 - 읽는 척만 하고 형광펜만 넘겨서 녹음 없이 페이지를 끝내버리는 걸
+  // 막으려는 것. 한 단어당: (1) 목소리가 MIN_SPEAK_MS 이상 잡히고, (2) 그 뒤로
+  // SILENCE_MS 이상 조용해지면 "그 단어를 다 읽었다"고 보고 다음으로 넘어간다.
+  // 마이크에 소리가 전혀 안 잡히는 상태(마이크 문제 등)가 MAX_WAIT_MS만큼 길어지면
+  // 완전히 멈춰버리지 않게 그냥 다음으로 넘긴다 - 다만 그러면 결국 hadVoiceActivity가
+  // 안 남아서 완료 처리(finalizeRecordingForMode)에서 걸러진다.
+  var VOICE_GATE_MIN_SPEAK_MS = 200;
+  var VOICE_GATE_SILENCE_MS = 350;
+  var VOICE_GATE_MAX_WAIT_MS = 10000;
+  var VOICE_GATE_POLL_MS = 90;
+
+  function startVoiceGatedHighlighter(startIndex, onDone) {
+    voiceGateIndex = startIndex || 0;
+
+    function highlightCurrent() {
+      var w = wordSpans[voiceGateIndex];
+      clearReadingHighlight();
+      w.el.classList.add("reading");
+      currentReadingEl = w.el;
+      w.el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+
+    function waitForWord() {
+      if (voiceGateIndex >= wordSpans.length) {
+        if (onDone) onDone();
+        return;
+      }
+      highlightCurrent();
+      var startedAt = Date.now();
+      var lastCheck = startedAt;
+      var activeMs = 0;
+      var silentStreakMs = 0;
+
+      function poll() {
+        var now = Date.now();
+        var dt = now - lastCheck;
+        lastCheck = now;
+        var active = typeof RecordingStore !== "undefined" && RecordingStore.isVoiceActive("alone");
+        if (active) {
+          activeMs += dt;
+          silentStreakMs = 0;
+        } else {
+          silentStreakMs += dt;
+        }
+        var spokeEnough = activeMs >= VOICE_GATE_MIN_SPEAK_MS;
+        var doneSpeaking = spokeEnough && silentStreakMs >= VOICE_GATE_SILENCE_MS;
+        var timedOut = now - startedAt >= VOICE_GATE_MAX_WAIT_MS;
+        if (doneSpeaking || timedOut) {
+          voiceGateIndex++;
+          voiceGateTimer = setTimeout(waitForWord, 30);
+          return;
+        }
+        voiceGateTimer = setTimeout(poll, VOICE_GATE_POLL_MS);
+      }
+
+      poll();
+    }
+
+    waitForWord();
+  }
+
   // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다. 페이지 진행률은
   // (버튼 안이 아니라) 상단 진행율 바 3개에 모드별로 따로 보여준다 - updateProgressBars() 참고.
   function buttonHtml(icon, label) {
@@ -526,6 +599,7 @@
     playToken++;
     Tts.stop();
     stopFallbackHighlighter();
+    stopVoiceGatedHighlighter();
     clearReadingHighlight();
     resetButtons();
     activeMode = null;
@@ -567,9 +641,11 @@
   function finalizeRecordingForMode(mode) {
     if (typeof RecordingStore === "undefined") return Promise.resolve(false);
     return RecordingStore.stopCapture(mode, currentPageIndex).then(
-      function (blob) {
-        if (!blob || blob.size === 0) return false;
-        return RecordingStore.saveTake(childId, unit.id, mode, currentPageIndex, blob, blob.type).then(
+      function (result) {
+        // blob이 있어도(마이크가 켜져 있었다는 뜻) hadVoiceActivity가 false면 그냥
+        // 조용히 마이크만 켜놓은 것 - 실제로 소리 낸 게 한 번도 없으면 완료로 안 친다.
+        if (!result || !result.blob || result.blob.size === 0 || !result.hadVoiceActivity) return false;
+        return RecordingStore.saveTake(childId, unit.id, mode, currentPageIndex, result.blob, result.blob.type).then(
           function () {
             return true;
           },
@@ -606,9 +682,9 @@
   }
 
   var RECORDING_NOTICE_MESSAGES = {
-    unsupported: "이 기기/브라우저는 목소리 녹음을 지원하지 않아요. 읽는 연습은 할 수 있지만 도장은 찍히지 않아요.",
-    denied: "마이크 사용이 허용되지 않아 목소리를 녹음하지 못했어요. 설정에서 마이크 권한을 허용해주세요. 녹음 없이는 도장이 찍히지 않아요.",
-    "recording-missing": "이번엔 목소리가 녹음되지 않았어요. 다시 한 번 읽어볼까요? 녹음이 돼야 도장이 찍혀요."
+    unsupported: "이 기기/브라우저는 목소리 녹음을 지원하지 않아요.\n읽는 연습은 할 수 있지만 도장은 찍히지 않아요.",
+    denied: "마이크 사용이 허용되지 않아 목소리를 녹음하지 못했어요. 설정에서 마이크 권한을 허용해주세요.\n녹음 없이는 도장이 찍히지 않아요.",
+    "recording-missing": "이번엔 목소리가 녹음되지 않았어요. 다시 한 번 읽어볼까요?\n녹음이 돼야 도장이 찍혀요."
   };
 
   function showRecordingNotice(mode, reasonCode) {
@@ -764,17 +840,24 @@
     else playWithHighlight(mode, currentSpeedRate(), pausedWordIndex.follow);
   }
 
+  // 마이크가 실제로 켜져 있으면(RecordingStore.isCapturing) 목소리가 잡혀야 다음
+  // 단어로 넘어가는 voiceGatedHighlighter를 쓴다. 마이크 권한이 없거나 지원 안 되는
+  // 기기라면 그 방식은 하염없이 기다리기만 하므로, 그때는 원래의 속도 기반
+  // fallbackHighlighter로 대신한다(완료 처리는 어차피 녹음이 있어야만 나므로,
+  // 이 경우는 처음부터 도장을 못 받는다는 안내가 이미 떠 있는 상태다).
   function startAloneMode(startWordIndex) {
     var myToken = playToken;
     setPlaying("alone");
-    startFallbackHighlighter(
-      currentSpeedRate(),
-      function () {
-        if (playToken !== myToken) return;
-        onReadingFinished("alone");
-      },
-      startWordIndex
-    );
+    var onDone = function () {
+      if (playToken !== myToken) return;
+      onReadingFinished("alone");
+    };
+    var canVoiceGate = typeof RecordingStore !== "undefined" && RecordingStore.isCapturing("alone");
+    if (canVoiceGate) {
+      startVoiceGatedHighlighter(startWordIndex, onDone);
+    } else {
+      startFallbackHighlighter(currentSpeedRate(), onDone, startWordIndex);
+    }
   }
 
   // 1번(듣기)·2번(따라읽기) 공용: TTS로 전체를 읽으면서 지금 읽는 단어를 하이라이트한다.

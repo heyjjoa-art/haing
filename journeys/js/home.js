@@ -10,6 +10,13 @@
 
   var activeBook = null;
 
+  // 도장 칸 하나하나에 서로 다른 응원 캐릭터(동물)를 색깔별로 찍어준다 - 월~금 요일
+  // 순서(day 배열 인덱스)로 그대로 매겨서, 한 주 안에서는 5개가 겹치지 않고 고르게
+  // 나오고, 새로고침해도 같은 요일엔 항상 같은 캐릭터가 나온다(랜덤이면 볼 때마다
+  // 바뀌어서 오히려 어수선함). 주말 보충 도장(isMakeup)은 여기 안 쓰고 "주말"
+  // 글자만 작게 표시하던 기존 방식 그대로 둔다.
+  var CHEER_CHARACTERS = ["🐰", "🐻", "🦁", "🐸", "🐙"];
+
   // 도장판은 특정 유닛이 아니라 "오늘 어느 유닛이든 하루 미션(듣기·따라읽기·혼자읽기)을
   // 다 끝냈는지"로 채워진다 - 유닛마다 따로 보던 걸 Journeys 메뉴 맨 위에 하나로
   // 모아서, 어느 책을 펴서 읽어도 오늘 몫을 채운 걸로 쳐준다.
@@ -32,16 +39,26 @@
     });
     if (weekComplete) row.classList.add("trophy");
 
-    thisWeek.days.forEach(function (day) {
+    thisWeek.days.forEach(function (day, idx) {
       var cell = document.createElement("div");
       cell.className = "stamp-day-cell";
       if (day.stamped) cell.classList.add("stamped");
       if (day.isMakeup) cell.classList.add("makeup");
       if (day.isToday) cell.classList.add("today");
       if (day.isFuture) cell.classList.add("future");
+
+      var iconClass = "stamp-day-icon";
+      var iconContent = "";
+      if (day.isMakeup) {
+        iconContent = "주말";
+      } else if (day.stamped) {
+        iconClass += " char-" + (idx % CHEER_CHARACTERS.length);
+        iconContent = CHEER_CHARACTERS[idx % CHEER_CHARACTERS.length];
+      }
+
       cell.innerHTML =
         '<span class="stamp-day-label">' + day.label + "</span>" +
-        '<span class="stamp-day-icon">' + (day.isMakeup ? "주말" : day.stamped ? "성공" : "") + "</span>";
+        '<span class="' + iconClass + '">' + iconContent + "</span>";
       row.appendChild(cell);
     });
     stampBoardWeeksEl.appendChild(row);
