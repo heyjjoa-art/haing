@@ -7,7 +7,6 @@
 
   var topRowEl = document.getElementById("topStampSpeedRow");
   var stampBoardWeeksEl = document.getElementById("stampBoardWeeks");
-  var speedButtons = Array.prototype.slice.call(document.querySelectorAll(".speed-btn"));
 
   var activeBook = null;
 
@@ -48,27 +47,8 @@
     stampBoardWeeksEl.appendChild(row);
   }
 
-  var SPEED_KEY = "journeysReadSpeed";
-  var SPEED_RATES = { slow: 0.5, normal: 1, fast: 1.5 };
-  var currentSpeed = localStorage.getItem(SPEED_KEY);
-  if (!SPEED_RATES[currentSpeed]) currentSpeed = "normal";
-
-  function updateSpeedButtons() {
-    speedButtons.forEach(function (btn) {
-      btn.classList.toggle("active", btn.getAttribute("data-speed") === currentSpeed);
-    });
-  }
-
-  speedButtons.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var speed = btn.getAttribute("data-speed");
-      if (!SPEED_RATES[speed]) return;
-      currentSpeed = speed;
-      localStorage.setItem(SPEED_KEY, speed);
-      updateSpeedButtons();
-    });
-  });
-  updateSpeedButtons();
+  // 읽는 속도 조절 버튼은 실제로 쓰이는 화면(reader.html, journeys/js/reader.js)으로
+  // 옮겨갔다 - 여기(목록 화면)엔 더 이상 없다.
 
   // 하정/하진이 각자 다른 책을 대표로 골라둘 수 있도록 아이별로 따로 저장한다.
   function defaultBookKey() {

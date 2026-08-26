@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>읽기 - Journeys</title>
-<link rel="stylesheet" href="css/style.css?v=202608261025">
-<link rel="stylesheet" href="css/reader.css?v=202608261025">
+<link rel="stylesheet" href="css/style.css?v=202608261141">
+<link rel="stylesheet" href="css/reader.css?v=202608261141">
 </head>
 <body>
 
@@ -15,10 +15,44 @@
     <div class="reader-sticky-top">
       <p class="listen-note">지금 읽는 부분이 노란색으로 표시돼요.<br>모르는 단어는 톡 눌러보세요!</p>
 
+      <div class="reader-top-row" id="readerTopRow">
+        <div class="mode-progress" id="modeProgressEl" hidden>
+          <div class="mode-progress-row" data-mode="listen">
+            <span class="mode-progress-label">🔊 음원듣기</span>
+            <span class="mode-progress-track"><span class="mode-progress-fill" id="progressFillListen"></span></span>
+            <span class="mode-progress-count" id="progressCountListen">1/1</span>
+          </div>
+          <div class="mode-progress-row" data-mode="follow">
+            <span class="mode-progress-label">✨ 따라읽기</span>
+            <span class="mode-progress-track"><span class="mode-progress-fill" id="progressFillFollow"></span></span>
+            <span class="mode-progress-count" id="progressCountFollow">1/1</span>
+          </div>
+          <div class="mode-progress-row" data-mode="alone">
+            <span class="mode-progress-label">📖 혼자읽기</span>
+            <span class="mode-progress-track"><span class="mode-progress-fill" id="progressFillAlone"></span></span>
+            <span class="mode-progress-count" id="progressCountAlone">1/1</span>
+          </div>
+        </div>
+
+        <div class="speed-control" id="speedControl">
+          <span class="speed-label">⏱ 읽는 속도</span>
+          <div class="speed-buttons">
+            <button type="button" class="speed-btn" data-speed="slow"><span class="speed-btn-icon">🐢</span><span class="speed-btn-label">느리게</span></button>
+            <button type="button" class="speed-btn" data-speed="normal"><span class="speed-btn-icon">🚶</span><span class="speed-btn-label">보통</span></button>
+            <button type="button" class="speed-btn" data-speed="fast"><span class="speed-btn-icon">🐇</span><span class="speed-btn-label">빠르게</span></button>
+          </div>
+        </div>
+      </div>
+
       <div class="mode-actions" id="modeActions">
         <button type="button" id="listenBtn" class="listen-btn listen"><span class="listen-btn-icon">🔊</span><span class="listen-btn-label">음원 듣기</span></button>
         <button type="button" id="followBtn" class="listen-btn follow"><span class="listen-btn-icon">✨</span><span class="listen-btn-label">따라 읽기</span></button>
         <button type="button" id="aloneBtn" class="listen-btn alone"><span class="listen-btn-icon">📖</span><span class="listen-btn-label">혼자 읽기</span></button>
+      </div>
+
+      <p class="recording-notice" id="recordingNoticeEl" hidden></p>
+      <div class="my-voice-row" id="myVoiceRow" hidden>
+        <button type="button" class="my-voice-btn" id="myVoicePlayBtn">▶ 내 목소리 듣기</button>
       </div>
     </div>
 
@@ -68,16 +102,17 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608261025"></script>
-<script src="../js/words-data.js?v=202608261025"></script>
-<script src="../js/child-store.js?v=202608261025"></script>
-<script src="../js/fortune-store.js?v=202608261025"></script>
-<script src="js/tts.js?v=202608261025"></script>
-<script src="js/data-store.js?v=202608261025"></script>
-<script src="js/stamp-store.js?v=202608261025"></script>
-<script src="js/dictionary.js?v=202608261025"></script>
-<script src="../js/word-card-store.js?v=202608261025"></script>
-<script src="../js/word-game-store.js?v=202608261025"></script>
-<script src="js/reader.js?v=202608261025"></script>
+<script src="js/firebase-init.js?v=202608261141"></script>
+<script src="../js/words-data.js?v=202608261141"></script>
+<script src="../js/child-store.js?v=202608261141"></script>
+<script src="../js/fortune-store.js?v=202608261141"></script>
+<script src="js/tts.js?v=202608261141"></script>
+<script src="js/recording-store.js?v=202608261141"></script>
+<script src="js/data-store.js?v=202608261141"></script>
+<script src="js/stamp-store.js?v=202608261141"></script>
+<script src="js/dictionary.js?v=202608261141"></script>
+<script src="../js/word-card-store.js?v=202608261141"></script>
+<script src="../js/word-game-store.js?v=202608261141"></script>
+<script src="js/reader.js?v=202608261141"></script>
 </body>
 </html>

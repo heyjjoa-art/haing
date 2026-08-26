@@ -35,16 +35,39 @@
   var listenBtn = document.getElementById("listenBtn");
   var followBtn = document.getElementById("followBtn");
   var aloneBtn = document.getElementById("aloneBtn");
+  var modeProgressEl = document.getElementById("modeProgressEl");
+  var recordingNoticeEl = document.getElementById("recordingNoticeEl");
+  var myVoiceRowEl = document.getElementById("myVoiceRow");
+  var myVoicePlayBtnEl = document.getElementById("myVoicePlayBtn");
+  var speedControlEl = document.getElementById("speedControl");
 
-  // 읽는 속도 버튼 자체는 Journeys 메뉴 맨 위로 옮겨갔다(home.js) - 여기서는 그
-  // 설정값만 읽어서 재생 속도에 반영한다.
+  // 읽는 속도 버튼 - 예전엔 Journeys 메뉴 맨 위(목록 화면)에 있었는데, 실제로 속도를
+  // 바꿔가며 쓰는 곳은 책을 펴서 읽는 이 화면이라 진행율 바 옆으로 옮겨왔다.
   var SPEED_KEY = "journeysReadSpeed";
   var SPEED_RATES = { slow: 0.5, normal: 1, fast: 1.5 };
+  var speedButtons = speedControlEl ? Array.prototype.slice.call(speedControlEl.querySelectorAll(".speed-btn")) : [];
 
   function currentSpeedRate() {
     var speed = localStorage.getItem(SPEED_KEY);
     return SPEED_RATES[speed] || SPEED_RATES.normal;
   }
+
+  function updateSpeedButtons() {
+    var speed = localStorage.getItem(SPEED_KEY) in SPEED_RATES ? localStorage.getItem(SPEED_KEY) : "normal";
+    speedButtons.forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-speed") === speed);
+    });
+  }
+
+  speedButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var speed = btn.getAttribute("data-speed");
+      if (!SPEED_RATES[speed]) return;
+      localStorage.setItem(SPEED_KEY, speed);
+      updateSpeedButtons();
+    });
+  });
+  updateSpeedButtons();
 
   var wordPopupEl = document.getElementById("wordPopup");
   var wordPopupWordEl = document.getElementById("wordPopupWord");
@@ -58,11 +81,13 @@
 
   // 재생 중에 버튼을 다시 눌러 직접 멈춘 경우(자동으로 다 끝난 게 아니라) 쓴다.
   // 모드별로 멈춘 지점을 기억해뒀다가, 같은 버튼을 또 누르면 처음부터가 아니라
-  // 그 지점부터 이어서 읽는다. hasUnfinishedPlayback은 "이 페이지를 끝까지 재생해서
-  // 다 읽지는 않았다"는 표시로, updatePageNavDisabled()가 페이지 이동을 계속 잠그는
-  // 데 쓴다 - 멈춤 버튼으로 잠금을 피해가지 못하게(다 듣기 전엔 페이지 이동 금지).
+  // 그 지점부터 이어서 읽는다. hasUnfinishedPlayback은 모드별로 "이 페이지를 끝까지
+  // 재생해서 다 읽지는 않았다"는 표시로, updatePageNavDisabled()가 그 모드를 보는 동안
+  // 페이지 이동을 계속 잠그는 데 쓴다 - 멈춤 버튼으로 잠금을 피해가지 못하게(다 듣기
+  // 전엔 페이지 이동 금지). 모드별로 따로 관리해서, 한 모드를 멈춰놓은 채로 다른
+  // 모드로 갈아타는 건 막지 않는다(그 모드는 자기 진도와 무관하니까).
   var pausedWordIndex = { listen: 0, follow: 0, alone: 0 };
-  var hasUnfinishedPlayback = false;
+  var hasUnfinishedPlayback = { listen: false, follow: false, alone: false };
 
   var rewardModalEl = document.getElementById("rewardModal");
   var rewardZodiacEl = document.getElementById("rewardZodiac");
@@ -81,23 +106,58 @@
   var currentChunkBoundaryFired = null; // 지금 재생 중인 청크의 boundary 도착 여부를 표시하는 콜백
 
   var pages = []; // { photo, pageNumber, paragraphs }
+  // 음원듣기/따라읽기/혼자읽기는 각자 다른 속도로 책을 읽어나갈 수 있으므로(듣기는
+  // 5페이지까지 들었는데 혼자읽기는 아직 1페이지일 수 있음), "어디까지 읽었는지"를
+  // 모드별로 따로 기억한다. currentPageIndex는 지금 화면에 보이는 페이지 하나뿐이고,
+  // viewedMode는 지금 화면이 "누구 기준"으로 보이고 있는지(어느 모드의 진도를 보고
+  // 있는지)를 나타낸다 - 아무 모드도 안 눌렀으면 null(그냥 책 미리보기).
+  var pageIndexByMode = { listen: 0, follow: 0, alone: 0 };
   var currentPageIndex = 0;
+  var viewedMode = null;
 
   // 긴 책(사진 10장 이상 등)은 한 번에 끝까지 못 읽고 나갔다 다시 들어오는 일이
-  // 흔해서, 마지막으로 보던 페이지를 아이별로 기억해뒀다가 다음에 들어오면 거기서부터
-  // 이어서 보여준다 - 매번 1페이지부터 다시 넘기지 않아도 되게.
-  function pagePosKey() {
+  // 흔해서, 모드별로 마지막으로 보던 페이지를 아이별로 기억해뒀다가 다음에 들어오면
+  // 거기서부터 이어서 보여준다 - 매번 1페이지부터 다시 넘기지 않아도 되게.
+  function pagePosKey(mode) {
+    return "journeysPagePos_" + (childId || "guest") + "_" + unit.id + "_" + mode;
+  }
+
+  function savePagePos(mode) {
+    localStorage.setItem(pagePosKey(mode), String(pageIndexByMode[mode]));
+  }
+
+  function loadPagePos(mode) {
+    var raw = localStorage.getItem(pagePosKey(mode));
+    var n = raw != null ? parseInt(raw, 10) : 0;
+    return isNaN(n) ? 0 : n;
+  }
+
+  // 모드 구분이 생기기 전(이번 세션 초반)엔 페이지 위치를 유닛당 하나로만 저장했다.
+  // 그 옛 값이 남아있으면, 아직 모드별 값이 하나도 없을 때 딱 한 번 세 모드 모두에
+  // 그대로 복사해준다 - 이어읽던 자리를 1페이지로 되돌리지 않기 위해서다. 그 뒤로는
+  // 모드별 값이 이미 있으니 이 함수는 계속 아무 일도 안 한다.
+  function legacyPagePosKey() {
     return "journeysPagePos_" + (childId || "guest") + "_" + unit.id;
   }
 
-  function saveCurrentPagePos() {
-    localStorage.setItem(pagePosKey(), String(currentPageIndex));
+  function migrateLegacyPagePosIfNeeded() {
+    var legacyRaw = localStorage.getItem(legacyPagePosKey());
+    if (legacyRaw == null) return;
+    ["listen", "follow", "alone"].forEach(function (mode) {
+      if (localStorage.getItem(pagePosKey(mode)) == null) {
+        localStorage.setItem(pagePosKey(mode), legacyRaw);
+      }
+    });
   }
 
-  function loadSavedPagePos() {
-    var raw = localStorage.getItem(pagePosKey());
-    var n = raw != null ? parseInt(raw, 10) : 0;
-    return isNaN(n) ? 0 : n;
+  // 이 모드의 "어디까지 읽었는지" 포인터를 옮긴다 - 페이지를 옮길 때마다 저장하고,
+  // 새 페이지로 넘어간 거니 그 모드의 문장 중간 재개 지점(pausedWordIndex)도 리셋하고,
+  // 상단 진행율 바도 다시 그린다.
+  function setModePageIndex(mode, idx) {
+    pageIndexByMode[mode] = Math.max(0, Math.min(idx, pages.length - 1));
+    savePagePos(mode);
+    pausedWordIndex[mode] = 0;
+    updateProgressBars();
   }
 
   var PAGE_BREAK_MARKER = "====";
@@ -152,22 +212,45 @@
   function render() {
     storyTitleEl.textContent = unit.title;
     pages = buildPages(unit);
-    renderPage(loadSavedPagePos());
+    migrateLegacyPagePosIfNeeded();
+    ["listen", "follow", "alone"].forEach(function (mode) {
+      pageIndexByMode[mode] = Math.max(0, Math.min(loadPagePos(mode), pages.length - 1));
+    });
+    // 세 모드 중 가장 뒤처진(아직 덜 읽은) 모드의 페이지를 먼저 보여준다 - 이어서
+    // 할 일이 남은 곳을 열자마자 보여주려는 것.
+    var initialIdx = Math.min(pageIndexByMode.listen, pageIndexByMode.follow, pageIndexByMode.alone);
+    renderPage(initialIdx, null);
     renderStampButtons();
     checkAndAwardTrophies();
   }
 
-  // 페이지를 넘기면 재생 중이던 소리/형광펜은 멈춘다(stopAll) - 이전 페이지 내용을
-  // 새 페이지로 이어서 읽지는 않는다. 이전/다음 페이지 버튼 자체가 재생 중에는
+  // 재생 중이던 소리/형광펜을 멈춘다. 지금 뭔가 재생 중이었다면(activeMode) 이건
+  // "다 안 끝났는데 끊긴 것"이므로, 버튼으로 직접 멈춘 것과 똑같이 취급해서 그 모드의
+  // 멈춘 지점을 기억해두고 페이지 잠금을 유지한다 - 다른 모드로 갈아타거나 페이지를
+  // 넘기다가 재생이 끊겨도 그 모드의 진행 상황이 조용히 사라지지 않게 하려는 것.
+  function interruptActiveModeIfPlaying() {
+    if (activeMode) {
+      var idx = currentReadingEl ? findWordIndexByEl(currentReadingEl) : -1;
+      pausedWordIndex[activeMode] = idx > 0 ? idx : 0;
+      hasUnfinishedPlayback[activeMode] = true;
+      if ((activeMode === "follow" || activeMode === "alone") && typeof RecordingStore !== "undefined") {
+        RecordingStore.cancelCapture(activeMode);
+      }
+    }
+    stopAll();
+  }
+
+  // 페이지를 넘기면 재생 중이던 소리/형광펜은 멈춘다 - 이전 페이지 내용을 새 페이지로
+  // 이어서 읽지는 않는다. mode를 주면 "이 모드 기준으로 보는 화면"이라는 뜻이고,
+  // 이전/다음 페이지 버튼 자체가 그 모드가 재생 중(또는 못다 읽은 채 멈춘 상태)이면
   // updatePageNavDisabled()로 잠겨 있어서, 형광펜이 그 페이지를 끝까지 읽기 전에는
   // 아예 눌리지 않는다 - 다 듣기 전에 건너뛰어서 다음 페이지로 넘기지 못 하게 하려는 것.
-  function renderPage(idx) {
-    stopAll();
+  function renderPage(idx, mode) {
+    interruptActiveModeIfPlaying();
     currentPageIndex = Math.max(0, Math.min(idx, pages.length - 1));
+    viewedMode = mode || null;
     resetButtons(); // stopAll()은 이전 페이지 번호로 이미 그려버렸으니 새 페이지 번호로 다시 그린다
-    saveCurrentPagePos();
-    pausedWordIndex = { listen: 0, follow: 0, alone: 0 };
-    hasUnfinishedPlayback = false;
+    clearRecordingNotice();
     var page = pages[currentPageIndex];
 
     if (page.photo) {
@@ -184,23 +267,36 @@
     pageNav.hidden = pages.length <= 1;
     pageIndicatorEl.textContent = (currentPageIndex + 1) + " / " + pages.length;
     updatePageNavDisabled();
+    updateProgressBars();
+    updateMyVoiceRow();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // 이전 페이지는 그냥 다시 보기 용도라 그 모드의 진도(pageIndexByMode)를 뒤로
+  // 되돌리지 않는다 - 예전 페이지를 잠깐 다시 봤다고 진행이 깎이면 안 되니까. 다음
+  // 페이지는 지금 보고 있는 모드가 있고, 아직 그 모드가 가본 적 없는 페이지라면
+  // 그 모드의 진도를 거기까지 넓혀준다(그래야 나중에 그 모드 버튼을 다시 누르면
+  // 여기서부터 이어진다).
   prevPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex - 1);
+    renderPage(currentPageIndex - 1, viewedMode);
   });
   nextPageBtn.addEventListener("click", function () {
-    renderPage(currentPageIndex + 1);
+    var mode = viewedMode;
+    var targetIdx = currentPageIndex + 1;
+    renderPage(targetIdx, mode);
+    if (mode && targetIdx > pageIndexByMode[mode]) setModePageIndex(mode, targetIdx);
   });
 
   // 재생 중(activeMode)이거나, 단어 뜻 팝업 때문에 잠깐 멈춘 중(pendingResumeMode, 곧
-  // 이어서 읽을 예정)이거나, 다 안 끝났는데 멈춤 버튼으로 직접 멈춘 상태(hasUnfinishedPlayback)면
-  // 형광펜이 이 페이지를 다 읽지 않은 것으로 보고 이전/다음 페이지 버튼을 잠근다 -
-  // 멈춤 버튼을 눌러서 끝까지 안 듣고 페이지를 넘겨버리는 것도 막는다.
+  // 이어서 읽을 예정)이거나, 지금 보고 있는 모드가 이 페이지를 다 안 읽고 멈춘 상태면
+  // (hasUnfinishedPlayback[viewedMode]) 형광펜이 이 페이지를 다 읽지 않은 것으로 보고
+  // 이전/다음 페이지 버튼을 잠근다 - 멈춤 버튼을 눌러서 끝까지 안 듣고 페이지를
+  // 넘겨버리는 것도 막는다. 다른 모드로 갈아타는 건 이 잠금과 무관하다(모드 버튼은
+  // 여기서 안 건드림).
   function updatePageNavDisabled() {
-    var stillReading = !!activeMode || !!pendingResumeMode || hasUnfinishedPlayback;
+    var lockedByViewedMode = !!viewedMode && !!hasUnfinishedPlayback[viewedMode];
+    var stillReading = !!activeMode || !!pendingResumeMode || lockedByViewedMode;
     prevPageBtn.disabled = stillReading || currentPageIndex === 0;
     nextPageBtn.disabled = stillReading || currentPageIndex === pages.length - 1;
   }
@@ -277,16 +373,7 @@
 
   function resumeReading(mode, wordIndex) {
     if (mode === "alone") {
-      var myToken = playToken;
-      setPlaying("alone");
-      startFallbackHighlighter(
-        currentSpeedRate(),
-        function () {
-          if (playToken !== myToken) return;
-          onReadingFinished("alone");
-        },
-        wordIndex
-      );
+      startAloneMode(wordIndex);
     } else {
       playWithHighlight(mode, currentSpeedRate(), wordIndex);
     }
@@ -391,20 +478,34 @@
     step();
   }
 
-  // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다. 페이지가
-  // 여러 장인 유닛은 지금 몇 페이지째인지도 버튼에 함께 보여준다 - 도장은 "듣기/따라읽기/
-  // 혼자읽기"를 마지막 페이지까지 끝까지 재생해야만 찍히는데, 버튼만 봐서는 지금 페이지가
-  // 마지막인지 알기 어려워서 "다 들었는데 왜 도장이 안 찍히지"로 헷갈리기 쉬웠다.
+  // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다. 페이지 진행률은
+  // (버튼 안이 아니라) 상단 진행율 바 3개에 모드별로 따로 보여준다 - updateProgressBars() 참고.
   function buttonHtml(icon, label) {
-    var progressHtml =
-      pages.length > 1
-        ? '<span class="listen-btn-progress">' + (currentPageIndex + 1) + "/" + pages.length + "</span>"
-        : "";
     return (
       '<span class="listen-btn-icon">' + icon + "</span>" +
-      '<span class="listen-btn-label">' + label + "</span>" +
-      progressHtml
+      '<span class="listen-btn-label">' + label + "</span>"
     );
+  }
+
+  var PROGRESS_FILL_EL = {
+    listen: document.getElementById("progressFillListen"),
+    follow: document.getElementById("progressFillFollow"),
+    alone: document.getElementById("progressFillAlone")
+  };
+  var PROGRESS_COUNT_EL = {
+    listen: document.getElementById("progressCountListen"),
+    follow: document.getElementById("progressCountFollow"),
+    alone: document.getElementById("progressCountAlone")
+  };
+
+  function updateProgressBars() {
+    if (!modeProgressEl) return;
+    modeProgressEl.hidden = pages.length <= 1;
+    Object.keys(pageIndexByMode).forEach(function (mode) {
+      var pct = pages.length > 1 ? Math.round(((pageIndexByMode[mode] + 1) / pages.length) * 100) : 100;
+      PROGRESS_FILL_EL[mode].style.width = pct + "%";
+      PROGRESS_COUNT_EL[mode].textContent = (pageIndexByMode[mode] + 1) + "/" + pages.length;
+    });
   }
 
   var BUTTONS = {
@@ -441,24 +542,112 @@
     updatePageNavDisabled();
   }
 
-  // 재생 중에 버튼을 다시 눌러 직접 멈췄을 때 호출. 지금 읽던 단어 위치를 그 모드의
-  // "멈춘 지점"으로 기억해뒀다가, 같은 버튼을 또 누르면 거기서부터 이어서 읽는다.
-  // 끝까지 다 읽은 게 아니므로 hasUnfinishedPlayback을 세워서 페이지 이동도 계속 잠가둔다.
+  // 재생 중에 버튼을 다시 눌러 직접 멈췄을 때 호출 - interruptActiveModeIfPlaying()가
+  // 멈춘 지점 기억/페이지 잠금/녹음 취소를 다 처리해준다.
   function pauseCurrentReading(mode) {
-    var idx = currentReadingEl ? findWordIndexByEl(currentReadingEl) : -1;
-    pausedWordIndex[mode] = idx > 0 ? idx : 0;
-    hasUnfinishedPlayback = true;
-    stopAll();
+    interruptActiveModeIfPlaying();
   }
 
-  // 이 페이지를 (멈추지 않고) 끝까지 다 읽었을 때 호출 - 마지막 페이지면 오늘의
-  // 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시 처음부터 읽도록 멈춘
-  // 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
+  // 이 페이지를 (멈추지 않고) 끝까지 다 읽었을 때 호출. 듣기는 녹음이 필요 없으니
+  // 바로 완료 처리하고, 따라읽기/혼자읽기는 실제로 목소리가 녹음됐는지 먼저 확인한
+  // 뒤에만 완료 처리한다(녹음이 없으면 완료가 아니다 - 처음부터 다시 읽게 한다).
   function onReadingFinished(mode) {
+    var myToken = playToken;
+    if (mode === "follow" || mode === "alone") {
+      finalizeRecordingForMode(mode).then(function (ok) {
+        if (playToken !== myToken) return;
+        if (ok) completeModeReadThrough(mode);
+        else rejectModeReadThrough(mode);
+      });
+    } else {
+      completeModeReadThrough(mode);
+    }
+  }
+
+  function finalizeRecordingForMode(mode) {
+    if (typeof RecordingStore === "undefined") return Promise.resolve(false);
+    return RecordingStore.stopCapture(mode, currentPageIndex).then(
+      function (blob) {
+        if (!blob || blob.size === 0) return false;
+        return RecordingStore.saveTake(childId, unit.id, mode, currentPageIndex, blob, blob.type).then(
+          function () {
+            return true;
+          },
+          function () {
+            return false;
+          }
+        );
+      },
+      function () {
+        return false;
+      }
+    );
+  }
+
+  // 끝까지 다 읽었을 때(듣기는 항상, 따라읽기/혼자읽기는 녹음까지 확인된 경우) 호출 -
+  // 마지막 페이지면 오늘의 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시
+  // 처음부터 읽도록 멈춘 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
+  function completeModeReadThrough(mode) {
     if (currentPageIndex === pages.length - 1) onStageCompleted(mode);
     pausedWordIndex[mode] = 0;
-    hasUnfinishedPlayback = false;
+    hasUnfinishedPlayback[mode] = false;
     stopAll();
+    updateMyVoiceRow();
+  }
+
+  // 끝까지 읽긴 읽었지만(따라읽기/혼자읽기) 녹음이 안 남았을 때 호출 - 완료로 치지
+  // 않는다. 부분 재개가 아니라 처음부터 다시 읽어야 새 녹음이 온전히 남으므로 멈춘
+  // 지점도 0으로 되돌리고, 페이지 잠금은 그대로 유지한 채 이유를 배너로 알려준다.
+  function rejectModeReadThrough(mode) {
+    pausedWordIndex[mode] = 0;
+    hasUnfinishedPlayback[mode] = true;
+    stopAll();
+    showRecordingNotice(mode, "recording-missing");
+  }
+
+  var RECORDING_NOTICE_MESSAGES = {
+    unsupported: "이 기기/브라우저는 목소리 녹음을 지원하지 않아요. 읽는 연습은 할 수 있지만 도장은 찍히지 않아요.",
+    denied: "마이크 사용이 허용되지 않아 목소리를 녹음하지 못했어요. 설정에서 마이크 권한을 허용해주세요. 녹음 없이는 도장이 찍히지 않아요.",
+    "recording-missing": "이번엔 목소리가 녹음되지 않았어요. 다시 한 번 읽어볼까요? 녹음이 돼야 도장이 찍혀요."
+  };
+
+  function showRecordingNotice(mode, reasonCode) {
+    if (!recordingNoticeEl) return;
+    recordingNoticeEl.textContent = RECORDING_NOTICE_MESSAGES[reasonCode] || RECORDING_NOTICE_MESSAGES["recording-missing"];
+    recordingNoticeEl.hidden = false;
+  }
+
+  function clearRecordingNotice() {
+    if (recordingNoticeEl) recordingNoticeEl.hidden = true;
+  }
+
+  // 지금 보고 있는 페이지에 그 모드(따라읽기/혼자읽기)의 저장된 녹음이 있으면 "내
+  // 목소리 듣기" 버튼을 보여준다. 듣기 모드는 애초에 녹음이 없으니 항상 숨긴다.
+  var myVoiceObjectUrl = null;
+
+  function revokeMyVoiceUrl() {
+    if (myVoiceObjectUrl) {
+      URL.revokeObjectURL(myVoiceObjectUrl);
+      myVoiceObjectUrl = null;
+    }
+  }
+
+  function updateMyVoiceRow() {
+    if (!myVoiceRowEl) return;
+    revokeMyVoiceUrl();
+    myVoiceRowEl.hidden = true;
+    if (typeof RecordingStore === "undefined") return;
+    if (viewedMode !== "follow" && viewedMode !== "alone") return;
+    var mode = viewedMode;
+    var pageIdx = currentPageIndex;
+    RecordingStore.getTake(childId, unit.id, mode, pageIdx).then(function (take) {
+      if (viewedMode !== mode || currentPageIndex !== pageIdx || !take) return; // 그 사이 페이지/모드가 바뀌었으면 무시
+      myVoiceRowEl.hidden = false;
+      myVoiceObjectUrl = URL.createObjectURL(take.blob);
+      myVoicePlayBtnEl.onclick = function () {
+        new Audio(myVoiceObjectUrl).play();
+      };
+    });
   }
 
   // 오늘 이 단계를 끝까지 마쳤을 때 호출. 오늘 1·2·3번을 모두 마치면 도장판에 도장이
@@ -521,7 +710,7 @@
       pauseCurrentReading("listen");
       return;
     }
-    playWithHighlight("listen", currentSpeedRate(), pausedWordIndex.listen);
+    startMode("listen");
   });
 
   followBtn.addEventListener("click", function () {
@@ -529,8 +718,64 @@
       pauseCurrentReading("follow");
       return;
     }
-    playWithHighlight("follow", currentSpeedRate(), pausedWordIndex.follow);
+    startMode("follow");
   });
+
+  aloneBtn.addEventListener("click", function () {
+    if (activeMode === "alone") {
+      pauseCurrentReading("alone");
+      return;
+    }
+    startMode("alone");
+  });
+
+  // 모드 버튼을 눌러 새로 시작할 때 공통으로 거치는 길목. 무슨 모드든 먼저 그 모드가
+  // 멈춰둔(가장 멀리 읽은) 페이지로 화면을 옮겨서 이어서 하도록 만든다. 듣기는 녹음이
+  // 필요 없어 바로 재생하고, 따라읽기/혼자읽기는 먼저 마이크 녹음을 켠 뒤(권한 요청
+  // 포함) 재생을 시작한다 - 권한이 없어도 읽기 연습 자체는 막지 않고, 완료(도장)
+  // 처리만 나중에 onReadingFinished에서 막는다.
+  function startMode(mode) {
+    renderPage(pageIndexByMode[mode], mode);
+    if (mode === "listen") {
+      playWithHighlight("listen", currentSpeedRate(), pausedWordIndex.listen);
+      return;
+    }
+    var myToken = playToken;
+    if (typeof RecordingStore === "undefined") {
+      showRecordingNotice(mode, "unsupported");
+      beginModePlayback(mode);
+      return;
+    }
+    RecordingStore.startCapture(mode, currentPageIndex).then(
+      function () {
+        if (playToken !== myToken) return;
+        beginModePlayback(mode);
+      },
+      function (err) {
+        if (playToken !== myToken) return;
+        showRecordingNotice(mode, (err && err.reason) || "denied");
+        beginModePlayback(mode);
+      }
+    );
+  }
+
+  function beginModePlayback(mode) {
+    if (mode === "alone") startAloneMode(pausedWordIndex.alone);
+    else playWithHighlight(mode, currentSpeedRate(), pausedWordIndex.follow);
+  }
+
+  function startAloneMode(startWordIndex) {
+    var myToken = playToken;
+    setPlaying("alone");
+    startFallbackHighlighter(
+      currentSpeedRate(),
+      function () {
+        if (playToken !== myToken) return;
+        onReadingFinished("alone");
+      },
+      startWordIndex
+    );
+  }
 
   // 1번(듣기)·2번(따라읽기) 공용: TTS로 전체를 읽으면서 지금 읽는 단어를 하이라이트한다.
   // startWordIndex를 주면 그 단어부터(예: 단어 뜻 팝업을 보고 난 뒤, 속도를 바꾼 뒤) 이어서 읽는다.
@@ -586,20 +831,6 @@
       }
     });
   }
-
-  aloneBtn.addEventListener("click", function () {
-    if (activeMode === "alone") {
-      pauseCurrentReading("alone");
-      return;
-    }
-    stopAll();
-    var myToken = playToken;
-    setPlaying("alone");
-    startFallbackHighlighter(currentSpeedRate(), function () {
-      if (playToken !== myToken) return;
-      onReadingFinished("alone");
-    }, pausedWordIndex.alone);
-  });
 
   render();
 

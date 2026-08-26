@@ -92,7 +92,8 @@
   border-radius: 6px;
 }
 
-/* 도장판(왼쪽)과 속도 조절(오른쪽)을 한 줄에 나란히 배치한다. */
+/* 저니스 목록 화면의 도장판, 리더 화면의 진행율 바 - 둘 다 속도 조절과 한 줄에
+   나란히 배치하는 용도로 이 클래스를 같이 쓴다. */
 .reader-top-row[hidden] {
   display: none;
 }
@@ -104,14 +105,21 @@
   margin: 0 0 16px;
 }
 
+/* 목록 화면: 도장판 혼자 남으면(속도 조절이 리더 화면으로 옮겨가서) 가운데로 정렬 */
 .reader-top-row > .stamp-board {
-  flex: 0 0 50%;
+  flex: 0 1 420px;
   min-width: 0;
-  margin-bottom: 0;
+  margin: 0 auto;
 }
 
 .reader-top-row > .speed-control {
   flex: 1;
+  min-width: 0;
+}
+
+/* 리더 화면: 진행율 바(왼쪽, 더 넓게) + 속도 조절(오른쪽) */
+.reader-top-row > .mode-progress {
+  flex: 1.4;
   min-width: 0;
 }
 
@@ -212,16 +220,6 @@
   text-overflow: ellipsis;
 }
 
-.listen-btn-progress {
-  flex: none;
-  font-size: 0.6rem;
-  font-weight: 900;
-  line-height: 1;
-  padding: 2px 5px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
-}
-
 .listen-btn.listen {
   background: var(--color-accent);
   color: var(--color-text);
@@ -266,6 +264,110 @@
   font-size: 0.7rem;
   color: var(--color-text-placeholder);
   margin: 0 0 12px;
+}
+
+/* 음원듣기/따라읽기/혼자읽기가 각자 이 책을 얼마나 읽었는지 한눈에 보여주는 진행율
+   바 3개. 버튼 안에 작게 넣었던 예전 방식 대신 상단에 눈에 잘 띄게 뒀다. */
+.mode-progress {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: var(--color-surface-soft);
+  border: 1px dashed var(--color-accent-soft);
+  border-radius: 14px;
+  padding: 8px 10px;
+}
+
+.mode-progress[hidden] {
+  display: none;
+}
+
+.mode-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-progress-label {
+  flex: none;
+  width: 60px;
+  font-size: 0.62rem;
+  font-weight: bold;
+  color: var(--color-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mode-progress-track {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-neutral-bg);
+  overflow: hidden;
+}
+
+.mode-progress-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--color-accent);
+  transition: width 0.25s ease;
+}
+
+.mode-progress-row[data-mode="follow"] .mode-progress-fill {
+  background: var(--color-accent-deep-2);
+}
+
+.mode-progress-row[data-mode="alone"] .mode-progress-fill {
+  background: var(--color-success);
+}
+
+.mode-progress-count {
+  flex: none;
+  width: 32px;
+  text-align: right;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--color-text-faint);
+}
+
+.recording-notice {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  font-size: 0.78rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.recording-notice[hidden] {
+  display: none;
+}
+
+.my-voice-row {
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.my-voice-row[hidden] {
+  display: none;
+}
+
+.my-voice-btn {
+  border: none;
+  background: var(--color-success);
+  color: #ffffff;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.78rem;
 }
 
 .stamp-board {
