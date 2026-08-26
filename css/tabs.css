@@ -84,6 +84,22 @@
   margin: 0 auto 18px;
 }
 
+.admin-child-settings-block {
+  padding: 14px 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.admin-child-settings-block:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.admin-child-settings-block h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
 .admin-child-settings-row {
   display: flex;
   flex-wrap: wrap;
