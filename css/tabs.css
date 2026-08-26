@@ -239,16 +239,6 @@
   white-space: nowrap;
 }
 
-/* Word/Journeys 관리 카드 안의 "유닛관리 / 진행관리" 중첩 탭 - 바깥 subtab-bar보다 작게. */
-.subtab-bar-nested {
-  margin-bottom: 12px;
-}
-
-.subtab-bar-nested .subtab-btn {
-  font-size: 0.82rem;
-  padding: 6px 10px;
-}
-
 /* ── Word 진행 관리 ───────────────────────────────────────────── */
 .admin-progress-summary {
   background: var(--color-surface-soft);
