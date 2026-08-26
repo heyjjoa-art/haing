@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>해피피 찾기 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608261626">
-<link rel="stylesheet" href="css/game-ui.css?v=202608261626">
-<link rel="stylesheet" href="css/smileyfind.css?v=202608261626">
+<link rel="stylesheet" href="css/style.css?v=202608261632">
+<link rel="stylesheet" href="css/game-ui.css?v=202608261632">
+<link rel="stylesheet" href="css/smileyfind.css?v=202608261632">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/smileyfind-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608261626"></script>
-<script src="js/smileyfind-gate.js?v=202608261626"></script>
+<script src="js/admin-auth-store.js?v=202608261632"></script>
+<script src="js/smileyfind-gate.js?v=202608261632"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -53,17 +53,17 @@
 
   <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
 
-  <div class="sf-overlay" id="sfOverlay" hidden>
-    <div class="sf-overlay-box">
-      <p class="sf-overlay-title" id="sfOverlayTitle">🎉 모두 찾았어요!</p>
-      <p class="sf-overlay-desc" id="sfOverlayDesc"></p>
+  <div class="game-overlay" id="sfOverlay" hidden>
+    <div class="game-overlay-box">
+      <p class="game-overlay-title" id="sfOverlayTitle">🎉 모두 찾았어요!</p>
+      <p class="game-overlay-desc" id="sfOverlayDesc"></p>
       <button type="button" class="game-btn game-btn--primary" id="sfRetryBtn">🔄 새 판</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608261626"></script>
-<script src="js/smileyfind.js?v=202608261626"></script>
+<script src="js/child-store.js?v=202608261632"></script>
+<script src="js/smileyfind.js?v=202608261632"></script>
 </body>
 </html>
