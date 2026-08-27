@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>거듭제곱 게임 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608271406">
-<link rel="stylesheet" href="css/game-ui.css?v=202608271406">
-<link rel="stylesheet" href="css/power.css?v=202608271406">
+<title>구구단 스네이크 - Haing</title>
+<link rel="stylesheet" href="css/style.css?v=202608271414">
+<link rel="stylesheet" href="css/game-ui.css?v=202608271414">
+<link rel="stylesheet" href="css/power.css?v=202608271414">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/power-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608271406"></script>
-<script src="js/power-gate.js?v=202608271406"></script>
+<script src="js/admin-auth-store.js?v=202608271414"></script>
+<script src="js/power-gate.js?v=202608271414"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -26,9 +26,9 @@
 
 <main class="game-main">
   <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
-  <h2 class="game-title">🐍 거듭제곱 스네이크</h2>
+  <h2 class="game-title">🐍 구구단 스네이크</h2>
 
-  <p class="pow-level-line">레벨 <strong id="powLevelNum">1</strong> / <span id="powLevelTotal">18</span> · 밑 <strong id="powBaseNum">2</strong></p>
+  <p class="pow-level-line">레벨 <strong id="powLevelNum">1</strong> / <span id="powLevelTotal">19</span> · <strong id="powBaseNum">2</strong>단</p>
 
   <div class="stage-tabs stage-tabs--levels" id="powLevelPicker"></div>
 
@@ -39,7 +39,7 @@
   </div>
 
   <p class="pow-chain" id="powChain"></p>
-  <p class="pow-hint" id="powHint">거듭제곱 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.</p>
+  <p class="pow-hint" id="powHint">구구단 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.</p>
 
   <div class="pow-board-wrap">
     <canvas id="powBoard" class="pow-board" width="280" height="392"></canvas>
@@ -69,7 +69,7 @@
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608271406"></script>
-<script src="js/power.js?v=202608271406"></script>
+<script src="js/child-store.js?v=202608271414"></script>
+<script src="js/power.js?v=202608271414"></script>
 </body>
 </html>

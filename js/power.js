@@ -1,34 +1,34 @@
-// 거듭제곱(2의 2승, 2의 3승, 2의 4승...) 연습을 스네이크로 만든 게임. 밑(base)이
-// 정해지면 base² → base³ → base⁴ 순서로 자라는 숫자만 골라 먹어야 한다 - 다른
-// 숫자를 먹거나 벽/몸통에 부딪히면 그 판은 끝. 조작은 클래식 스네이크와 똑같이
+// 구구단(5단이면 5, 10, 15, 20...) 연습을 스네이크로 만든 게임. 단(N)이 정해지면
+// N×1 → N×2 → N×3 → ... 순서로 커지는 숫자만 골라 먹어야 한다 - 다른 숫자를
+// 먹거나 벽/몸통에 부딪히면 그 판은 끝. 한 판은 N×9에서 멈추지 않고 계속 갈 수
+// 있는 만큼 무한히 이어진다(N×9까지 먹으면 다음 레벨은 이미 열리고, 그 뒤로도
+// 원하는 만큼 더 먹어서 기록을 늘릴 수 있다). 조작은 클래식 스네이크와 똑같이
 // 방향키/버튼 한 번 누르면 그 방향으로 계속 가는 방식이라(연속 드래그 없음)
-// 손이 편하다. 레벨은 하노이의 탑처럼 순서대로 깨야 다음 밑(3, 4, 5...)이
-// 열리고, 밑 2~19까지 18단계다. 관리자 계정에서만 테스트하는 개발 중 게임이라
-// WordGameStore(게임 기회) 연동은 하지 않는다.
+// 손이 편하다. 레벨은 하노이의 탑처럼 순서대로 깨야 다음 단(3, 4, 5...)이
+// 열리고, 2단(레벨1)부터 20단(레벨19)까지 19단계다. 관리자 계정에서만 테스트
+// 하는 개발 중 게임이라 WordGameStore(게임 기회) 연동은 하지 않는다.
 (function () {
   "use strict";
 
   var COLS = 10;
   var ROWS = 14;
   var BLOCK = 28;
-  var BASE_START = 2;
-  var BASE_END = 19;
-  var LEVEL_COUNT = BASE_END - BASE_START + 1; // 18
-  var MIN_EXP = 2;
-  var MAX_EXP = 4;
-  var EXP_SUP = { 2: "²", 3: "³", 4: "⁴" };
-  var SPEEDUP_PER_EAT = 8;
+  var DAN_START = 2;
+  var LEVEL_COUNT = 19; // 2단(레벨1) ~ 20단(레벨19)
+  var MIN_K = 1;
+  var UNLOCK_K = 9; // 이 배수까지 먹으면 다음 레벨이 열린다(구구단 전통대로 9단)
+  var CHAIN_WINDOW = 4; // 사슬 표시에 보여줄 최근 개수(무한히 늘어나므로 최근 것만)
+  var SPEEDUP_PER_EAT = 6;
+  var MIN_INTERVAL = 90;
 
-  // 레벨마다 밑(base) 하나를 맡는다(2~19). 목표 사슬은 항상 base²→base³→base⁴
-  // 3단계. 뒤로 갈수록(밑이 커질수록) 미끼 숫자가 늘고 속도도 빨라진다.
+  // 레벨마다 단(N) 하나를 맡는다(2단~20단) - dan이 클수록 시작 속도가 조금씩
+  // 빨라진다. 미끼 개수는 레벨이 아니라 "이번 판에서 몇 번째를 먹고 있는지"에
+  // 따라 늘어난다(spawnFoods 참고) - 오래 버틸수록 어려워지는 무한 모드라서.
   var LEVELS = (function () {
     var arr = [];
-    for (var base = BASE_START; base <= BASE_END; base++) {
-      var idx = base - BASE_START; // 0..17
-      var decoys = idx < 6 ? 2 : idx < 12 ? 3 : 4;
-      var startInterval = 220 - idx * 6; // 220ms(밑2) ~ 118ms(밑19)
-      var minInterval = Math.max(90, startInterval - 70);
-      arr.push({ base: base, decoys: decoys, startInterval: startInterval, minInterval: minInterval });
+    for (var dan = DAN_START; dan < DAN_START + LEVEL_COUNT; dan++) {
+      var startInterval = Math.max(120, 220 - (dan - DAN_START) * 6);
+      arr.push({ dan: dan, startInterval: startInterval });
     }
     return arr;
   })();
@@ -58,11 +58,11 @@
   var nextBtn = document.getElementById("powNextBtn");
   var retryBtn = document.getElementById("powRetryBtn");
 
-  var DEFAULT_HINT = "거듭제곱 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.";
+  var DEFAULT_HINT = "구구단 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.";
 
   var currentLevel = 1;
-  var targets = []; // [{ exp, value }, ...] base¹..base⁴
-  var targetIndex = 0;
+  var nextK = 1; // 지금 먹어야 할 배수(아직 안 먹음) - 무한히 늘어난다
+  var unlockedThisRun = false;
   var snake = [];
   var direction = { x: 1, y: 0 };
   var pendingDirection = null;
@@ -97,8 +97,10 @@
     }
   }
 
-  function bestTimeKey(level) {
-    return "haingPowerBestTime_" + childKeyPart() + level;
+  // 이 레벨(단)에서 지금까지 최고 몇 배수까지 먹었는지 - 무한 모드라 "클리어
+  // 시간" 대신 "얼마나 멀리 갔는지"를 기록으로 삼는다.
+  function bestKKey(level) {
+    return "haingPowerBestK_" + childKeyPart() + level;
   }
 
   function formatTime(totalSeconds) {
@@ -108,8 +110,8 @@
   }
 
   function showBest() {
-    var raw = localStorage.getItem(bestTimeKey(currentLevel));
-    bestEl.textContent = raw ? formatTime(parseInt(raw, 10)) : "-";
+    var raw = parseInt(localStorage.getItem(bestKKey(currentLevel)), 10);
+    bestEl.textContent = raw > 0 ? "×" + raw : "-";
   }
 
   function updateStatsUI() {
@@ -124,10 +126,11 @@
         var btn = document.createElement("button");
         btn.type = "button";
         var locked = lv > unlocked;
+        var bestK = parseInt(localStorage.getItem(bestKKey(lv)), 10) || 0;
         var classes = ["stage-tab", "stage-tab--level"];
         if (lv === currentLevel) classes.push("current");
         if (locked) classes.push("locked");
-        else if (localStorage.getItem(bestTimeKey(lv))) classes.push("cleared");
+        else if (bestK >= UNLOCK_K) classes.push("cleared");
         btn.className = classes.join(" ");
         btn.textContent = locked ? "🔒" : String(lv);
         btn.disabled = locked;
@@ -140,26 +143,19 @@
     }
   }
 
-  // base²부터 base⁴까지 이번 레벨에서 순서대로 먹어야 할 사슬을 만든다.
-  function buildTargets(base) {
-    var arr = [];
-    for (var exp = MIN_EXP; exp <= MAX_EXP; exp++) {
-      arr.push({ exp: exp, value: Math.pow(base, exp) });
-    }
-    return arr;
-  }
-
-  // 지금 목표(밑,지수,정답)를 기준으로 흔한 실수 값을 미끼로 만든다 -
-  // 정답·중복·0 이하는 제외하고, 모자라면 정답 근처 값으로 채운다.
-  function makeDistractors(base, exp, answer, count) {
+  // 지금 목표(단,몇 번째,정답)를 기준으로 흔한 구구단 실수 값을 미끼로 만든다:
+  // 한 칸 앞/뒤 숫자(더하기/빼기 실수), 곱셈 대신 덧셈(dan+k), 옆 단으로
+  // 착각(±1단), ±1 오타. 정답·중복·0 이하는 제외하고, 모자라면 정답 근처
+  // 값으로 채운다.
+  function makeDistractors(dan, k, answer, count) {
     var raw = [
-      base * exp,
-      Math.pow(base, exp - 1), // exp=1이면 base^0=1 - 그것도 정답과 다른 유효한 미끼
-      Math.pow(base, exp + 1),
-      Math.pow(base + 1, exp),
-      Math.pow(base - 1, exp),
-      answer + base,
-      answer - base
+      answer - dan, // 한 칸 전(dan×(k-1))
+      answer + dan, // 한 칸 다음(dan×(k+1))
+      dan + k, // 곱셈을 덧셈으로 착각
+      (dan + 1) * k, // 옆 단(한 칸 위)으로 착각
+      (dan - 1) * k, // 옆 단(한 칸 아래)으로 착각
+      answer + 1,
+      answer - 1
     ];
     var seen = {};
     seen[answer] = true;
@@ -174,8 +170,7 @@
     var guard = 0;
     while (picked.length < count && guard < 40) {
       guard++;
-      var magnitude = Math.max(1, Math.round(answer * 0.2));
-      var delta = 1 + Math.floor(Math.random() * magnitude);
+      var delta = 1 + Math.floor(Math.random() * dan * 2);
       var v = Math.random() < 0.5 ? answer + delta : answer - delta;
       if (v > 0 && !seen[v]) {
         seen[v] = true;
@@ -201,14 +196,16 @@
     return free[Math.floor(Math.random() * free.length)];
   }
 
-  // 정답 1개(다음 목표) + 미끼 여러 개를 서로 다른 빈 칸에 뿌린다. 색은
-  // 전부 똑같이 둬서(정답만 다른 색이면 계산 없이 풀림) 숫자를 직접 읽어야
-  // 고를 수 있게 한다.
+  // 정답 1개(다음 목표) + 미끼 여러 개를 서로 다른 빈 칸에 뿌린다. 색은 전부
+  // 똑같이 둬서(정답만 다른 색이면 계산 없이 풀림) 숫자를 직접 읽어야 고를 수
+  // 있게 한다. 미끼 개수는 이번 판에서 몇 번째를 먹는 중인지(nextK)에 따라
+  // 늘어난다 - 오래 버틸수록 보드가 더 복잡해진다.
   function spawnFoods() {
     var conf = LEVELS[currentLevel - 1];
-    var target = targets[targetIndex];
-    var distractors = makeDistractors(conf.base, target.exp, target.value, conf.decoys);
-    var values = [target.value].concat(distractors);
+    var decoyCount = Math.min(6, 2 + Math.floor((nextK - 1) / 4));
+    var answer = conf.dan * nextK;
+    var distractors = makeDistractors(conf.dan, nextK, answer, decoyCount);
+    var values = [answer].concat(distractors);
 
     var occupied = {};
     snake.forEach(function (seg) {
@@ -220,18 +217,21 @@
       var cell = randomEmptyCell(occupied);
       if (!cell) return; // 보드가 거의 꽉 찬 극단적인 경우 - 그냥 덜 뿌린다
       occupied[cellKey(cell)] = true;
-      foods.push({ x: cell.x, y: cell.y, value: v, correct: v === target.value });
+      foods.push({ x: cell.x, y: cell.y, value: v, correct: v === answer });
     });
   }
 
+  // 사슬은 무한히 늘어나니 최근 몇 개만 보여준다 - 앞이 잘렸으면 "…"로 표시.
   function updateChainUI() {
     var conf = LEVELS[currentLevel - 1];
-    var parts = targets.map(function (t, i) {
-      var cls = i < targetIndex ? "pow-chain-done" : i === targetIndex ? "pow-chain-current" : "pow-chain-todo";
-      var label = conf.base + (EXP_SUP[t.exp] || "^" + t.exp) + "=" + t.value;
-      return '<span class="' + cls + '">' + label + "</span>";
-    });
-    chainEl.innerHTML = parts.join('<span class="pow-chain-arrow">→</span>');
+    var startK = Math.max(MIN_K, nextK - CHAIN_WINDOW);
+    var htmlParts = [];
+    if (startK > MIN_K) htmlParts.push('<span class="pow-chain-todo">…</span>');
+    for (var k = startK; k <= nextK; k++) {
+      var cls = k < nextK ? "pow-chain-done" : "pow-chain-current";
+      htmlParts.push('<span class="' + cls + '">' + conf.dan + "×" + k + "=" + conf.dan * k + "</span>");
+    }
+    chainEl.innerHTML = htmlParts.join('<span class="pow-chain-arrow">→</span>');
   }
 
   function setDirection(dx, dy) {
@@ -249,41 +249,30 @@
     pauseBtn.textContent = paused ? "▶" : "⏸";
   }
 
-  function levelClear() {
+  // 벽/몸통에 부딪히거나 다른 숫자를 먹으면 이번 판은 끝 - 클리어 지점이
+  // 정해져 있지 않은 무한 모드라, 여기서 "이번 판 최종 기록"을 정리해서 보여준다.
+  function endRun(reason) {
     isLevelOver = true;
+    var conf = LEVELS[currentLevel - 1];
+    var reachedK = nextK - 1; // 이번 판에서 실제로 다 먹은 마지막 배수
 
-    var sec = Math.floor(elapsedMs / 1000);
-    var key = bestTimeKey(currentLevel);
-    var prevBest = parseInt(localStorage.getItem(key), 10);
-    var isNewBest = isNaN(prevBest) || sec < prevBest;
-    if (isNewBest) localStorage.setItem(key, String(sec));
+    var key = bestKKey(currentLevel);
+    var prevBest = parseInt(localStorage.getItem(key), 10) || 0;
+    var isNewBest = reachedK > prevBest;
+    if (isNewBest) localStorage.setItem(key, String(reachedK));
     showBest();
-
-    var isFinal = currentLevel === LEVEL_COUNT;
-    var justUnlockedNext = currentLevel === getUnlockedLevel() && !isFinal;
-    if (justUnlockedNext) unlockLevel(currentLevel + 1);
     renderLevelPicker();
 
-    var conf = LEVELS[currentLevel - 1];
-    var chainText = targets.map(function (t) { return t.value; }).join(" → ");
-    overlayTitleEl.textContent = isFinal ? "🏆 모든 단계 클리어!" : "🎉 레벨 " + currentLevel + " 클리어!";
-    overlayDescEl.textContent =
-      "밑 " + conf.base + "의 거듭제곱(" + chainText + ")을 " + formatTime(sec) + "만에 다 먹었어요!" +
-      (isNewBest ? " 🎉 신기록!" : "") +
-      (justUnlockedNext ? " 다음 레벨이 열렸어요!" : "");
+    var clearedNine = reachedK >= UNLOCK_K;
+    var nextUnlocked = currentLevel < LEVEL_COUNT && currentLevel + 1 <= getUnlockedLevel();
 
-    nextBtn.hidden = isFinal;
-    retryBtn.textContent = "🔄 같은 단계 다시";
-    overlayEl.hidden = false;
-  }
-
-  function levelFail(reason) {
-    isLevelOver = true;
-    var conf = LEVELS[currentLevel - 1];
-    overlayTitleEl.textContent = "😵 아쉬워요!";
+    overlayTitleEl.textContent = clearedNine ? "🎉 " + conf.dan + "단 도전 완료!" : "😵 아쉬워요!";
     overlayDescEl.textContent =
-      reason + " 밑 " + conf.base + " · " + targetIndex + "/" + targets.length + "단계까지 먹었어요. 다시 도전해볼까요?";
-    nextBtn.hidden = true;
+      reason + " " + conf.dan + "×" + Math.max(reachedK, 0) + "까지 먹었어요." +
+      (isNewBest && reachedK > 0 ? " 🎉 신기록!" : "") +
+      (clearedNine ? "" : " " + conf.dan + "×" + UNLOCK_K + "까지 먹으면 다음 레벨이 열려요.");
+
+    nextBtn.hidden = !nextUnlocked;
     retryBtn.textContent = "🔄 다시 하기";
     overlayEl.hidden = false;
   }
@@ -291,17 +280,26 @@
   function onCorrectEat() {
     score += 10;
     updateStatsUI();
-    targetIndex++;
-    updateChainUI();
-    hintEl.textContent = "🎉 정답이에요! 다음 숫자를 찾아보세요.";
 
     var conf = LEVELS[currentLevel - 1];
-    moveInterval = Math.max(conf.minInterval, moveInterval - SPEEDUP_PER_EAT);
-
-    if (targetIndex >= targets.length) {
-      levelClear();
-      return;
+    if (nextK >= UNLOCK_K && !unlockedThisRun) {
+      unlockedThisRun = true;
+      var isFinal = currentLevel === LEVEL_COUNT;
+      var justUnlockedNext = currentLevel === getUnlockedLevel() && !isFinal;
+      if (justUnlockedNext) {
+        unlockLevel(currentLevel + 1);
+        renderLevelPicker();
+        hintEl.textContent = "🎉 " + conf.dan + "×" + UNLOCK_K + " 완주! 다음 레벨이 열렸어요. 계속 도전해봐요!";
+      } else {
+        hintEl.textContent = "🎉 " + conf.dan + "×" + UNLOCK_K + " 완주! 계속 도전해봐요!";
+      }
+    } else {
+      hintEl.textContent = "🎉 정답이에요! 다음 숫자를 찾아보세요.";
     }
+
+    nextK++;
+    updateChainUI();
+    moveInterval = Math.max(MIN_INTERVAL, moveInterval - SPEEDUP_PER_EAT);
     spawnFoods();
   }
 
@@ -315,14 +313,14 @@
     var next = { x: head.x + direction.x, y: head.y + direction.y };
 
     if (next.x < 0 || next.x >= COLS || next.y < 0 || next.y >= ROWS) {
-      levelFail("벽에 부딪혔어요!");
+      endRun("벽에 부딪혔어요!");
       return;
     }
     var hitsSelf = snake.some(function (seg, i) {
       return i < snake.length - 1 && seg.x === next.x && seg.y === next.y;
     });
     if (hitsSelf) {
-      levelFail("몸통에 부딪혔어요!");
+      endRun("몸통에 부딪혔어요!");
       return;
     }
 
@@ -343,7 +341,7 @@
 
     var eaten = foods[eatenIndex];
     if (!eaten.correct) {
-      levelFail("숫자 " + eaten.value + "을(를) 먹었어요 - 정답이 아니에요.");
+      endRun("숫자 " + eaten.value + "을(를) 먹었어요 - 정답이 아니에요.");
       return;
     }
 
@@ -382,7 +380,7 @@
       boardCtx.fillRect(left, top, boxSize, boxSize);
 
       var text = String(f.value);
-      var size = text.length <= 2 ? 14 : text.length === 3 ? 12 : text.length === 4 ? 10 : text.length === 5 ? 8 : 7;
+      var size = text.length <= 2 ? 14 : text.length === 3 ? 12 : 10;
       boardCtx.font = "bold " + size + "px 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
       boardCtx.fillStyle = "#3a2e26";
       boardCtx.textAlign = "center";
@@ -399,8 +397,8 @@
     currentLevel = level;
     var conf = LEVELS[currentLevel - 1];
 
-    targets = buildTargets(conf.base);
-    targetIndex = 0;
+    nextK = MIN_K;
+    unlockedThisRun = false;
     score = 0;
     moveInterval = conf.startInterval;
     moveCounter = 0;
@@ -420,7 +418,7 @@
     pendingDirection = null;
 
     levelNumEl.textContent = String(level);
-    baseNumEl.textContent = String(conf.base);
+    baseNumEl.textContent = String(conf.dan);
     updateStatsUI();
     timerEl.textContent = "0:00";
     hintEl.textContent = DEFAULT_HINT;
