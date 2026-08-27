@@ -151,6 +151,16 @@
     });
   }
 
+  // 마지막 페이지까지 다 읽고 끝냈을 때만 한 번 켜두는 1회성 표시. "중간까지
+  // 읽다 나간 경우"(이어서 보던 자리를 그대로 기억)와는 분명히 구분해야 해서 -
+  // 다 읽은 책을 다시 열면 복습하려는 거라 1페이지부터 다시 보여주고 싶지만,
+  // 그 다음부터 페이지를 넘기다 중간에 나가면 그 자리는 평소처럼 그대로
+  // 저장돼야 한다. 그래서 이 표시는 render()에서 딱 한 번만 "소비"되고 바로
+  // 지워진다 - 그 이후엔 pageIndexByMode/pagePos가 평소처럼 이어서 저장을 맡는다.
+  function bookDoneKey(mode) {
+    return "journeysBookDone_" + (childId || "guest") + "_" + unit.id + "_" + mode;
+  }
+
   // 이 모드의 "어디까지 읽었는지" 포인터를 옮긴다 - 페이지를 옮길 때마다 저장하고,
   // 새 페이지로 넘어간 거니 그 모드의 문장 중간 재개 지점(pausedWordIndex)도 리셋하고,
   // 상단 진행율 바도 다시 그린다.
@@ -215,7 +225,16 @@
     pages = buildPages(unit);
     migrateLegacyPagePosIfNeeded();
     ["listen", "follow", "alone"].forEach(function (mode) {
-      pageIndexByMode[mode] = Math.max(0, Math.min(loadPagePos(mode), pages.length - 1));
+      if (localStorage.getItem(bookDoneKey(mode)) != null) {
+        // 지난번에 이 모드로 끝까지 다 읽었던 책 - 복습하러 다시 들어온 거니
+        // 1페이지부터 다시 보여준다. 표시는 여기서 바로 지워서 한 번만 적용되고,
+        // 이제부터 페이지를 넘기면 평소처럼 그 자리가 새로 저장된다.
+        localStorage.removeItem(bookDoneKey(mode));
+        pageIndexByMode[mode] = 0;
+        savePagePos(mode);
+      } else {
+        pageIndexByMode[mode] = Math.max(0, Math.min(loadPagePos(mode), pages.length - 1));
+      }
     });
     // 세 모드 중 가장 뒤처진(아직 덜 읽은) 모드의 페이지를 먼저 보여준다 - 이어서
     // 할 일이 남은 곳을 열자마자 보여주려는 것.
@@ -693,7 +712,12 @@
   // 마지막 페이지면 오늘의 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시
   // 처음부터 읽도록 멈춘 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
   function completeModeReadThrough(mode) {
-    if (currentPageIndex === pages.length - 1) onStageCompleted(mode);
+    if (currentPageIndex === pages.length - 1) {
+      onStageCompleted(mode);
+      // 다음에 이 모드로 다시 들어오면 1페이지부터 복습할 수 있게 표시해둔다
+      // (render()에서 한 번만 소비됨 - bookDoneKey 주석 참고).
+      localStorage.setItem(bookDoneKey(mode), "1");
+    }
     pausedWordIndex[mode] = 0;
     hasUnfinishedPlayback[mode] = false;
     stopAll();
