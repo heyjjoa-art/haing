@@ -27,6 +27,7 @@ const HTML_FILES = [
   "maze.html",
   "memory.html",
   "pacman.html",
+  "power.html",
   "smileyfind.html",
   "snake.html",
   "storybook.html",

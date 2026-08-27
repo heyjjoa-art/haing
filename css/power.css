@@ -1,0 +1,76 @@
+.pow-level-line {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.pow-question {
+  margin: 4px 0 2px;
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-text);
+  transition: color 0.15s ease;
+}
+
+.pow-question sup {
+  font-size: 0.55em;
+}
+
+.pow-question.correct {
+  color: var(--color-success);
+}
+
+.pow-question.wrong {
+  color: var(--color-danger);
+}
+
+.pow-hint {
+  min-height: 1.2em;
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-faint);
+}
+
+.pow-stage {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.pow-board {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 320 / 460;
+  background: #1c1f2b;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  touch-action: none;
+}
+
+.pow-pad-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 16px auto 8px;
+}
+
+.pow-btn {
+  width: 72px;
+  height: 56px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-border);
+  background: var(--color-neutral-bg);
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pow-btn:active {
+  background: var(--color-accent-soft);
+}
