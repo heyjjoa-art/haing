@@ -17,7 +17,6 @@
   var LEVEL_COUNT = 19; // 2단(레벨1) ~ 20단(레벨19)
   var MIN_K = 1;
   var UNLOCK_K = 9; // 이 배수까지 먹으면 다음 레벨이 열린다(구구단 전통대로 9단)
-  var CHAIN_WINDOW = 4; // 사슬 표시에 보여줄 최근 개수(무한히 늘어나므로 최근 것만)
   var SPEEDUP_PER_EAT = 6;
   var MIN_INTERVAL = 90;
 
@@ -36,11 +35,13 @@
   var levelNumEl = document.getElementById("powLevelNum");
   var levelTotalEl = document.getElementById("powLevelTotal");
   var baseNumEl = document.getElementById("powBaseNum");
-  var levelPickerEl = document.getElementById("powLevelPicker");
+  var resumeTab = document.getElementById("powResumeTab");
+  var restartTab = document.getElementById("powRestartTab");
+  var resumeNumEl = document.getElementById("powResumeNum");
   var bestEl = document.getElementById("powBest");
   var timerEl = document.getElementById("powTimer");
   var scoreEl = document.getElementById("powScore");
-  var chainEl = document.getElementById("powChain");
+  var targetBadgeEl = document.getElementById("powTargetBadge");
   var hintEl = document.getElementById("powHint");
 
   var boardCanvas = document.getElementById("powBoard");
@@ -118,29 +119,14 @@
     scoreEl.textContent = String(score);
   }
 
-  function renderLevelPicker() {
+  // 자물쇠 19개를 다 보여주는 대신, "이어하기(가장 높이 해금된 레벨)"와
+  // "처음부터(레벨1)" 두 선택지만 보여준다. 기본값은 이어하기.
+  function renderLevelChoice() {
     var unlocked = getUnlockedLevel();
-    levelPickerEl.innerHTML = "";
-    for (var level = 1; level <= LEVEL_COUNT; level++) {
-      (function (lv) {
-        var btn = document.createElement("button");
-        btn.type = "button";
-        var locked = lv > unlocked;
-        var bestK = parseInt(localStorage.getItem(bestKKey(lv)), 10) || 0;
-        var classes = ["stage-tab", "stage-tab--level"];
-        if (lv === currentLevel) classes.push("current");
-        if (locked) classes.push("locked");
-        else if (bestK >= UNLOCK_K) classes.push("cleared");
-        btn.className = classes.join(" ");
-        btn.textContent = locked ? "🔒" : String(lv);
-        btn.disabled = locked;
-        btn.addEventListener("click", function () {
-          if (isLevelOver) return;
-          newGame(lv);
-        });
-        levelPickerEl.appendChild(btn);
-      })(level);
-    }
+    resumeNumEl.textContent = String(unlocked);
+    var onResume = currentLevel === unlocked;
+    resumeTab.classList.toggle("active", onResume);
+    restartTab.classList.toggle("active", !onResume);
   }
 
   // 지금 목표(단,몇 번째,정답)를 기준으로 흔한 구구단 실수 값을 미끼로 만든다:
@@ -221,17 +207,11 @@
     });
   }
 
-  // 사슬은 무한히 늘어나니 최근 몇 개만 보여준다 - 앞이 잘렸으면 "…"로 표시.
-  function updateChainUI() {
+  // 테트리스의 "다음 블록" 미리보기처럼 보드 위에 늘 떠 있는 목표 배지 -
+  // "=값"은 안 보여주고 "N×k" 형태만, 지금 먹어야 할 것 하나만 표시한다.
+  function updateTargetBadge() {
     var conf = LEVELS[currentLevel - 1];
-    var startK = Math.max(MIN_K, nextK - CHAIN_WINDOW);
-    var htmlParts = [];
-    if (startK > MIN_K) htmlParts.push('<span class="pow-chain-todo">…</span>');
-    for (var k = startK; k <= nextK; k++) {
-      var cls = k < nextK ? "pow-chain-done" : "pow-chain-current";
-      htmlParts.push('<span class="' + cls + '">' + conf.dan + "×" + k + "=" + conf.dan * k + "</span>");
-    }
-    chainEl.innerHTML = htmlParts.join('<span class="pow-chain-arrow">→</span>');
+    targetBadgeEl.textContent = conf.dan + "×" + nextK;
   }
 
   function setDirection(dx, dy) {
@@ -261,7 +241,7 @@
     var isNewBest = reachedK > prevBest;
     if (isNewBest) localStorage.setItem(key, String(reachedK));
     showBest();
-    renderLevelPicker();
+    renderLevelChoice();
 
     var clearedNine = reachedK >= UNLOCK_K;
     var nextUnlocked = currentLevel < LEVEL_COUNT && currentLevel + 1 <= getUnlockedLevel();
@@ -288,7 +268,7 @@
       var justUnlockedNext = currentLevel === getUnlockedLevel() && !isFinal;
       if (justUnlockedNext) {
         unlockLevel(currentLevel + 1);
-        renderLevelPicker();
+        renderLevelChoice();
         hintEl.textContent = "🎉 " + conf.dan + "×" + UNLOCK_K + " 완주! 다음 레벨이 열렸어요. 계속 도전해봐요!";
       } else {
         hintEl.textContent = "🎉 " + conf.dan + "×" + UNLOCK_K + " 완주! 계속 도전해봐요!";
@@ -298,7 +278,7 @@
     }
 
     nextK++;
-    updateChainUI();
+    updateTargetBadge();
     moveInterval = Math.max(MIN_INTERVAL, moveInterval - SPEEDUP_PER_EAT);
     spawnFoods();
   }
@@ -427,8 +407,8 @@
     pauseBtn.textContent = "⏸";
 
     showBest();
-    renderLevelPicker();
-    updateChainUI();
+    renderLevelChoice();
+    updateTargetBadge();
     spawnFoods();
     draw();
   }
@@ -506,6 +486,15 @@
   });
   nextBtn.addEventListener("click", function () {
     newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
+  });
+
+  resumeTab.addEventListener("click", function () {
+    if (isLevelOver) return;
+    newGame(getUnlockedLevel());
+  });
+  restartTab.addEventListener("click", function () {
+    if (isLevelOver) return;
+    newGame(1);
   });
 
   levelTotalEl.textContent = String(LEVEL_COUNT);

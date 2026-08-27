@@ -24,7 +24,9 @@
   var minMovesEl = document.getElementById("hanoiMinMoves");
   var levelNumEl = document.getElementById("hanoiLevelNum");
   var levelTotalEl = document.getElementById("hanoiLevelTotal");
-  var levelPickerEl = document.getElementById("hanoiLevelPicker");
+  var resumeTab = document.getElementById("hanoiResumeTab");
+  var restartTab = document.getElementById("hanoiRestartTab");
+  var resumeNumEl = document.getElementById("hanoiResumeNum");
   var hintEl = document.getElementById("hanoiHint");
   var boardEl = document.getElementById("hanoiBoard");
   var restartBtn = document.getElementById("hanoiRestartBtn");
@@ -104,28 +106,14 @@
     pegs = [start, [], []];
   }
 
-  function renderLevelPicker() {
+  // 자물쇠 6개를 다 보여주는 대신, "이어하기(가장 높이 해금된 레벨)"와
+  // "처음부터(레벨1)" 두 선택지만 보여준다. 기본값은 이어하기.
+  function renderLevelChoice() {
     var unlocked = getUnlockedLevel();
-    levelPickerEl.innerHTML = "";
-    for (var level = 1; level <= LEVEL_COUNT; level++) {
-      (function (lv) {
-        var btn = document.createElement("button");
-        btn.type = "button";
-        var locked = lv > unlocked;
-        var classes = ["stage-tab", "stage-tab--level"];
-        if (lv === currentLevel) classes.push("current");
-        if (locked) classes.push("locked");
-        else if (localStorage.getItem(bestMovesKey(lv))) classes.push("cleared");
-        btn.className = classes.join(" ");
-        btn.textContent = locked ? "🔒" : String(lv);
-        btn.disabled = locked;
-        btn.addEventListener("click", function () {
-          if (isSolved) return;
-          newGame(lv);
-        });
-        levelPickerEl.appendChild(btn);
-      })(level);
-    }
+    resumeNumEl.textContent = String(unlocked);
+    var onResume = currentLevel === unlocked;
+    resumeTab.classList.toggle("active", onResume);
+    restartTab.classList.toggle("active", !onResume);
   }
 
   function renderBoard() {
@@ -228,7 +216,7 @@
     var isFinalLevel = currentLevel === LEVEL_COUNT;
     var justUnlockedNext = currentLevel === getUnlockedLevel() && !isFinalLevel;
     if (justUnlockedNext) unlockLevel(currentLevel + 1);
-    renderLevelPicker();
+    renderLevelChoice();
 
     var isOptimal = moveCount === optimal;
     overlayTitleEl.textContent = isFinalLevel ? "🏆 모든 단계 클리어!" : isOptimal ? "🌟 최소 횟수로 완성!" : "🎉 완성했어요!";
@@ -257,7 +245,7 @@
     showBest();
     startTimer();
     renderBoard();
-    renderLevelPicker();
+    renderLevelChoice();
   }
 
   restartBtn.addEventListener("click", function () {
@@ -272,6 +260,15 @@
     newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
   });
 
+  resumeTab.addEventListener("click", function () {
+    if (isSolved) return;
+    newGame(getUnlockedLevel());
+  });
+  restartTab.addEventListener("click", function () {
+    if (isSolved) return;
+    newGame(1);
+  });
+
   levelTotalEl.textContent = String(LEVEL_COUNT);
-  newGame(1);
+  newGame(getUnlockedLevel());
 })();

@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>하노이의 탑 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608271509">
-<link rel="stylesheet" href="css/game-ui.css?v=202608271509">
-<link rel="stylesheet" href="css/hanoi.css?v=202608271509">
+<link rel="stylesheet" href="css/style.css?v=202608271611">
+<link rel="stylesheet" href="css/game-ui.css?v=202608271611">
+<link rel="stylesheet" href="css/hanoi.css?v=202608271611">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/hanoi-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608271509"></script>
-<script src="js/hanoi-gate.js?v=202608271509"></script>
+<script src="js/admin-auth-store.js?v=202608271611"></script>
+<script src="js/hanoi-gate.js?v=202608271611"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -30,7 +30,10 @@
 
   <p class="hanoi-level-line">레벨 <strong id="hanoiLevelNum">1</strong> / <span id="hanoiLevelTotal">6</span></p>
 
-  <div class="stage-tabs stage-tabs--levels" id="hanoiLevelPicker"></div>
+  <div class="stage-tabs" id="hanoiLevelChoice">
+    <button type="button" class="stage-tab active" id="hanoiResumeTab">▶ 이어하기 (레벨 <span id="hanoiResumeNum">1</span>)</button>
+    <button type="button" class="stage-tab" id="hanoiRestartTab">🔄 처음부터 (레벨 1)</button>
+  </div>
 
   <div class="game-stats">
     <span class="game-stat--best">🏆 최소 이동 <strong id="hanoiBest">-</strong></span>
@@ -62,7 +65,7 @@
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608271509"></script>
-<script src="js/hanoi.js?v=202608271509"></script>
+<script src="js/child-store.js?v=202608271611"></script>
+<script src="js/hanoi.js?v=202608271611"></script>
 </body>
 </html>

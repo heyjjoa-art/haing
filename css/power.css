@@ -4,33 +4,6 @@
   color: var(--color-text-muted);
 }
 
-.pow-chain {
-  margin: 0 0 6px;
-  font-size: 0.95rem;
-  font-weight: bold;
-  text-align: center;
-  letter-spacing: 0.2px;
-}
-
-.pow-chain-done {
-  color: var(--color-success);
-}
-
-.pow-chain-current {
-  color: var(--color-accent-deep);
-  text-decoration: underline;
-}
-
-.pow-chain-todo {
-  color: var(--color-text-placeholder);
-}
-
-.pow-chain-arrow {
-  color: var(--color-text-placeholder);
-  margin: 0 3px;
-  font-weight: normal;
-}
-
 .pow-hint {
   min-height: 1.2em;
   margin: 0 0 12px;
@@ -54,4 +27,31 @@
   background: #2f3d2a;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
+}
+
+/* 테트리스의 "다음 블록" 미리보기와 같은 자리 - 보드 위에 떠서 항상 보이는
+   목표 배지. 사슬 전체가 아니라 지금 먹어야 할 한 개("2×1")만 보여준다. */
+.pow-top-bar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pow-top-bar .game-icon-btn {
+  position: static;
+}
+
+.pow-target-badge {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(2px);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-weight: bold;
+  font-size: 1.05rem;
+  color: #3a2e26;
 }
