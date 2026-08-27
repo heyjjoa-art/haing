@@ -99,6 +99,7 @@
   var wordSpans = []; // { start, end, el }
   var joinedText = "";
   var currentReadingEl = null;
+  var currentReadingEls = []; // 혼자읽기 문장 단위 하이라이트용 - 한 문장의 단어 span 여러 개를 한꺼번에 켜둔다
   var activeMode = null; // 'listen' | 'follow' | 'alone'
   var playToken = 0; // 모드를 바꿀 때마다 올려서, 이미 취소된 재생의 뒤늦은 콜백을 무시한다.
   var fallbackTimer = null;
@@ -431,6 +432,12 @@
       currentReadingEl.classList.remove("reading");
       currentReadingEl = null;
     }
+    if (currentReadingEls.length) {
+      currentReadingEls.forEach(function (el) {
+        el.classList.remove("reading");
+      });
+      currentReadingEls = [];
+    }
   }
 
   function highlightAt(charIndex) {
@@ -488,36 +495,65 @@
     }
   }
 
-  // 혼자읽기 전용: 정해진 속도로 그냥 넘기는 게 아니라, 실제로 그 단어를 소리 내어
-  // 읽는 낌새(마이크 음량, RecordingStore.isVoiceActive)가 감지돼야 다음 단어로
-  // 넘어간다 - 읽는 척만 하고 형광펜만 넘겨서 녹음 없이 페이지를 끝내버리는 걸
-  // 막으려는 것. 한 단어당: (1) 목소리가 MIN_SPEAK_MS 이상 잡히고, (2) 그 뒤로
-  // SILENCE_MS 이상 조용해지면 "그 단어를 다 읽었다"고 보고 다음으로 넘어간다.
-  // 마이크에 소리가 전혀 안 잡히는 상태(마이크 문제 등)가 MAX_WAIT_MS만큼 길어지면
-  // 완전히 멈춰버리지 않게 그냥 다음으로 넘긴다 - 다만 그러면 결국 hadVoiceActivity가
-  // 안 남아서 완료 처리(finalizeRecordingForMode)에서 걸러진다.
-  var VOICE_GATE_MIN_SPEAK_MS = 200;
-  var VOICE_GATE_SILENCE_MS = 350;
-  var VOICE_GATE_MAX_WAIT_MS = 10000;
+  // 한 단어의 마지막 글자가 문장을 끝내는 문장부호(. ! ?)로 끝나면(뒤에 닫는 따옴표/
+  // 괄호가 붙어도 됨) 그 단어를 문장의 끝으로 본다.
+  var SENTENCE_END_RE = /[.!?]+["'’”)\]]*$/;
+
+  function isSentenceEndWord(el) {
+    return SENTENCE_END_RE.test(el.textContent);
+  }
+
+  // startIndex부터 훑어서 문장이 끝나는 단어의 인덱스를 찾는다. 문장부호 없이 페이지가
+  // 끝나면(마지막 문장) 마지막 단어를 끝으로 본다.
+  function sentenceEndIndexFrom(startIndex) {
+    for (var i = startIndex; i < wordSpans.length; i++) {
+      if (isSentenceEndWord(wordSpans[i].el)) return i;
+    }
+    return wordSpans.length - 1;
+  }
+
+  // 혼자읽기 전용: 정해진 속도로 그냥 넘기는 게 아니라, 실제로 소리 내어 읽는 낌새
+  // (마이크 음량, RecordingStore.isVoiceActive)가 감지돼야 다음으로 넘어간다 - 읽는
+  // 척만 하고 형광펜만 넘겨서 녹음 없이 페이지를 끝내버리는 걸 막으려는 것.
+  // 단어 하나마다 끊어 읽어야 넘어가면 답답하므로, 문장 하나를 통째로 하이라이트해
+  // 두고 그 문장을 다 읽었는지를 문장 단위로 확인한다: (1) 목소리가 문장 길이에
+  // 비례한 MIN_SPEAK_MS_PER_WORD * 단어수 이상 잡히고, (2) 그 뒤로 SILENCE_MS 이상
+  // 조용해지면 "그 문장을 다 읽었다"고 보고 다음 문장으로 넘어간다. 마이크에 소리가
+  // 전혀 안 잡히는 상태(마이크 문제 등)가 문장 길이에 비례한 MAX_WAIT_MS만큼
+  // 길어지면 완전히 멈춰버리지 않게 그냥 다음으로 넘긴다 - 다만 그러면 결국
+  // hadVoiceActivity가 안 남아서 완료 처리(finalizeRecordingForMode)에서 걸러진다.
+  var VOICE_GATE_MIN_SPEAK_MS_PER_WORD = 150;
+  var VOICE_GATE_SILENCE_MS = 500;
+  var VOICE_GATE_MAX_WAIT_MS_PER_WORD = 2500;
+  var VOICE_GATE_MAX_WAIT_MS_FLOOR = 4000;
   var VOICE_GATE_POLL_MS = 90;
 
   function startVoiceGatedHighlighter(startIndex, onDone) {
     voiceGateIndex = startIndex || 0;
 
-    function highlightCurrent() {
-      var w = wordSpans[voiceGateIndex];
+    function highlightSentence(fromIdx, toIdx) {
       clearReadingHighlight();
-      w.el.classList.add("reading");
-      currentReadingEl = w.el;
-      w.el.scrollIntoView({ block: "center", behavior: "smooth" });
+      var els = [];
+      for (var i = fromIdx; i <= toIdx; i++) {
+        wordSpans[i].el.classList.add("reading");
+        els.push(wordSpans[i].el);
+      }
+      currentReadingEl = wordSpans[fromIdx].el;
+      currentReadingEls = els;
+      wordSpans[fromIdx].el.scrollIntoView({ block: "center", behavior: "smooth" });
     }
 
-    function waitForWord() {
+    function waitForSentence() {
       if (voiceGateIndex >= wordSpans.length) {
         if (onDone) onDone();
         return;
       }
-      highlightCurrent();
+      var sentenceEndIdx = sentenceEndIndexFrom(voiceGateIndex);
+      var wordCount = sentenceEndIdx - voiceGateIndex + 1;
+      highlightSentence(voiceGateIndex, sentenceEndIdx);
+
+      var minSpeakMs = VOICE_GATE_MIN_SPEAK_MS_PER_WORD * wordCount;
+      var maxWaitMs = Math.max(VOICE_GATE_MAX_WAIT_MS_FLOOR, VOICE_GATE_MAX_WAIT_MS_PER_WORD * wordCount);
       var startedAt = Date.now();
       var lastCheck = startedAt;
       var activeMs = 0;
@@ -534,12 +570,12 @@
         } else {
           silentStreakMs += dt;
         }
-        var spokeEnough = activeMs >= VOICE_GATE_MIN_SPEAK_MS;
+        var spokeEnough = activeMs >= minSpeakMs;
         var doneSpeaking = spokeEnough && silentStreakMs >= VOICE_GATE_SILENCE_MS;
-        var timedOut = now - startedAt >= VOICE_GATE_MAX_WAIT_MS;
+        var timedOut = now - startedAt >= maxWaitMs;
         if (doneSpeaking || timedOut) {
-          voiceGateIndex++;
-          voiceGateTimer = setTimeout(waitForWord, 30);
+          voiceGateIndex = sentenceEndIdx + 1;
+          voiceGateTimer = setTimeout(waitForSentence, 30);
           return;
         }
         voiceGateTimer = setTimeout(poll, VOICE_GATE_POLL_MS);
@@ -548,7 +584,7 @@
       poll();
     }
 
-    waitForWord();
+    waitForSentence();
   }
 
   // 아이콘 줄 + 글자 줄로 나눠서 버튼을 좁은 칸에서도 안 넘치게 그린다. 페이지 진행률은
