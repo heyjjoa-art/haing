@@ -409,6 +409,14 @@
   flex: none;
 }
 
+.stamp-board-empty {
+  margin: 0;
+  padding: 10px 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-faint);
+  text-align: center;
+}
+
 /* 월~금 도장 5개를 한 주 안에 다 채운 개근 주 - 은색 트로피 줄로 표시한다. */
 .stamp-week-row.trophy .stamp-day-cell.stamped {
   background: linear-gradient(135deg, var(--color-silver-soft), var(--color-silver));

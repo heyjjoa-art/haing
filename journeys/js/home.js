@@ -23,8 +23,14 @@
   function renderStampBoard() {
     if (typeof StampStore === "undefined") return;
     var childId = typeof ChildStore !== "undefined" ? ChildStore.getActive() : null;
-    topRowEl.hidden = !childId;
-    if (!childId) return;
+    topRowEl.hidden = false;
+    if (!childId) {
+      // 관리자로 로그인하면 선택된 아이가 없어서 도장판을 채울 수 없다 - 그렇다고
+      // 자리를 통째로 없애버리면 아이 화면과 레이아웃이 달라져서 헷갈리니, 같은
+      // 자리에 안내 문구만 넣어 자리는 그대로 유지한다.
+      stampBoardWeeksEl.innerHTML = '<p class="stamp-board-empty">학습자로 로그인하면 여기에 도장판이 보여요.</p>';
+      return;
+    }
 
     // 메뉴 맨 위에서는 지난 주 기록까지 다 볼 필요는 없어서, 이번 주 월~금 한 줄만 보여준다.
     var weeks = StampStore.getWeekGridAny(childId);
