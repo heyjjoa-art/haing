@@ -98,11 +98,15 @@
     var style = document.createElement("style");
     style.id = "growthBadgeStyles";
     style.textContent =
-      ".growth-badge-btn{position:absolute;top:50%;right:92px;transform:translateY(-50%);" +
-      "width:44px;height:44px;padding:0;border:none;background:transparent;cursor:pointer;" +
-      "filter:drop-shadow(0 2px 4px rgba(35,32,42,0.28));}" +
-      ".growth-badge-btn svg{display:block;width:100%;height:100%;}" +
-      ".growth-badge-btn:active{transform:translateY(-50%) scale(0.93);}" +
+      // 단어도감 아이콘(.wordcard-link-btn, 오른쪽 14px부터 76×72px)과 같은 둥근
+      // 반투명 배경 카드로, 크기도 똑같이 맞추되 확실히 떨어뜨려 둔다.
+      ".growth-badge-btn{position:absolute;top:50%;right:104px;transform:translateY(-50%);" +
+      "display:flex;align-items:center;justify-content:center;" +
+      "width:76px;height:72px;padding:0;border:none;border-radius:16px;" +
+      "background:rgba(255,255,255,0.6);cursor:pointer;}" +
+      ".growth-badge-btn svg{display:block;width:42px;height:42px;" +
+      "filter:drop-shadow(0 2px 3px rgba(35,32,42,0.25));}" +
+      ".growth-badge-btn:active{transform:translateY(-50%) scale(0.94);}" +
       ".growth-popup-backdrop{position:fixed;inset:0;background:rgba(20,16,10,0.55);" +
       "display:flex;align-items:flex-end;justify-content:center;z-index:9999;padding:0;}" +
       "@media (min-width:560px){.growth-popup-backdrop{align-items:center;padding:20px;}}" +
@@ -217,7 +221,7 @@
     btn.id = "growthBadgeBtn";
     btn.className = "growth-badge-btn";
     btn.setAttribute("aria-label", tier.label + " 등급 배지 - 눌러서 자세히 보기");
-    btn.innerHTML = badgeSvg(tier.tier, 44);
+    btn.innerHTML = badgeSvg(tier.tier, 42);
     btn.addEventListener("click", function () {
       openGrowthPopup(childId);
     });
