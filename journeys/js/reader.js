@@ -675,14 +675,19 @@
   // 뒤에만 완료 처리한다(녹음이 없으면 완료가 아니다 - 처음부터 다시 읽게 한다).
   function onReadingFinished(mode) {
     var myToken = playToken;
+    // "마지막 페이지였는지"는 지금(다 읽은 바로 그 순간) 확정해둔다 - 따라읽기/
+    // 혼자읽기는 녹음 저장이 끝날 때까지 기다렸다가(비동기) completeModeReadThrough를
+    // 부르는데, 그 사이에 currentPageIndex를 다시 읽으면 늦게 확정하는 셈이라
+    // 혹시라도 어긋날 여지가 있다 - 듣기는 곧바로 확정하니 문제가 없었다.
+    var wasLastPage = currentPageIndex === pages.length - 1;
     if (mode === "follow" || mode === "alone") {
       finalizeRecordingForMode(mode).then(function (ok) {
         if (playToken !== myToken) return;
-        if (ok) completeModeReadThrough(mode);
+        if (ok) completeModeReadThrough(mode, wasLastPage);
         else rejectModeReadThrough(mode);
       });
     } else {
-      completeModeReadThrough(mode);
+      completeModeReadThrough(mode, wasLastPage);
     }
   }
 
@@ -711,8 +716,8 @@
   // 끝까지 다 읽었을 때(듣기는 항상, 따라읽기/혼자읽기는 녹음까지 확인된 경우) 호출 -
   // 마지막 페이지면 오늘의 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시
   // 처음부터 읽도록 멈춘 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
-  function completeModeReadThrough(mode) {
-    if (currentPageIndex === pages.length - 1) {
+  function completeModeReadThrough(mode, wasLastPage) {
+    if (wasLastPage) {
       onStageCompleted(mode);
       // 다음에 이 모드로 다시 들어오면 1페이지부터 복습할 수 있게 표시해둔다
       // (render()에서 한 번만 소비됨 - bookDoneKey 주석 참고).
