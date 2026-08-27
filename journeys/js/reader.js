@@ -109,9 +109,12 @@
   var pages = []; // { photo, pageNumber, paragraphs }
   // 음원듣기/따라읽기/혼자읽기는 각자 다른 속도로 책을 읽어나갈 수 있으므로(듣기는
   // 5페이지까지 들었는데 혼자읽기는 아직 1페이지일 수 있음), "어디까지 읽었는지"를
-  // 모드별로 따로 기억한다. currentPageIndex는 지금 화면에 보이는 페이지 하나뿐이고,
-  // viewedMode는 지금 화면이 "누구 기준"으로 보이고 있는지(어느 모드의 진도를 보고
-  // 있는지)를 나타낸다 - 아무 모드도 안 눌렀으면 null(그냥 책 미리보기).
+  // 모드별로 따로 기억한다. 이 값은 "가본 페이지"가 아니라 "그 모드로 실제로 다
+  // 읽어낸(completeModeReadThrough) 페이지"만 넓어진다 - 그래야 다음 페이지 버튼을
+  // 눌러서 안 읽은 페이지를 건너뛰는 걸로 진도를 앞당길 수 없다(updatePageNavDisabled
+  // 참고). currentPageIndex는 지금 화면에 보이는 페이지 하나뿐이고, viewedMode는
+  // 지금 화면이 "누구 기준"으로 보이고 있는지(어느 모드의 진도를 보고 있는지)를
+  // 나타낸다 - 아무 모드도 안 눌렀으면 null(그냥 책 미리보기, 자유롭게 넘겨볼 수 있음).
   var pageIndexByMode = { listen: 0, follow: 0, alone: 0 };
   var currentPageIndex = 0;
   var viewedMode = null;
@@ -295,30 +298,33 @@
 
   // 이전 페이지는 그냥 다시 보기 용도라 그 모드의 진도(pageIndexByMode)를 뒤로
   // 되돌리지 않는다 - 예전 페이지를 잠깐 다시 봤다고 진행이 깎이면 안 되니까. 다음
-  // 페이지는 지금 보고 있는 모드가 있고, 아직 그 모드가 가본 적 없는 페이지라면
-  // 그 모드의 진도를 거기까지 넓혀준다(그래야 나중에 그 모드 버튼을 다시 누르면
-  // 여기서부터 이어진다).
+  // 페이지로 진도를 넓히는 건 여기서 더 이상 하지 않는다 - 그 페이지를 실제로 다
+  // 읽어야만(completeModeReadThrough) 진도가 넓어지고, 그래야 다음 페이지 버튼이
+  // 풀린다(updatePageNavDisabled 참고). 그냥 눌러서 넘긴다고 진도가 늘면 1페이지와
+  // 마지막 페이지만 읽고 중간을 몽땅 건너뛰어도 "완독"으로 잡히는 구멍이 생긴다.
   prevPageBtn.addEventListener("click", function () {
     renderPage(currentPageIndex - 1, viewedMode);
   });
   nextPageBtn.addEventListener("click", function () {
-    var mode = viewedMode;
-    var targetIdx = currentPageIndex + 1;
-    renderPage(targetIdx, mode);
-    if (mode && targetIdx > pageIndexByMode[mode]) setModePageIndex(mode, targetIdx);
+    renderPage(currentPageIndex + 1, viewedMode);
   });
 
   // 재생 중(activeMode)이거나, 단어 뜻 팝업 때문에 잠깐 멈춘 중(pendingResumeMode, 곧
   // 이어서 읽을 예정)이거나, 지금 보고 있는 모드가 이 페이지를 다 안 읽고 멈춘 상태면
   // (hasUnfinishedPlayback[viewedMode]) 형광펜이 이 페이지를 다 읽지 않은 것으로 보고
   // 이전/다음 페이지 버튼을 잠근다 - 멈춤 버튼을 눌러서 끝까지 안 듣고 페이지를
-  // 넘겨버리는 것도 막는다. 다른 모드로 갈아타는 건 이 잠금과 무관하다(모드 버튼은
-  // 여기서 안 건드림).
+  // 넘겨버리는 것도 막는다. 그것과 별개로, 지금 보는 모드가 아직 이 페이지를 한
+  // 번도 다 읽어본 적이 없으면(currentPageIndex가 그 모드의 진도보다 앞서 있지
+  // 않으면) 다음 페이지도 잠가서 - 1페이지만 읽고 다음 페이지로 넘긴 뒤 중간을
+  // 다 건너뛰고 마지막 페이지만 읽어서 완독 처리를 받는 걸 막는다. 이미 읽어본
+  // 페이지를 다시 보러 갈 때는(뒤로 갔다가 다시 앞으로) 걸리지 않는다. 다른
+  // 모드로 갈아타는 건 이 잠금과 무관하다(모드 버튼은 여기서 안 건드림).
   function updatePageNavDisabled() {
     var lockedByViewedMode = !!viewedMode && !!hasUnfinishedPlayback[viewedMode];
+    var atUnreadFrontier = !!viewedMode && currentPageIndex >= pageIndexByMode[viewedMode];
     var stillReading = !!activeMode || !!pendingResumeMode || lockedByViewedMode;
     prevPageBtn.disabled = stillReading || currentPageIndex === 0;
-    nextPageBtn.disabled = stillReading || currentPageIndex === pages.length - 1;
+    nextPageBtn.disabled = stillReading || currentPageIndex === pages.length - 1 || atUnreadFrontier;
   }
 
   function buildStoryText(paragraphs) {
@@ -675,19 +681,21 @@
   // 뒤에만 완료 처리한다(녹음이 없으면 완료가 아니다 - 처음부터 다시 읽게 한다).
   function onReadingFinished(mode) {
     var myToken = playToken;
-    // "마지막 페이지였는지"는 지금(다 읽은 바로 그 순간) 확정해둔다 - 따라읽기/
-    // 혼자읽기는 녹음 저장이 끝날 때까지 기다렸다가(비동기) completeModeReadThrough를
-    // 부르는데, 그 사이에 currentPageIndex를 다시 읽으면 늦게 확정하는 셈이라
-    // 혹시라도 어긋날 여지가 있다 - 듣기는 곧바로 확정하니 문제가 없었다.
-    var wasLastPage = currentPageIndex === pages.length - 1;
+    // "몇 페이지를, 마지막 페이지로 다 읽었는지"는 지금(다 읽은 바로 그 순간)
+    // 확정해둔다 - 따라읽기/혼자읽기는 녹음 저장이 끝날 때까지 기다렸다가(비동기)
+    // completeModeReadThrough를 부르는데, 그 사이에 currentPageIndex를 다시 읽으면
+    // 늦게 확정하는 셈이라 혹시라도 어긋날 여지가 있다 - 듣기는 곧바로 확정하니
+    // 문제가 없었다.
+    var finishedPageIndex = currentPageIndex;
+    var wasLastPage = finishedPageIndex === pages.length - 1;
     if (mode === "follow" || mode === "alone") {
       finalizeRecordingForMode(mode).then(function (ok) {
         if (playToken !== myToken) return;
-        if (ok) completeModeReadThrough(mode, wasLastPage);
+        if (ok) completeModeReadThrough(mode, finishedPageIndex, wasLastPage);
         else rejectModeReadThrough(mode);
       });
     } else {
-      completeModeReadThrough(mode, wasLastPage);
+      completeModeReadThrough(mode, finishedPageIndex, wasLastPage);
     }
   }
 
@@ -716,12 +724,17 @@
   // 끝까지 다 읽었을 때(듣기는 항상, 따라읽기/혼자읽기는 녹음까지 확인된 경우) 호출 -
   // 마지막 페이지면 오늘의 단계를 완료 처리하고, 다음에 같은 버튼을 눌렀을 때 다시
   // 처음부터 읽도록 멈춘 지점 기록을 지운 뒤, 페이지 이동 잠금도 풀어준다.
-  function completeModeReadThrough(mode, wasLastPage) {
+  function completeModeReadThrough(mode, pageIdx, wasLastPage) {
     if (wasLastPage) {
       onStageCompleted(mode);
       // 다음에 이 모드로 다시 들어오면 1페이지부터 복습할 수 있게 표시해둔다
       // (render()에서 한 번만 소비됨 - bookDoneKey 주석 참고).
       localStorage.setItem(bookDoneKey(mode), "1");
+    } else if (pageIdx + 1 > pageIndexByMode[mode]) {
+      // 이 페이지를 실제로 다 읽었으니 진도를 딱 한 페이지만 넓혀준다 - 여기서만
+      // 진도가 늘어나야, 그냥 다음 페이지 버튼을 눌러서 안 읽은 페이지를 건너뛰는
+      // 방법으로 진도를 앞당길 수 없다(updatePageNavDisabled의 잠금과 짝을 이룬다).
+      setModePageIndex(mode, pageIdx + 1);
     }
     pausedWordIndex[mode] = 0;
     hasUnfinishedPlayback[mode] = false;
