@@ -546,18 +546,6 @@
   border-color: #8e5fd6;
 }
 
-/* 주중에 못 채운 도장을 같은 주 주말에 한 미션으로 메꾼 경우 - 진짜 그날
-   한 것과 헷갈리지 않게 도장 색을 다르게(청록) 쓰고 "주말로"라고 적는다. */
-.stamp-day-cell.stamped.makeup .stamp-day-icon {
-  border-color: var(--color-stamp-makeup);
-  color: var(--color-stamp-makeup);
-  background: radial-gradient(circle, rgba(47, 143, 168, 0.1), transparent 70%);
-}
-
-.stamp-day-cell.stamped.makeup .stamp-day-icon::before {
-  border-color: var(--color-stamp-makeup);
-}
-
 .story-text {
   padding-top: 14px;
   font-size: 1.1rem;

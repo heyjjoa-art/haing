@@ -80,7 +80,7 @@
         if (day.isFuture) cell.classList.add("future");
         cell.innerHTML =
           '<span class="admin-glance-day-label">' + day.label + "</span>" +
-          '<span class="admin-glance-day-mark">' + (day.isMakeup ? "주말" : day.stamped ? "✅" : day.isFuture ? "" : "・") + "</span>";
+          '<span class="admin-glance-day-mark">' + (day.stamped ? "✅" : day.isFuture ? "" : "・") + "</span>";
         row.appendChild(cell);
       });
     }
