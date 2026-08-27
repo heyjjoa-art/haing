@@ -1,4 +1,4 @@
-// 전통 놀이 "청기백기"를 반응 게임으로 만들었다. 명령이 뜨면(예: "청기 올려,
+// 전통 놀이 "청기백기"를 반응 게임으로 만들었다. 명령이 뜨면(예: "청기 올리고
 // 백기 내리지 마!") 시간 안에 두 깃발을 정확한 상태로 맞춰야 한다 - 언급 안 된
 // 깃발은 이전 상태 그대로 둬야 하고, "내리지 마"는 결국 "올려라"와 같은 뜻이라는
 // 게 이 놀이의 핵심 함정이다. 레벨이 오를수록 두 깃발을 한꺼번에 지시하거나
@@ -15,13 +15,6 @@
 
   var BLUE_LABEL = "청기";
   var WHITE_LABEL = "백기";
-
-  var RAISE_TMPL = ["{f} 올려!", "{f}를 올리세요!", "{f} 올리기!"];
-  var LOWER_TMPL = ["{f} 내려!", "{f}를 내리세요!", "{f} 내리기!"];
-  // "내리지 마" = 내려가면 안 됨 = 결국 올라가 있어야 함(RAISE와 같은 목표).
-  var NEG_KEEP_UP_TMPL = ["{f} 내리지 마세요!", "{f} 내리지 마!"];
-  // "올리지 마" = 올라가면 안 됨 = 결국 내려가 있어야 함(LOWER와 같은 목표).
-  var NEG_KEEP_DOWN_TMPL = ["{f} 올리지 마세요!", "{f} 올리지 마!"];
 
   // 레벨마다 난이도(tier)와 반응 시간을 정한다. tier 1: 한쪽 깃발만, 부정문 없음.
   // tier 2: 두 깃발 동시 지시 추가. tier 3~4: 부정문("~하지 마") 섞임, 시간은
@@ -63,7 +56,7 @@
   var nextBtn = document.getElementById("flgNextBtn");
   var retryBtn = document.getElementById("flgRetryBtn");
 
-  var DEFAULT_HINT = "깃발을 눌러서 올리고 내려요. 말하는 대로 정확히 맞혀보세요 - 언급 안 된 깃발은 그대로 둬야 해요!";
+  var DEFAULT_HINT = "글자와 소리로 명령이 나와요. 깃발을 눌러서 올리고 내려요 - 언급 안 된 깃발은 그대로 둬야 해요!";
 
   var currentLevel = 1;
   var lives = LIVES_MAX;
@@ -111,15 +104,40 @@
     return localStorage.getItem(clearedKey(level)) === "1";
   }
 
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
+  // Tts(js/tts.js)는 영어(en-US) 전용이라 한국어 명령을 읽히면 발음이 깨진다 -
+  // 그래서 이 게임은 Web Speech API를 직접 한국어(ko-KR) 목소리로 불러 쓴다.
+  function speakCommand(text) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "ko-KR";
+    utter.rate = 1;
+    window.speechSynthesis.speak(utter);
   }
 
-  function flagPhrase(label, wantUp, useNegation) {
+  function stopSpeech() {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  // 실제 청기백기 구호처럼 짧게: "청기 올려!", "백기 내려!", "청기 올리고
+  // 백기 내려!", "청기 내리지 말고 백기 내리지 마!" 식으로, 두 개를 이을 때는
+  // 쉼표가 아니라 "-고"/"-지 말고" 연결어미를 그대로 쓴다. isFirst=true면
+  // 문장 중간에 오는 연결형("올리고", "내리지 말고")을, false면 문장을
+  // 끝맺는 종결형("올려!", "내리지 마!")을 돌려준다.
+  function wordFor(wantUp, useNegation, isFirst) {
     if (!useNegation) {
-      return pick(wantUp ? RAISE_TMPL : LOWER_TMPL).replace("{f}", label);
+      if (wantUp) return isFirst ? "올리고" : "올려";
+      return isFirst ? "내리고" : "내려";
     }
-    return pick(wantUp ? NEG_KEEP_UP_TMPL : NEG_KEEP_DOWN_TMPL).replace("{f}", label);
+    // "내리지 마" = 내려가면 안 됨 = 결국 올라가 있어야 함(올려와 같은 목표).
+    if (wantUp) return isFirst ? "내리지 말고" : "내리지 마";
+    // "올리지 마" = 올라가면 안 됨 = 결국 내려가 있어야 함(내려와 같은 목표).
+    return isFirst ? "올리지 말고" : "올리지 마";
+  }
+
+  function flagPhrase(label, wantUp, useNegation, isFirst) {
+    var text = label + " " + wordFor(wantUp, useNegation, isFirst);
+    return isFirst ? text : text + "!";
   }
 
   // 지금 tier에 맞춰 명령 문장과, 그 문장이 요구하는 두 깃발의 최종 상태를
@@ -127,7 +145,6 @@
   function buildCommand(tier, prevBlue, prevWhite) {
     var nextTargetBlue = prevBlue;
     var nextTargetWhite = prevWhite;
-    var parts = [];
 
     var mentionBoth = tier >= 2 && Math.random() < (tier >= 3 ? 0.65 : 0.5);
     var allowNegation = tier >= 3;
@@ -138,6 +155,7 @@
     // 그대로 다시 지시하기도 한다.
     var FLIP_BIAS = 0.75;
 
+    var text;
     if (mentionBoth) {
       var blueUpWant = Math.random() < FLIP_BIAS ? !prevBlue : prevBlue;
       var whiteUpWant = Math.random() < FLIP_BIAS ? !prevWhite : prevWhite;
@@ -145,27 +163,31 @@
       nextTargetWhite = whiteUpWant;
       var blueNeg = allowNegation && Math.random() < (tier >= 4 ? 0.6 : 0.4);
       var whiteNeg = allowNegation && Math.random() < (tier >= 4 ? 0.6 : 0.4);
-      parts.push(flagPhrase(BLUE_LABEL, blueUpWant, blueNeg));
-      parts.push(flagPhrase(WHITE_LABEL, whiteUpWant, whiteNeg));
+
+      // 어느 깃발을 먼저 부를지도 섞는다(항상 청기부터면 금방 패턴이 읽힌다).
+      var blueFirst = Math.random() < 0.5;
+      var firstPart = blueFirst
+        ? flagPhrase(BLUE_LABEL, blueUpWant, blueNeg, true)
+        : flagPhrase(WHITE_LABEL, whiteUpWant, whiteNeg, true);
+      var secondPart = blueFirst
+        ? flagPhrase(WHITE_LABEL, whiteUpWant, whiteNeg, false)
+        : flagPhrase(BLUE_LABEL, blueUpWant, blueNeg, false);
+      text = firstPart + " " + secondPart;
     } else {
       var isBlue = Math.random() < 0.5;
       var neg = allowNegation && Math.random() < 0.4;
       if (isBlue) {
         var blueWant = Math.random() < FLIP_BIAS ? !prevBlue : prevBlue;
         nextTargetBlue = blueWant;
-        parts.push(flagPhrase(BLUE_LABEL, blueWant, neg));
+        text = flagPhrase(BLUE_LABEL, blueWant, neg, false);
       } else {
         var whiteWant = Math.random() < FLIP_BIAS ? !prevWhite : prevWhite;
         nextTargetWhite = whiteWant;
-        parts.push(flagPhrase(WHITE_LABEL, whiteWant, neg));
+        text = flagPhrase(WHITE_LABEL, whiteWant, neg, false);
       }
     }
 
-    var cleaned = parts.map(function (p, i) {
-      return i < parts.length - 1 ? p.replace(/!\s*$/, "") : p;
-    });
-
-    return { text: cleaned.join(", "), targetBlue: nextTargetBlue, targetWhite: nextTargetWhite };
+    return { text: text, targetBlue: nextTargetBlue, targetWhite: nextTargetWhite };
   }
 
   function formatLives() {
@@ -235,6 +257,7 @@
     isLevelOver = true;
     roundActive = false;
     clearTimers();
+    stopSpeech();
 
     var key = bestScoreKey(currentLevel);
     var prevBest = parseInt(localStorage.getItem(key), 10) || 0;
@@ -309,6 +332,7 @@
     targetWhite = cmd.targetWhite;
 
     commandEl.textContent = cmd.text;
+    speakCommand(cmd.text);
     feedbackEl.textContent = "";
     feedbackEl.className = "flg-feedback";
     roundActive = true;
@@ -385,6 +409,7 @@
       // 화면을 벗어나면 타이머가 계속 흘러 억울하게 시간초과가 나지 않도록,
       // 지금 명령을 취소하고 돌아왔을 때 같은 레벨을 다시 시작한다.
       clearTimers();
+      stopSpeech();
       roundActive = false;
       if (!isLevelOver) advanceHandle = setTimeout(startCommand, 400);
     }
