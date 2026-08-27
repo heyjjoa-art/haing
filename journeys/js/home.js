@@ -10,11 +10,43 @@
 
   var activeBook = null;
 
-  // 도장 칸 하나하나에 서로 다른 응원 캐릭터(동물)를 색깔별로 찍어준다 - 월~금 요일
-  // 순서(day 배열 인덱스)로 그대로 매겨서, 한 주 안에서는 5개가 겹치지 않고 고르게
-  // 나오고, 새로고침해도 같은 요일엔 항상 같은 캐릭터가 나온다(랜덤이면 볼 때마다
-  // 바뀌어서 오히려 어수선함). 통통하고 동글동글한 인상의 동물로만 골랐다.
+  // 도장 칸에 응원 캐릭터(동물)를 색깔별로 찍어준다. 통통하고 동글동글한 인상의
+  // 동물로만 골랐다. 요일 순서 그대로 고정하면 "월요일은 늘 햄스터"처럼 뻔해지니,
+  // 그 주(weekStart)를 시드로 매주 다르게 섞어서 배정한다 - 그래도 새로고침한다고
+  // 매번 바뀌진 않고(같은 주면 항상 같은 결과), 한 주 안에서는 5개가 겹치지 않으면서
+  // 이번 주엔 어떤 캐릭터가 나올지는 주마다 달라져서 매일 살짝 기대하게 만든다.
   var CHEER_CHARACTERS = ["🐹", "🐼", "🐧", "🐷", "🐻"];
+
+  function hashStr(s) {
+    var h = 0;
+    for (var i = 0; i < s.length; i++) {
+      h = (h * 31 + s.charCodeAt(i)) | 0;
+    }
+    return h >>> 0;
+  }
+
+  // 시드 기반 PRNG(mulberry32) - 같은 시드면 항상 같은 순서를 준다.
+  function seededRandom(seed) {
+    return function () {
+      seed = (seed + 0x6d2b79f5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // 이번 주(weekStart)를 시드로 캐릭터 5개를 섞은 순서를 돌려준다.
+  function cheerCharactersForWeek(weekStartStr) {
+    var rand = seededRandom(hashStr(weekStartStr));
+    var arr = CHEER_CHARACTERS.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(rand() * (i + 1));
+      var tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr;
+  }
 
   // 도장판은 특정 유닛이 아니라 "오늘 어느 유닛이든 하루 미션(듣기·따라읽기·혼자읽기)을
   // 다 끝냈는지"로 채워진다 - 유닛마다 따로 보던 걸 Journeys 메뉴 맨 위에 하나로
@@ -44,6 +76,7 @@
     });
     if (weekComplete) row.classList.add("trophy");
 
+    var weekChars = cheerCharactersForWeek(thisWeek.weekStart);
     thisWeek.days.forEach(function (day, idx) {
       var cell = document.createElement("div");
       cell.className = "stamp-day-cell";
@@ -54,8 +87,8 @@
       var iconClass = "stamp-day-icon";
       var iconContent = "";
       if (day.stamped) {
-        iconClass += " char-" + (idx % CHEER_CHARACTERS.length);
-        iconContent = CHEER_CHARACTERS[idx % CHEER_CHARACTERS.length];
+        iconClass += " char-" + (idx % weekChars.length);
+        iconContent = weekChars[idx % weekChars.length];
       }
 
       cell.innerHTML =
