@@ -483,7 +483,6 @@
   color: var(--color-stamp);
   font-weight: 900;
   background: radial-gradient(circle, rgba(224, 69, 58, 0.08), transparent 70%);
-  transform: rotate(-11deg);
 }
 
 .stamp-day-cell.stamped .stamp-day-icon::before {
@@ -503,7 +502,7 @@
 .stamp-day-icon.char-2,
 .stamp-day-icon.char-3,
 .stamp-day-icon.char-4 {
-  font-size: 1.7rem;
+  font-size: 2rem;
 }
 
 .stamp-day-cell.stamped .stamp-day-icon.char-0 {
