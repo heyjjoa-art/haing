@@ -98,33 +98,11 @@
 .blocks-hit-remove {
   cursor: pointer;
   touch-action: manipulation;
+  stroke-linejoin: round;
 }
 
 .blocks-floor {
   fill: var(--color-neutral-bg);
   stroke: var(--color-neutral-border);
   stroke-width: 1;
-}
-
-.blocks-face-top {
-  fill: var(--color-accent-soft);
-  stroke: var(--color-accent-deep);
-  stroke-width: 1;
-  stroke-linejoin: round;
-}
-
-.blocks-face-left {
-  fill: var(--color-accent-deep);
-  opacity: 0.55;
-  stroke: var(--color-accent-deep);
-  stroke-width: 1;
-  stroke-linejoin: round;
-}
-
-.blocks-face-right {
-  fill: var(--color-accent);
-  opacity: 0.85;
-  stroke: var(--color-accent-deep);
-  stroke-width: 1;
-  stroke-linejoin: round;
 }

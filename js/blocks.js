@@ -5,6 +5,10 @@
 // 만드는 쌓기 방법은 여러 가지일 수 있고, 그 전부가 수학적으로 정답이기 때문.
 // 관리자 계정에서만 테스트하는 개발 중 게임이라 WordGameStore(게임 기회)
 // 연동은 아직 하지 않는다.
+//
+// 쌓기나무는 전부 레고 2x2 블록 모양(스터드 4개)으로 그린다. 층(1층=바닥)마다
+// 색이 다르고, 앞/옆/위 평면도도 같은 층 색으로 칠해서 색만 보고도 몇 층인지
+// 짝지어볼 수 있게 했다(LEGO_COLORS·levelColor 참고).
 (function () {
   "use strict";
 
@@ -54,9 +58,58 @@
   var maxHeight = 2;
   var current = [];        // 지금 아이가 쌓고 있는 높이 지도
   var targetViews = null;  // 목표 세 평면도 (front/side/top) - 정답 판정 기준
+  var targetHeights = null; // 위 평면도 색칠에 쓰는 목표 높이 원본(그 칸에서 가장 위에 보이는 층 색을 정하려면 높이 값이 필요해서 boolean인 targetViews.top과 별도로 갖고 있는다)
   var solved = false;
   var startTime = 0;
   var timerId = null;
+
+  // 층(1층=바닥)마다 정해진 레고 컬러 - 보드의 정육면체, 앞/옆 평면도의 층별
+  // 칸, 위 평면도의 칸(그 칸에서 가장 위에 보이는 층 기준) 모두 이 배열의
+  // 같은 색을 써서 세 평면도와 실제로 쌓은 모양을 색으로도 맞춰볼 수 있게 한다.
+  var LEGO_COLORS = ["#e2231a", "#f6c500", "#0055bf", "#237841"]; // 빨강·노랑·파랑·초록(어려움 4층까지 커버)
+
+  function clamp255(v) {
+    return Math.max(0, Math.min(255, v));
+  }
+
+  // percent>0이면 흰색 쪽으로, percent<0이면 검은색 쪽으로 색을 섞어 밝기를 조절한다.
+  // 큐브의 옆면(어둡게)·윗면 하이라이트·스터드(밝게) 색을 컬러 하나로부터 계산할 때 쓴다.
+  function shadeColor(hex, percent) {
+    var num = parseInt(hex.replace("#", ""), 16);
+    var r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+    function adjust(v) {
+      return percent < 0 ? clamp255(Math.round(v * (1 + percent))) : clamp255(Math.round(v + (255 - v) * percent));
+    }
+    r = adjust(r); g = adjust(g); b = adjust(b);
+    return "rgb(" + r + "," + g + "," + b + ")";
+  }
+
+  function levelColor(level) {
+    return LEGO_COLORS[(level - 1) % LEGO_COLORS.length];
+  }
+
+  // 평면도 미니 칸을 레고 스터드가 콕콕 박힌 것처럼 보이게 - 칸 배경은 층 색,
+  // 그 위에 살짝 밝은 원 4개(2x2 스터드 하이라이트)를 겹쳐 그린다.
+  function legoCellBackground(hex) {
+    var studColor = "rgba(255,255,255,0.55)";
+    return (
+      "radial-gradient(circle at 30% 30%, " + studColor + " 0 22%, transparent 23%)," +
+      "radial-gradient(circle at 70% 30%, " + studColor + " 0 22%, transparent 23%)," +
+      "radial-gradient(circle at 30% 70%, " + studColor + " 0 22%, transparent 23%)," +
+      "radial-gradient(circle at 70% 70%, " + studColor + " 0 22%, transparent 23%)," +
+      hex
+    );
+  }
+
+  function paintLegoCell(el, hex) {
+    el.style.background = legoCellBackground(hex);
+    el.style.border = "1px solid " + shadeColor(hex, -0.4);
+  }
+
+  function clearLegoCell(el) {
+    el.style.background = "";
+    el.style.border = "";
+  }
 
   function childKeyPart() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
@@ -258,6 +311,7 @@
   }
 
   // ── 평면도 미니 격자 렌더링 (목표만 그린다 - 현재 상태는 배지로만 알려준다) ──
+  // 앞/옆 평면도: 행 하나가 "그 층"이므로 층 번호 그대로 LEGO_COLORS 색을 칠한다.
   function renderLinearView(el, heights, n, maxH) {
     el.innerHTML = "";
     el.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
@@ -266,20 +320,29 @@
       var level = maxH - levelFromTop;
       for (var i = 0; i < n; i++) {
         var cell = document.createElement("div");
-        cell.className = "blocks-view-cell" + (heights[i] >= level ? " filled" : "");
+        var filled = heights[i] >= level;
+        cell.className = "blocks-view-cell" + (filled ? " filled" : "");
+        if (filled) paintLegoCell(cell, levelColor(level));
+        else clearLegoCell(cell);
         el.appendChild(cell);
       }
     }
   }
 
-  function renderTopView(el, top, n) {
+  // 위 평면도: 위에서 내려다보면 그 칸에서 가장 위에 놓인 큐브만 보이므로,
+  // 칸의 높이(target[r][c])에 해당하는 층 색을 칠한다 - 보드에서 그 칸의
+  // 맨 위 큐브 색과 항상 같다.
+  function renderTopView(el, heights, n) {
     el.innerHTML = "";
     el.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
     el.style.gridTemplateRows = "repeat(" + n + ", 1fr)";
     for (var r = 0; r < n; r++) {
       for (var c = 0; c < n; c++) {
         var cell = document.createElement("div");
-        cell.className = "blocks-view-cell" + (top[r][c] ? " filled" : "");
+        var h = heights[r][c];
+        cell.className = "blocks-view-cell" + (h > 0 ? " filled" : "");
+        if (h > 0) paintLegoCell(cell, levelColor(h));
+        else clearLegoCell(cell);
         el.appendChild(cell);
       }
     }
@@ -361,6 +424,74 @@
     ];
   }
 
+  // 레고 큐브 윗면(다이아몬드 x=u*TILE_W, y=v*TILE_H, |u|+|v|<=1)에 2x2 스터드를
+  // 얹는다. 실제 레고 스터드처럼 표면 위로 살짝 튀어나온 원기둥으로 보이도록
+  // 밑동 타원(어두운 색) + 옆면 사각형(어두운 색) + 윗면 타원(밝은 색), 세 조각을
+  // 겹쳐 그린다 - 밋밋한 타원 하나만으로는 튀어나온 느낌이 나지 않기 때문.
+  function appendLegoStuds(parent, x, y, r, c, color) {
+    var studRx = TILE_W * 0.19;
+    var studRy = TILE_H * 0.26;
+    var studBump = 6;
+    var topColor = shadeColor(color, 0.2);
+    var sideColor = shadeColor(color, -0.3);
+    var strokeColor = shadeColor(color, -0.55);
+    // 나무토막의 윗면 다이아몬드 자체가 칸의 r축·c축을 따라 45도 돌아간
+    // 모양이므로(topFacePoints 참고 - 위/오른쪽/아래/왼쪽 꼭짓점이 그 두 축
+    // 방향이다), 2x2 스터드도 화면 가로세로가 아니라 그 두 축을 따라 배치해야
+    // 나무 하나와 같은 방향으로 돌아간 것처럼 보인다. du/dc는 그 칸 안에서
+    // 스터드가 앞/뒤(r), 왼/오(c) 중 어느 쪽에 있는지를 나타낸다. f가 작을수록
+    // 네 스터드가 나무토막 중앙 쪽으로 모이면서도(대칭이라 네 변 간격은 항상
+    // 똑같다) 실제 2x2 레고처럼 중앙에 옹기종기 모인 느낌이 난다.
+    var f = 0.22;
+    var axisOffsets = [
+      { du: -1, dc: -1 }, // 뒤쪽 꼭짓점 방향
+      { du: -1, dc: 1 },  // 오른쪽 꼭짓점 방향
+      { du: 1, dc: -1 },  // 왼쪽 꼭짓점 방향
+      { du: 1, dc: 1 }    // 앞쪽 꼭짓점 방향
+    ];
+
+    for (var i = 0; i < axisOffsets.length; i++) {
+      var du = axisOffsets[i].du, dc = axisOffsets[i].dc;
+      var sx = x + f * TILE_W * (dc - du);
+      var sy = y + f * TILE_H * (du + dc);
+
+      var base = document.createElementNS(SVG_NS, "ellipse");
+      base.setAttribute("cx", String(sx));
+      base.setAttribute("cy", String(sy));
+      base.setAttribute("rx", String(studRx));
+      base.setAttribute("ry", String(studRy));
+      base.style.fill = sideColor;
+      base.setAttribute("data-r", String(r));
+      base.setAttribute("data-c", String(c));
+      base.setAttribute("data-action", "add");
+      parent.appendChild(base);
+
+      var side = document.createElementNS(SVG_NS, "rect");
+      side.setAttribute("x", String(sx - studRx));
+      side.setAttribute("y", String(sy - studBump));
+      side.setAttribute("width", String(studRx * 2));
+      side.setAttribute("height", String(studBump));
+      side.style.fill = sideColor;
+      side.setAttribute("data-r", String(r));
+      side.setAttribute("data-c", String(c));
+      side.setAttribute("data-action", "add");
+      parent.appendChild(side);
+
+      var top = document.createElementNS(SVG_NS, "ellipse");
+      top.setAttribute("cx", String(sx));
+      top.setAttribute("cy", String(sy - studBump));
+      top.setAttribute("rx", String(studRx));
+      top.setAttribute("ry", String(studRy));
+      top.style.fill = topColor;
+      top.style.stroke = strokeColor;
+      top.style.strokeWidth = "0.7";
+      top.setAttribute("data-r", String(r));
+      top.setAttribute("data-c", String(c));
+      top.setAttribute("data-action", "add");
+      parent.appendChild(top);
+    }
+  }
+
   // 뒤에서 앞으로(d = r+c 오름차순), 아래에서 위로(k 오름차순) 그려야 앞쪽
   // 큐브가 뒤쪽 큐브를 자연스럽게 가린다. 같은 d의 칸들은 화면에서 겹치지
   // 않으므로 그 안의 순서는 상관없다. 모드 버튼 없이 클릭한 면으로 동작을
@@ -392,16 +523,22 @@
         }
         for (var k = 0; k < h; k++) {
           var center = cubeTopCenter(r, c, k, geo);
-          boardSvg.appendChild(
-            createPolygon(leftFacePoints(center.x, center.y), "blocks-face-left blocks-hit-remove", r, c, "remove")
-          );
-          boardSvg.appendChild(
-            createPolygon(rightFacePoints(center.x, center.y), "blocks-face-right blocks-hit-remove", r, c, "remove")
-          );
-          if (k === h - 1) {
-            boardSvg.appendChild(
-              createPolygon(topFacePoints(center.x, center.y), "blocks-face-top blocks-hit-add", r, c, "add")
-            );
+          var isTop = k === h - 1;
+          var color = levelColor(k + 1);
+          var leftPoly = createPolygon(leftFacePoints(center.x, center.y), "blocks-hit-remove", r, c, "remove");
+          leftPoly.style.fill = shadeColor(color, -0.35);
+          leftPoly.style.stroke = shadeColor(color, -0.55);
+          boardSvg.appendChild(leftPoly);
+          var rightPoly = createPolygon(rightFacePoints(center.x, center.y), "blocks-hit-remove", r, c, "remove");
+          rightPoly.style.fill = shadeColor(color, -0.15);
+          rightPoly.style.stroke = shadeColor(color, -0.55);
+          boardSvg.appendChild(rightPoly);
+          if (isTop) {
+            var topPoly = createPolygon(topFacePoints(center.x, center.y), "blocks-hit-add", r, c, "add");
+            topPoly.style.fill = color;
+            topPoly.style.stroke = shadeColor(color, -0.55);
+            boardSvg.appendChild(topPoly);
+            appendLegoStuds(boardSvg, center.x, center.y, r, c, color);
           }
         }
       }
@@ -459,10 +596,11 @@
     maxHeight = conf.maxHeight;
     var target = generatePuzzle(size, maxHeight, conf.minCount, conf.maxCount);
     targetViews = computeViews(target, size);
+    targetHeights = target;
 
     renderLinearView(frontGridEl, targetViews.front, size, maxHeight);
     renderLinearView(sideGridEl, targetViews.side, size, maxHeight);
-    renderTopView(topGridEl, targetViews.top, size);
+    renderTopView(topGridEl, targetHeights, size);
 
     showBestTime();
     resetBoard();
