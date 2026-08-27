@@ -516,16 +516,12 @@
   // (마이크 음량, RecordingStore.isVoiceActive)가 감지돼야 다음으로 넘어간다 - 읽는
   // 척만 하고 형광펜만 넘겨서 녹음 없이 페이지를 끝내버리는 걸 막으려는 것.
   // 단어 하나마다 끊어 읽어야 넘어가면 답답하므로, 문장 하나를 통째로 하이라이트해
-  // 두고 그 문장을 다 읽었는지를 문장 단위로 확인한다: (1) 목소리가 문장 길이에
-  // 비례한 MIN_SPEAK_MS_PER_WORD * 단어수 이상 잡히고, (2) 그 뒤로 SILENCE_MS 이상
-  // 조용해지면 "그 문장을 다 읽었다"고 보고 다음 문장으로 넘어간다. 마이크에 소리가
-  // 전혀 안 잡히는 상태(마이크 문제 등)가 문장 길이에 비례한 MAX_WAIT_MS만큼
-  // 길어지면 완전히 멈춰버리지 않게 그냥 다음으로 넘긴다 - 다만 그러면 결국
-  // hadVoiceActivity가 안 남아서 완료 처리(finalizeRecordingForMode)에서 걸러진다.
+  // 두고 그 문장을 다 읽었는지를 문장 단위로 확인한다: 목소리가 문장 길이에 비례한
+  // MIN_SPEAK_MS_PER_WORD * 단어수 이상 잡히고, 그 뒤로 SILENCE_MS 이상 조용해지면
+  // "그 문장을 다 읽었다"고 보고 다음 문장으로 넘어간다. 시간 제한으로 그냥 넘기는
+  // 건 없다 - 실제로 그만큼 소리 내어 읽어야만 넘어간다.
   var VOICE_GATE_MIN_SPEAK_MS_PER_WORD = 150;
   var VOICE_GATE_SILENCE_MS = 500;
-  var VOICE_GATE_MAX_WAIT_MS_PER_WORD = 2500;
-  var VOICE_GATE_MAX_WAIT_MS_FLOOR = 4000;
   var VOICE_GATE_POLL_MS = 90;
 
   function startVoiceGatedHighlighter(startIndex, onDone) {
@@ -553,9 +549,7 @@
       highlightSentence(voiceGateIndex, sentenceEndIdx);
 
       var minSpeakMs = VOICE_GATE_MIN_SPEAK_MS_PER_WORD * wordCount;
-      var maxWaitMs = Math.max(VOICE_GATE_MAX_WAIT_MS_FLOOR, VOICE_GATE_MAX_WAIT_MS_PER_WORD * wordCount);
-      var startedAt = Date.now();
-      var lastCheck = startedAt;
+      var lastCheck = Date.now();
       var activeMs = 0;
       var silentStreakMs = 0;
 
@@ -572,8 +566,7 @@
         }
         var spokeEnough = activeMs >= minSpeakMs;
         var doneSpeaking = spokeEnough && silentStreakMs >= VOICE_GATE_SILENCE_MS;
-        var timedOut = now - startedAt >= maxWaitMs;
-        if (doneSpeaking || timedOut) {
+        if (doneSpeaking) {
           voiceGateIndex = sentenceEndIdx + 1;
           voiceGateTimer = setTimeout(waitForSentence, 30);
           return;
