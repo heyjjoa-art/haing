@@ -297,10 +297,41 @@ var WordCardStore = (function () {
     });
   }
 
+  // 관리자 화면에서 보는 아이가 이 기기에서 로그인한 적이 없으면(예: 부모 기기와
+  // 아이 기기가 다른 경우), 그 아이의 카드는 이 기기 localStorage에 한 번도 안
+  // 내려온 적이 없어서 트로피/단어를 새로 모아도 관리자 화면엔 안 보였다. 아래
+  // watchedChildrenForAdmin/ensureCloudSyncForChild가 stamp-store.js의
+  // ensureCloudSync와 같은 방식으로 - 지금 로그인한 아이와 무관하게 - 그 아이 몫을
+  // 클라우드에서 따로 받아와 이 기기에도 채워 넣는다.
+  var watchedChildrenForAdmin = {};
+
+  function ensureCloudSyncForChild(childId) {
+    if (!childId) return;
+    // 지금 로그인한 아이면 setupCloudSyncForActiveChild가 이미 실시간으로 맞춰주고 있다.
+    if (typeof ChildStore !== "undefined" && ChildStore.getActive() === childId) return;
+    if (watchedChildrenForAdmin[childId]) return;
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    watchedChildrenForAdmin[childId] = true;
+
+    var path = "wordCards/" + childId;
+    var storageKey = "haingWordCards_" + childId + "_";
+    function applyRemote(data) {
+      if (!data) return;
+      localStorage.setItem(storageKey, JSON.stringify(data.cards || []));
+      if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
+      if (window.__haingRenderAdminWordProgress) window.__haingRenderAdminWordProgress();
+    }
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      applyRemote(remote);
+      HaingCloud.watchDoc(path, applyRemote);
+    });
+  }
+
   // 관리자 진행 관리용 - 로그인한 아이와 무관하게 특정 아이의 카드를 직접 읽는다
   // (renameUnitInCards가 쓰는 것과 같은 저장 키 규칙).
   function getCollectedForChild(childId) {
     if (!childId) return [];
+    ensureCloudSyncForChild(childId);
     var raw = localStorage.getItem("haingWordCards_" + childId + "_");
     if (!raw) return [];
     try {
