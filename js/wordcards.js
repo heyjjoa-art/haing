@@ -220,6 +220,11 @@
 
   function startGame(url, game) {
     if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit(game)) return;
+    // 성장 레벨(브론즈~다이아몬드) XP는 공부 활동이 아니라 "게임을 실제로 한 판
+    // 시작한 횟수"로만 쌓는다 - 크레딧을 쓰는 이 시점이 곧 그 순간이다.
+    if (typeof GrowthStore !== "undefined" && typeof ChildStore !== "undefined") {
+      GrowthStore.recordPlay(ChildStore.getActive(), game);
+    }
     window.location.href = url;
   }
 
