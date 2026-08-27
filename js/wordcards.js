@@ -30,6 +30,7 @@
   var gamePacmanBtn = document.getElementById("wcGamePacman");
   var gameBlocksBtn = document.getElementById("wcGameBlocks");
   var gamePowerBtn = document.getElementById("wcGamePower");
+  var gameFlagBtn = document.getElementById("wcGameFlag");
   var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
   var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
   var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
@@ -133,8 +134,8 @@
     }
 
     // 해피피 찾기 / 하노이의 탑 / 스네이크 / 벽돌깨기 / 미로찾기 / 팩맨 / 쌓기나무 /
-    // 구구단 스네이크는 아직 개발 중 - 게임 기회 시스템과 무관하게, 관리자로
-    // 로그인했을 때만 카드 자체를 보여준다(아이 계정에는 항상 숨김).
+    // 구구단 스네이크 / 청기백기는 아직 개발 중 - 게임 기회 시스템과 무관하게,
+    // 관리자로 로그인했을 때만 카드 자체를 보여준다(아이 계정에는 항상 숨김).
     var isAdmin = typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
     gameSmileyfindBtn.hidden = !isAdmin;
     gameHanoiBtn.hidden = !isAdmin;
@@ -144,6 +145,7 @@
     gamePacmanBtn.hidden = !isAdmin;
     gameBlocksBtn.hidden = !isAdmin;
     gamePowerBtn.hidden = !isAdmin;
+    gameFlagBtn.hidden = !isAdmin;
   }
 
   function render() {
@@ -253,6 +255,9 @@
   });
   gamePowerBtn.addEventListener("click", function () {
     window.location.href = "power.html";
+  });
+  gameFlagBtn.addEventListener("click", function () {
+    window.location.href = "flag.html";
   });
 
   // 게임을 끝내고 "도감으로" 돌아올 때(?tab=games) 단어 탭이 아니라 게임 목록

@@ -20,6 +20,7 @@ const HTML_FILES = [
   "blocks.html",
   "breakout.html",
   "crossword.html",
+  "flag.html",
   "flashcards.html",
   "hangman.html",
   "hanoi.html",
