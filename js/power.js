@@ -1,9 +1,9 @@
-// 거듭제곱(2, 4, 8, 16...) 연습을 스네이크로 만든 게임. 밑(base)이 정해지면
-// base¹ → base² → base³ → base⁴ 순서로 자라는 숫자만 골라 먹어야 한다 - 다른
+// 거듭제곱(2의 2승, 2의 3승, 2의 4승...) 연습을 스네이크로 만든 게임. 밑(base)이
+// 정해지면 base² → base³ → base⁴ 순서로 자라는 숫자만 골라 먹어야 한다 - 다른
 // 숫자를 먹거나 벽/몸통에 부딪히면 그 판은 끝. 조작은 클래식 스네이크와 똑같이
 // 방향키/버튼 한 번 누르면 그 방향으로 계속 가는 방식이라(연속 드래그 없음)
 // 손이 편하다. 레벨은 하노이의 탑처럼 순서대로 깨야 다음 밑(3, 4, 5...)이
-// 열리고, 밑 2~12까지 11단계다. 관리자 계정에서만 테스트하는 개발 중 게임이라
+// 열리고, 밑 2~19까지 18단계다. 관리자 계정에서만 테스트하는 개발 중 게임이라
 // WordGameStore(게임 기회) 연동은 하지 않는다.
 (function () {
   "use strict";
@@ -11,26 +11,27 @@
   var COLS = 10;
   var ROWS = 14;
   var BLOCK = 28;
-  var LEVEL_COUNT = 11;
+  var BASE_START = 2;
+  var BASE_END = 19;
+  var LEVEL_COUNT = BASE_END - BASE_START + 1; // 18
+  var MIN_EXP = 2;
   var MAX_EXP = 4;
-  var EXP_SUP = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
-
-  // 레벨마다 밑(base) 하나를 맡는다. 뒤로 갈수록 미끼 숫자가 늘고 속도도
-  // 빨라진다. 목표 사슬은 항상 base¹~base⁴ 4단계.
-  var LEVELS = [
-    { base: 2, decoys: 2, startInterval: 220, minInterval: 140 },
-    { base: 3, decoys: 2, startInterval: 210, minInterval: 135 },
-    { base: 4, decoys: 2, startInterval: 200, minInterval: 130 },
-    { base: 5, decoys: 3, startInterval: 195, minInterval: 125 },
-    { base: 6, decoys: 3, startInterval: 190, minInterval: 120 },
-    { base: 7, decoys: 3, startInterval: 180, minInterval: 115 },
-    { base: 8, decoys: 3, startInterval: 170, minInterval: 110 },
-    { base: 9, decoys: 4, startInterval: 165, minInterval: 105 },
-    { base: 10, decoys: 4, startInterval: 160, minInterval: 100 },
-    { base: 11, decoys: 4, startInterval: 150, minInterval: 95 },
-    { base: 12, decoys: 4, startInterval: 145, minInterval: 90 }
-  ];
+  var EXP_SUP = { 2: "²", 3: "³", 4: "⁴" };
   var SPEEDUP_PER_EAT = 8;
+
+  // 레벨마다 밑(base) 하나를 맡는다(2~19). 목표 사슬은 항상 base²→base³→base⁴
+  // 3단계. 뒤로 갈수록(밑이 커질수록) 미끼 숫자가 늘고 속도도 빨라진다.
+  var LEVELS = (function () {
+    var arr = [];
+    for (var base = BASE_START; base <= BASE_END; base++) {
+      var idx = base - BASE_START; // 0..17
+      var decoys = idx < 6 ? 2 : idx < 12 ? 3 : 4;
+      var startInterval = 220 - idx * 6; // 220ms(밑2) ~ 118ms(밑19)
+      var minInterval = Math.max(90, startInterval - 70);
+      arr.push({ base: base, decoys: decoys, startInterval: startInterval, minInterval: minInterval });
+    }
+    return arr;
+  })();
 
   var levelNumEl = document.getElementById("powLevelNum");
   var levelTotalEl = document.getElementById("powLevelTotal");
@@ -139,10 +140,10 @@
     }
   }
 
-  // base¹부터 base⁴까지 이번 레벨에서 순서대로 먹어야 할 사슬을 만든다.
+  // base²부터 base⁴까지 이번 레벨에서 순서대로 먹어야 할 사슬을 만든다.
   function buildTargets(base) {
     var arr = [];
-    for (var exp = 1; exp <= MAX_EXP; exp++) {
+    for (var exp = MIN_EXP; exp <= MAX_EXP; exp++) {
       arr.push({ exp: exp, value: Math.pow(base, exp) });
     }
     return arr;
@@ -224,9 +225,11 @@
   }
 
   function updateChainUI() {
+    var conf = LEVELS[currentLevel - 1];
     var parts = targets.map(function (t, i) {
       var cls = i < targetIndex ? "pow-chain-done" : i === targetIndex ? "pow-chain-current" : "pow-chain-todo";
-      return '<span class="' + cls + '">' + t.value + "</span>";
+      var label = conf.base + (EXP_SUP[t.exp] || "^" + t.exp) + "=" + t.value;
+      return '<span class="' + cls + '">' + label + "</span>";
     });
     chainEl.innerHTML = parts.join('<span class="pow-chain-arrow">→</span>');
   }
