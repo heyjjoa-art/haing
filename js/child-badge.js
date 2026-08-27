@@ -78,7 +78,7 @@
       "</defs>" +
       '<circle cx="32" cy="32" r="29" fill="' + c.ring + '"/>' +
       '<circle cx="32" cy="32" r="26" fill="url(#' + gradId + ')"/>' +
-      '<circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-dasharray="2.5 4"/>' +
+      '<circle cx="32" cy="32" r="21" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-dasharray="2.5 4"/>' +
       emblem +
       '<ellipse cx="23" cy="21" rx="10" ry="6" fill="url(#' + shineId + ')" transform="rotate(-28 23 21)"/>' +
       "</svg>"
