@@ -1,75 +1,53 @@
-// 거듭제곱(5³ = ?) 연습을 낙하/충돌형 아케이드로 만든 게임. 위에서 떨어지는 숫자
-// 블록 중 정답만 바구니로 받는다. 밑 2~12 · 지수 2~4를 10개 레벨에 나눠 담고,
-// 하노이의 탑처럼 앞 레벨을 깨야 다음 레벨이 열린다. 관리자 계정에서만 테스트
-// 하는 개발 중 게임이라 WordGameStore(게임 기회) 연동은 하지 않는다.
+// 거듭제곱(2, 4, 8, 16...) 연습을 스네이크로 만든 게임. 밑(base)이 정해지면
+// base¹ → base² → base³ → base⁴ 순서로 자라는 숫자만 골라 먹어야 한다 - 다른
+// 숫자를 먹거나 벽/몸통에 부딪히면 그 판은 끝. 조작은 클래식 스네이크와 똑같이
+// 방향키/버튼 한 번 누르면 그 방향으로 계속 가는 방식이라(연속 드래그 없음)
+// 손이 편하다. 레벨은 하노이의 탑처럼 순서대로 깨야 다음 밑(3, 4, 5...)이
+// 열리고, 밑 2~12까지 11단계다. 관리자 계정에서만 테스트하는 개발 중 게임이라
+// WordGameStore(게임 기회) 연동은 하지 않는다.
 (function () {
   "use strict";
 
-  var BOARD_W = 320;
-  var BOARD_H = 460;
-  var BLOCK_W = 58;
-  var BLOCK_H = 34;
-  var LANES = 5;
-  var LANE_W = BOARD_W / LANES;
-  var STAGGER = 80; // 한 문제 안에서 블록끼리 시작 y를 이만큼씩 어긋나게 둔다
-  var BASKET_W = 76;
-  var BASKET_H = 14;
-  var BASKET_Y = BOARD_H - 26; // 판정선(바구니 윗면)
-  var BASKET_SPEED = 300; // px/s
-  var LEVEL_COUNT = 10;
-  var MAX_LIVES = 3;
-  var NEXT_PROBLEM_DELAY = 600; // ms
-  var FLASH_MS = 400;
-  var EXP_SUP = { 2: "²", 3: "³", 4: "⁴" };
+  var COLS = 10;
+  var ROWS = 14;
+  var BLOCK = 28;
+  var LEVEL_COUNT = 11;
+  var MAX_EXP = 4;
+  var EXP_SUP = { 1: "¹", 2: "²", 3: "³", 4: "⁴" };
 
-  // 레벨마다 어떤 (지수, 밑 범위) 조합에서 문제를 뽑을지, 블록 개수·낙하속도·
-  // 클리어에 필요한 문제 수를 정한다. 밑 2~12 · 지수 2~4 전 범위를 레벨 10에서
-  // 종합적으로 다룬다.
+  // 레벨마다 밑(base) 하나를 맡는다. 뒤로 갈수록 미끼 숫자가 늘고 속도도
+  // 빨라진다. 목표 사슬은 항상 base¹~base⁴ 4단계.
   var LEVELS = [
-    { specs: [{ exp: 2, minBase: 2, maxBase: 5 }], blocks: 3, speed: 70, goal: 5 },
-    { specs: [{ exp: 2, minBase: 2, maxBase: 9 }], blocks: 3, speed: 78, goal: 5 },
-    { specs: [{ exp: 2, minBase: 2, maxBase: 12 }], blocks: 4, speed: 86, goal: 5 },
-    { specs: [{ exp: 3, minBase: 2, maxBase: 5 }], blocks: 3, speed: 84, goal: 5 },
-    {
-      specs: [
-        { exp: 2, minBase: 2, maxBase: 12 },
-        { exp: 3, minBase: 2, maxBase: 6 }
-      ],
-      blocks: 4,
-      speed: 94,
-      goal: 6
-    },
-    { specs: [{ exp: 3, minBase: 2, maxBase: 9 }], blocks: 4, speed: 102, goal: 6 },
-    { specs: [{ exp: 3, minBase: 2, maxBase: 12 }], blocks: 4, speed: 110, goal: 6 },
-    { specs: [{ exp: 4, minBase: 2, maxBase: 5 }], blocks: 4, speed: 106, goal: 6 },
-    { specs: [{ exp: 4, minBase: 2, maxBase: 8 }], blocks: 5, speed: 118, goal: 7 },
-    {
-      specs: [
-        { exp: 2, minBase: 2, maxBase: 12 },
-        { exp: 3, minBase: 2, maxBase: 12 },
-        { exp: 4, minBase: 2, maxBase: 12 }
-      ],
-      blocks: 5,
-      speed: 130,
-      goal: 7
-    }
+    { base: 2, decoys: 2, startInterval: 220, minInterval: 140 },
+    { base: 3, decoys: 2, startInterval: 210, minInterval: 135 },
+    { base: 4, decoys: 2, startInterval: 200, minInterval: 130 },
+    { base: 5, decoys: 3, startInterval: 195, minInterval: 125 },
+    { base: 6, decoys: 3, startInterval: 190, minInterval: 120 },
+    { base: 7, decoys: 3, startInterval: 180, minInterval: 115 },
+    { base: 8, decoys: 3, startInterval: 170, minInterval: 110 },
+    { base: 9, decoys: 4, startInterval: 165, minInterval: 105 },
+    { base: 10, decoys: 4, startInterval: 160, minInterval: 100 },
+    { base: 11, decoys: 4, startInterval: 150, minInterval: 95 },
+    { base: 12, decoys: 4, startInterval: 145, minInterval: 90 }
   ];
+  var SPEEDUP_PER_EAT = 8;
 
   var levelNumEl = document.getElementById("powLevelNum");
   var levelTotalEl = document.getElementById("powLevelTotal");
+  var baseNumEl = document.getElementById("powBaseNum");
   var levelPickerEl = document.getElementById("powLevelPicker");
   var bestEl = document.getElementById("powBest");
   var timerEl = document.getElementById("powTimer");
-  var livesEl = document.getElementById("powLives");
-  var solvedEl = document.getElementById("powSolved");
-  var goalEl = document.getElementById("powGoal");
-  var questionEl = document.getElementById("powQuestion");
+  var scoreEl = document.getElementById("powScore");
+  var chainEl = document.getElementById("powChain");
   var hintEl = document.getElementById("powHint");
 
   var boardCanvas = document.getElementById("powBoard");
   var boardCtx = boardCanvas.getContext("2d");
   var pauseBtn = document.getElementById("powPauseBtn");
   var pauseVeilEl = document.getElementById("powPauseVeil");
+  var upBtn = document.getElementById("powUpBtn");
+  var downBtn = document.getElementById("powDownBtn");
   var leftBtn = document.getElementById("powLeftBtn");
   var rightBtn = document.getElementById("powRightBtn");
 
@@ -79,25 +57,23 @@
   var nextBtn = document.getElementById("powNextBtn");
   var retryBtn = document.getElementById("powRetryBtn");
 
-  var DEFAULT_HINT = "정답이 적힌 블록을 바구니로 받아보세요!";
+  var DEFAULT_HINT = "거듭제곱 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.";
 
   var currentLevel = 1;
-  var solvedCount = 0;
-  var lives = MAX_LIVES;
-  var blocks = []; // { value, correct, x, y }
-  var basketX = (BOARD_W - BASKET_W) / 2;
-  var leftPressed = false;
-  var rightPressed = false;
-  var dragging = false;
+  var targets = []; // [{ exp, value }, ...] base¹..base⁴
+  var targetIndex = 0;
+  var snake = [];
+  var direction = { x: 1, y: 0 };
+  var pendingDirection = null;
+  var foods = []; // { x, y, value, correct }
+  var score = 0;
+  var moveInterval = 200;
+  var moveCounter = 0;
+  var lastTime = 0;
   var paused = false;
   var isLevelOver = false;
   var elapsedMs = 0;
   var lastTimerSecond = -1;
-  var nextSpawnAt = 0;
-  var needNewProblem = true;
-  var problem = null; // { base, exp, answer }
-  var lastTime = 0;
-  var questionFlashTimer = null;
 
   function childKeyPart() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
@@ -135,10 +111,8 @@
     bestEl.textContent = raw ? formatTime(parseInt(raw, 10)) : "-";
   }
 
-  function updateLivesUI() {
-    var hearts = "";
-    for (var i = 0; i < MAX_LIVES; i++) hearts += i < lives ? "❤️" : "🤍";
-    livesEl.textContent = hearts;
+  function updateStatsUI() {
+    scoreEl.textContent = String(score);
   }
 
   function renderLevelPicker() {
@@ -165,45 +139,26 @@
     }
   }
 
-  function pickSpec(specs) {
-    return specs[Math.floor(Math.random() * specs.length)];
-  }
-
-  // 이번 레벨 설정에서 (밑, 지수) 하나를 뽑아 새 문제를 만든다.
-  function makeProblem() {
-    var conf = LEVELS[currentLevel - 1];
-    var spec = pickSpec(conf.specs);
-    var base = spec.minBase + Math.floor(Math.random() * (spec.maxBase - spec.minBase + 1));
-    var exp = spec.exp;
-    problem = { base: base, exp: exp, answer: Math.pow(base, exp) };
-    questionEl.innerHTML = base + "<sup>" + exp + "</sup> = ?";
-  }
-
-  function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = a[i];
-      a[i] = a[j];
-      a[j] = tmp;
+  // base¹부터 base⁴까지 이번 레벨에서 순서대로 먹어야 할 사슬을 만든다.
+  function buildTargets(base) {
+    var arr = [];
+    for (var exp = 1; exp <= MAX_EXP; exp++) {
+      arr.push({ exp: exp, value: Math.pow(base, exp) });
     }
-    return a;
+    return arr;
   }
 
-  // 실제로 아이가 하기 쉬운 실수(곱셈 혼동, 지수/밑 하나 어긋남 등)를 우선
-  // 후보로 쓰고, 모자라면 정답 근처 값으로 채운다. 정답·중복·0 이하는 제외.
-  function makeDistractors(count) {
-    var b = problem.base;
-    var e = problem.exp;
-    var answer = problem.answer;
+  // 지금 목표(밑,지수,정답)를 기준으로 흔한 실수 값을 미끼로 만든다 -
+  // 정답·중복·0 이하는 제외하고, 모자라면 정답 근처 값으로 채운다.
+  function makeDistractors(base, exp, answer, count) {
     var raw = [
-      b * e,
-      Math.pow(b, e - 1),
-      Math.pow(b, e + 1),
-      Math.pow(b + 1, e),
-      Math.pow(b - 1, e),
-      answer + b,
-      answer - b
+      base * exp,
+      Math.pow(base, exp - 1), // exp=1이면 base^0=1 - 그것도 정답과 다른 유효한 미끼
+      Math.pow(base, exp + 1),
+      Math.pow(base + 1, exp),
+      Math.pow(base - 1, exp),
+      answer + base,
+      answer - base
     ];
     var seen = {};
     seen[answer] = true;
@@ -218,7 +173,7 @@
     var guard = 0;
     while (picked.length < count && guard < 40) {
       guard++;
-      var magnitude = Math.max(1, Math.round(answer * 0.15));
+      var magnitude = Math.max(1, Math.round(answer * 0.2));
       var delta = 1 + Math.floor(Math.random() * magnitude);
       var v = Math.random() < 0.5 ? answer + delta : answer - delta;
       if (v > 0 && !seen[v]) {
@@ -229,164 +184,70 @@
     return picked;
   }
 
-  // 정답 1개 + 오답들을 서로 다른 레인에, 시작 y를 어긋나게 배치한다 - 전부
-  // 같은 높이로 떨어지면 좌우 이동만으로 구분이 안 되고, 하나씩 스폰하면
-  // 대기 시간이 늘어진다.
-  function spawnProblemBlocks() {
+  function cellKey(p) {
+    return p.x + "_" + p.y;
+  }
+
+  function randomEmptyCell(occupied) {
+    var free = [];
+    for (var x = 0; x < COLS; x++) {
+      for (var y = 0; y < ROWS; y++) {
+        var p = { x: x, y: y };
+        if (!occupied[cellKey(p)]) free.push(p);
+      }
+    }
+    if (free.length === 0) return null;
+    return free[Math.floor(Math.random() * free.length)];
+  }
+
+  // 정답 1개(다음 목표) + 미끼 여러 개를 서로 다른 빈 칸에 뿌린다. 색은
+  // 전부 똑같이 둬서(정답만 다른 색이면 계산 없이 풀림) 숫자를 직접 읽어야
+  // 고를 수 있게 한다.
+  function spawnFoods() {
     var conf = LEVELS[currentLevel - 1];
-    var distractors = makeDistractors(conf.blocks - 1);
-    var values = shuffle([problem.answer].concat(distractors));
-    var lanes = shuffle([0, 1, 2, 3, 4]).slice(0, values.length);
-    blocks = values.map(function (v, i) {
-      return {
-        value: v,
-        correct: v === problem.answer,
-        x: lanes[i] * LANE_W + (LANE_W - BLOCK_W) / 2,
-        y: -BLOCK_H - i * STAGGER
-      };
+    var target = targets[targetIndex];
+    var distractors = makeDistractors(conf.base, target.exp, target.value, conf.decoys);
+    var values = [target.value].concat(distractors);
+
+    var occupied = {};
+    snake.forEach(function (seg) {
+      occupied[cellKey(seg)] = true;
+    });
+
+    foods = [];
+    values.forEach(function (v) {
+      var cell = randomEmptyCell(occupied);
+      if (!cell) return; // 보드가 거의 꽉 찬 극단적인 경우 - 그냥 덜 뿌린다
+      occupied[cellKey(cell)] = true;
+      foods.push({ x: cell.x, y: cell.y, value: v, correct: v === target.value });
     });
   }
 
-  // 레벨 안에서도 문제를 맞힐수록 조금씩 빨라진다.
-  function currentFallSpeed() {
-    var conf = LEVELS[currentLevel - 1];
-    return conf.speed * (1 + 0.05 * solvedCount);
-  }
-
-  function flashQuestion(cls) {
-    questionEl.classList.remove("correct", "wrong");
-    questionEl.classList.add(cls);
-    if (questionFlashTimer) clearTimeout(questionFlashTimer);
-    questionFlashTimer = setTimeout(function () {
-      questionEl.classList.remove(cls);
-    }, FLASH_MS);
-  }
-
-  // 목숨을 하나 잃는다. 0이 되면 레벨 실패로 넘어가고 true를 돌려준다.
-  function loseLife() {
-    lives--;
-    updateLivesUI();
-    if (lives <= 0) {
-      levelFail();
-      return true;
-    }
-    return false;
-  }
-
-  function onCorrect() {
-    blocks = [];
-    solvedCount++;
-    solvedEl.textContent = String(solvedCount);
-    var sup = EXP_SUP[problem.exp] || "^" + problem.exp;
-    hintEl.textContent = "🎉 정답! " + problem.base + sup + " = " + problem.answer;
-    flashQuestion("correct");
-
-    var conf = LEVELS[currentLevel - 1];
-    if (solvedCount >= conf.goal) {
-      levelClear();
-      return;
-    }
-    needNewProblem = true;
-    nextSpawnAt = Date.now() + NEXT_PROBLEM_DELAY;
-  }
-
-  function onWrongCatch() {
-    hintEl.textContent = "❌ 아니에요! 다시 잘 보세요";
-    flashQuestion("wrong");
-    loseLife();
-  }
-
-  function onMissed() {
-    blocks = [];
-    hintEl.textContent = "😢 놓쳤어요! 한 번 더!";
-    flashQuestion("wrong");
-    var ended = loseLife();
-    if (ended) return;
-    needNewProblem = false; // 같은 문제를 새 블록으로 재출제
-    nextSpawnAt = Date.now() + NEXT_PROBLEM_DELAY;
-  }
-
-  function updateBasket(dt) {
-    var d = BASKET_SPEED * dt;
-    if (leftPressed) basketX -= d;
-    if (rightPressed) basketX += d;
-    basketX = Math.max(0, Math.min(BOARD_W - BASKET_W, basketX));
-  }
-
-  // dt가 크면(탭 전환 복귀 등) 블록이 한 프레임에 판정선을 건너뛸 수 있으니,
-  // 좌표 비교가 아니라 "이번 프레임에 판정선을 넘었는가"로 잡는다.
-  function updateBlocks(dt) {
-    if (blocks.length === 0) {
-      if (nextSpawnAt && Date.now() >= nextSpawnAt) {
-        nextSpawnAt = 0;
-        if (needNewProblem) makeProblem();
-        spawnProblemBlocks();
-      }
-      return;
-    }
-
-    var speed = currentFallSpeed();
-    for (var i = blocks.length - 1; i >= 0; i--) {
-      var b = blocks[i];
-      var prevBottom = b.y + BLOCK_H;
-      b.y += speed * dt;
-      var nextBottom = b.y + BLOCK_H;
-
-      if (prevBottom < BASKET_Y && nextBottom >= BASKET_Y) {
-        var overlap = b.x < basketX + BASKET_W && b.x + BLOCK_W > basketX;
-        if (overlap) {
-          if (b.correct) {
-            onCorrect();
-            return; // onCorrect가 blocks를 통째로 비웠으니 나머지 순회는 무의미
-          }
-          blocks.splice(i, 1);
-          onWrongCatch();
-          continue;
-        }
-      }
-
-      if (b.y > BOARD_H) {
-        blocks.splice(i, 1);
-        if (b.correct) {
-          onMissed();
-          return;
-        }
-      }
-    }
-  }
-
-  function draw() {
-    boardCtx.clearRect(0, 0, BOARD_W, BOARD_H);
-
-    boardCtx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-    boardCtx.setLineDash([4, 4]);
-    boardCtx.beginPath();
-    boardCtx.moveTo(0, BASKET_Y);
-    boardCtx.lineTo(BOARD_W, BASKET_Y);
-    boardCtx.stroke();
-    boardCtx.setLineDash([]);
-
-    blocks.forEach(function (b) {
-      boardCtx.fillStyle = "#4d96ff";
-      boardCtx.fillRect(b.x, b.y, BLOCK_W, BLOCK_H);
-      var text = String(b.value);
-      var size = text.length <= 3 ? 18 : text.length === 4 ? 15 : 13;
-      boardCtx.font = "bold " + size + "px 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
-      boardCtx.fillStyle = "#ffffff";
-      boardCtx.textAlign = "center";
-      boardCtx.textBaseline = "middle";
-      boardCtx.fillText(text, b.x + BLOCK_W / 2, b.y + BLOCK_H / 2);
+  function updateChainUI() {
+    var parts = targets.map(function (t, i) {
+      var cls = i < targetIndex ? "pow-chain-done" : i === targetIndex ? "pow-chain-current" : "pow-chain-todo";
+      return '<span class="' + cls + '">' + t.value + "</span>";
     });
+    chainEl.innerHTML = parts.join('<span class="pow-chain-arrow">→</span>');
+  }
 
-    boardCtx.fillStyle = "#ffd93d";
-    boardCtx.fillRect(basketX, BASKET_Y, BASKET_W, BASKET_H);
-    boardCtx.fillStyle = "#e0a72f";
-    boardCtx.fillRect(basketX, BASKET_Y, BASKET_W, 4);
+  function setDirection(dx, dy) {
+    if (paused || isLevelOver) return;
+    // 지금 진행 방향의 정반대로는 못 돌린다(그 자리에서 바로 몸통에 부딪히므로).
+    var base = pendingDirection || direction;
+    if (base.x === -dx && base.y === -dy) return;
+    pendingDirection = { x: dx, y: dy };
+  }
+
+  function setPaused(next) {
+    if (isLevelOver) return;
+    paused = next;
+    pauseVeilEl.hidden = !paused;
+    pauseBtn.textContent = paused ? "▶" : "⏸";
   }
 
   function levelClear() {
     isLevelOver = true;
-    blocks = [];
 
     var sec = Math.floor(elapsedMs / 1000);
     var key = bestTimeKey(currentLevel);
@@ -401,128 +262,210 @@
     renderLevelPicker();
 
     var conf = LEVELS[currentLevel - 1];
-    var noMiss = lives === MAX_LIVES;
+    var chainText = targets.map(function (t) { return t.value; }).join(" → ");
     overlayTitleEl.textContent = isFinal ? "🏆 모든 단계 클리어!" : "🎉 레벨 " + currentLevel + " 클리어!";
     overlayDescEl.textContent =
-      conf.goal + "문제를 " + formatTime(sec) + "만에 다 맞혔어요!" +
+      "밑 " + conf.base + "의 거듭제곱(" + chainText + ")을 " + formatTime(sec) + "만에 다 먹었어요!" +
       (isNewBest ? " 🎉 신기록!" : "") +
-      (justUnlockedNext ? " 다음 레벨이 열렸어요!" : "") +
-      (noMiss ? " 목숨을 하나도 안 잃었어요! 💯" : "");
+      (justUnlockedNext ? " 다음 레벨이 열렸어요!" : "");
 
     nextBtn.hidden = isFinal;
     retryBtn.textContent = "🔄 같은 단계 다시";
     overlayEl.hidden = false;
   }
 
-  function levelFail() {
+  function levelFail(reason) {
     isLevelOver = true;
-    blocks = [];
-
     var conf = LEVELS[currentLevel - 1];
     overlayTitleEl.textContent = "😵 아쉬워요!";
     overlayDescEl.textContent =
-      "레벨 " + currentLevel + " - " + solvedCount + "/" + conf.goal + "문제까지 맞혔어요. 다시 도전해볼까요?";
+      reason + " 밑 " + conf.base + " · " + targetIndex + "/" + targets.length + "단계까지 먹었어요. 다시 도전해볼까요?";
     nextBtn.hidden = true;
     retryBtn.textContent = "🔄 다시 하기";
     overlayEl.hidden = false;
+  }
+
+  function onCorrectEat() {
+    score += 10;
+    updateStatsUI();
+    targetIndex++;
+    updateChainUI();
+    hintEl.textContent = "🎉 정답이에요! 다음 숫자를 찾아보세요.";
+
+    var conf = LEVELS[currentLevel - 1];
+    moveInterval = Math.max(conf.minInterval, moveInterval - SPEEDUP_PER_EAT);
+
+    if (targetIndex >= targets.length) {
+      levelClear();
+      return;
+    }
+    spawnFoods();
+  }
+
+  function step() {
+    if (pendingDirection) {
+      direction = pendingDirection;
+      pendingDirection = null;
+    }
+
+    var head = snake[0];
+    var next = { x: head.x + direction.x, y: head.y + direction.y };
+
+    if (next.x < 0 || next.x >= COLS || next.y < 0 || next.y >= ROWS) {
+      levelFail("벽에 부딪혔어요!");
+      return;
+    }
+    var hitsSelf = snake.some(function (seg, i) {
+      return i < snake.length - 1 && seg.x === next.x && seg.y === next.y;
+    });
+    if (hitsSelf) {
+      levelFail("몸통에 부딪혔어요!");
+      return;
+    }
+
+    snake.unshift(next);
+
+    var eatenIndex = -1;
+    for (var i = 0; i < foods.length; i++) {
+      if (foods[i].x === next.x && foods[i].y === next.y) {
+        eatenIndex = i;
+        break;
+      }
+    }
+
+    if (eatenIndex === -1) {
+      snake.pop();
+      return;
+    }
+
+    var eaten = foods[eatenIndex];
+    if (!eaten.correct) {
+      levelFail("숫자 " + eaten.value + "을(를) 먹었어요 - 정답이 아니에요.");
+      return;
+    }
+
+    foods.splice(eatenIndex, 1);
+    onCorrectEat();
+  }
+
+  function drawCell(x, y, color) {
+    boardCtx.fillStyle = color;
+    boardCtx.fillRect(x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, BLOCK - 2);
+  }
+
+  function draw() {
+    boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+
+    boardCtx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+    boardCtx.lineWidth = 1;
+    for (var gx = 0; gx <= COLS; gx++) {
+      boardCtx.beginPath();
+      boardCtx.moveTo(gx * BLOCK, 0);
+      boardCtx.lineTo(gx * BLOCK, ROWS * BLOCK);
+      boardCtx.stroke();
+    }
+    for (var gy = 0; gy <= ROWS; gy++) {
+      boardCtx.beginPath();
+      boardCtx.moveTo(0, gy * BLOCK);
+      boardCtx.lineTo(COLS * BLOCK, gy * BLOCK);
+      boardCtx.stroke();
+    }
+
+    foods.forEach(function (f) {
+      var boxSize = BLOCK - 4;
+      var left = f.x * BLOCK + 2;
+      var top = f.y * BLOCK + 2;
+      boardCtx.fillStyle = "#ffb454";
+      boardCtx.fillRect(left, top, boxSize, boxSize);
+
+      var text = String(f.value);
+      var size = text.length <= 2 ? 14 : text.length === 3 ? 12 : text.length === 4 ? 10 : text.length === 5 ? 8 : 7;
+      boardCtx.font = "bold " + size + "px 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
+      boardCtx.fillStyle = "#3a2e26";
+      boardCtx.textAlign = "center";
+      boardCtx.textBaseline = "middle";
+      boardCtx.fillText(text, left + boxSize / 2, top + boxSize / 2 + 1);
+    });
+
+    snake.forEach(function (seg, i) {
+      drawCell(seg.x, seg.y, i === 0 ? "#ffd93d" : "#6bcb77");
+    });
   }
 
   function newGame(level) {
     currentLevel = level;
     var conf = LEVELS[currentLevel - 1];
 
-    solvedCount = 0;
-    lives = MAX_LIVES;
-    blocks = [];
-    needNewProblem = true;
-    nextSpawnAt = 0;
+    targets = buildTargets(conf.base);
+    targetIndex = 0;
+    score = 0;
+    moveInterval = conf.startInterval;
+    moveCounter = 0;
     isLevelOver = false;
     paused = false;
     elapsedMs = 0;
     lastTimerSecond = -1;
-    basketX = (BOARD_W - BASKET_W) / 2;
+
+    var startX = Math.floor(COLS / 2);
+    var startY = Math.floor(ROWS / 2);
+    snake = [
+      { x: startX, y: startY },
+      { x: startX - 1, y: startY },
+      { x: startX - 2, y: startY }
+    ];
+    direction = { x: 1, y: 0 };
+    pendingDirection = null;
 
     levelNumEl.textContent = String(level);
-    solvedEl.textContent = "0";
-    goalEl.textContent = String(conf.goal);
-    updateLivesUI();
+    baseNumEl.textContent = String(conf.base);
+    updateStatsUI();
     timerEl.textContent = "0:00";
     hintEl.textContent = DEFAULT_HINT;
-    questionEl.classList.remove("correct", "wrong");
     overlayEl.hidden = true;
     pauseVeilEl.hidden = true;
     pauseBtn.textContent = "⏸";
 
     showBest();
     renderLevelPicker();
-
-    makeProblem();
-    spawnProblemBlocks();
+    updateChainUI();
+    spawnFoods();
     draw();
-  }
-
-  function setPaused(next) {
-    if (isLevelOver) return;
-    paused = next;
-    pauseVeilEl.hidden = !paused;
-    pauseBtn.textContent = paused ? "▶" : "⏸";
   }
 
   function tick(timestamp) {
     if (!lastTime) lastTime = timestamp;
-    var dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+    var delta = timestamp - lastTime;
     lastTime = timestamp;
 
     if (!paused && !isLevelOver) {
-      elapsedMs += dt * 1000;
+      elapsedMs += delta;
       var sec = Math.floor(elapsedMs / 1000);
       if (sec !== lastTimerSecond) {
         lastTimerSecond = sec;
         timerEl.textContent = formatTime(sec);
       }
-      updateBasket(dt);
-      updateBlocks(dt);
+      moveCounter += delta;
+      if (moveCounter > moveInterval) {
+        moveCounter = 0;
+        step();
+      }
     }
     draw();
     requestAnimationFrame(tick);
   }
 
-  function bindHold(btn, onChange) {
-    btn.addEventListener("pointerdown", function (e) {
-      e.preventDefault();
-      onChange(true);
-    });
-    ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) {
-      btn.addEventListener(ev, function () {
-        onChange(false);
-      });
-    });
-  }
-
-  bindHold(leftBtn, function (v) {
-    leftPressed = v;
+  upBtn.addEventListener("click", function () {
+    setDirection(0, -1);
   });
-  bindHold(rightBtn, function (v) {
-    rightPressed = v;
+  downBtn.addEventListener("click", function () {
+    setDirection(0, 1);
   });
-
-  boardCanvas.addEventListener("pointerdown", function (e) {
-    dragging = true;
-    boardCanvas.setPointerCapture(e.pointerId);
+  leftBtn.addEventListener("click", function () {
+    setDirection(-1, 0);
   });
-  boardCanvas.addEventListener("pointermove", function (e) {
-    if (!dragging) return;
-    var rect = boardCanvas.getBoundingClientRect();
-    var scale = BOARD_W / rect.width;
-    var x = (e.clientX - rect.left) * scale;
-    basketX = Math.max(0, Math.min(BOARD_W - BASKET_W, x - BASKET_W / 2));
+  rightBtn.addEventListener("click", function () {
+    setDirection(1, 0);
   });
-  ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) {
-    boardCanvas.addEventListener(ev, function () {
-      dragging = false;
-    });
-  });
-
   pauseBtn.addEventListener("click", function () {
     setPaused(!paused);
   });
@@ -531,11 +474,19 @@
     if (isLevelOver) return;
     switch (e.key) {
       case "ArrowLeft":
-        leftPressed = true;
+        setDirection(-1, 0);
         e.preventDefault();
         break;
       case "ArrowRight":
-        rightPressed = true;
+        setDirection(1, 0);
+        e.preventDefault();
+        break;
+      case "ArrowUp":
+        setDirection(0, -1);
+        e.preventDefault();
+        break;
+      case "ArrowDown":
+        setDirection(0, 1);
         e.preventDefault();
         break;
       case " ":
@@ -543,10 +494,6 @@
         e.preventDefault();
         break;
     }
-  });
-  document.addEventListener("keyup", function (e) {
-    if (e.key === "ArrowLeft") leftPressed = false;
-    if (e.key === "ArrowRight") rightPressed = false;
   });
 
   document.addEventListener("visibilitychange", function () {

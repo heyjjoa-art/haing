@@ -4,24 +4,31 @@
   color: var(--color-text-muted);
 }
 
-.pow-question {
-  margin: 4px 0 2px;
-  font-size: 2rem;
+.pow-chain {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
   font-weight: bold;
-  color: var(--color-text);
-  transition: color 0.15s ease;
+  text-align: center;
+  letter-spacing: 0.2px;
 }
 
-.pow-question sup {
-  font-size: 0.55em;
-}
-
-.pow-question.correct {
+.pow-chain-done {
   color: var(--color-success);
 }
 
-.pow-question.wrong {
-  color: var(--color-danger);
+.pow-chain-current {
+  color: var(--color-accent-deep);
+  text-decoration: underline;
+}
+
+.pow-chain-todo {
+  color: var(--color-text-placeholder);
+}
+
+.pow-chain-arrow {
+  color: var(--color-text-placeholder);
+  margin: 0 3px;
+  font-weight: normal;
 }
 
 .pow-hint {
@@ -29,12 +36,13 @@
   margin: 0 0 12px;
   font-size: 0.8rem;
   color: var(--color-text-faint);
+  text-align: center;
 }
 
-.pow-stage {
+.pow-board-wrap {
   position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 280px;
   margin: 0 auto;
 }
 
@@ -42,35 +50,8 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 320 / 460;
-  background: #1c1f2b;
+  aspect-ratio: 280 / 392;
+  background: #2f3d2a;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
-  touch-action: none;
-}
-
-.pow-pad-row {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin: 16px auto 8px;
-}
-
-.pow-btn {
-  width: 72px;
-  height: 56px;
-  padding: 0;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-neutral-border);
-  background: var(--color-neutral-bg);
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: var(--color-text);
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pow-btn:active {
-  background: var(--color-accent-soft);
 }

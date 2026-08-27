@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>거듭제곱 게임 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608271316">
-<link rel="stylesheet" href="css/game-ui.css?v=202608271316">
-<link rel="stylesheet" href="css/power.css?v=202608271316">
+<link rel="stylesheet" href="css/style.css?v=202608271343">
+<link rel="stylesheet" href="css/game-ui.css?v=202608271343">
+<link rel="stylesheet" href="css/power.css?v=202608271343">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/power-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608271316"></script>
-<script src="js/power-gate.js?v=202608271316"></script>
+<script src="js/admin-auth-store.js?v=202608271343"></script>
+<script src="js/power-gate.js?v=202608271343"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -26,31 +26,34 @@
 
 <main class="game-main">
   <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
-  <h2 class="game-title">🔢 거듭제곱 게임</h2>
+  <h2 class="game-title">🐍 거듭제곱 스네이크</h2>
 
-  <p class="pow-level-line">레벨 <strong id="powLevelNum">1</strong> / <span id="powLevelTotal">10</span></p>
+  <p class="pow-level-line">레벨 <strong id="powLevelNum">1</strong> / <span id="powLevelTotal">11</span> · 밑 <strong id="powBaseNum">2</strong></p>
 
   <div class="stage-tabs stage-tabs--levels" id="powLevelPicker"></div>
 
   <div class="game-stats">
     <span class="game-stat--best">🏆 최고 기록 <strong id="powBest">-</strong></span>
     <span>⏱ <strong id="powTimer">0:00</strong></span>
-    <span><strong id="powLives">❤️❤️❤️</strong></span>
-    <span>문제 <strong id="powSolved">0</strong>/<span id="powGoal">5</span></span>
+    <span>점수 <strong id="powScore">0</strong></span>
   </div>
 
-  <p class="pow-question" id="powQuestion">5<sup>3</sup> = ?</p>
-  <p class="pow-hint" id="powHint">정답이 적힌 블록을 바구니로 받아보세요!</p>
+  <p class="pow-chain" id="powChain"></p>
+  <p class="pow-hint" id="powHint">거듭제곱 숫자만 순서대로 먹어보세요! 다른 숫자를 먹으면 게임이 끝나요.</p>
 
-  <div class="pow-stage">
-    <canvas id="powBoard" class="pow-board" width="320" height="460"></canvas>
+  <div class="pow-board-wrap">
+    <canvas id="powBoard" class="pow-board" width="280" height="392"></canvas>
     <button type="button" class="game-icon-btn" id="powPauseBtn" aria-label="일시정지">⏸</button>
     <div class="game-veil" id="powPauseVeil" hidden>⏸ 일시정지</div>
   </div>
 
-  <div class="pow-pad-row">
-    <button type="button" class="pow-btn" id="powLeftBtn" aria-label="왼쪽으로">◀</button>
-    <button type="button" class="pow-btn" id="powRightBtn" aria-label="오른쪽으로">▶</button>
+  <div class="game-pad">
+    <div class="game-dpad">
+      <button type="button" class="game-dpad-btn game-dpad-up" id="powUpBtn" aria-label="위로">▲</button>
+      <button type="button" class="game-dpad-btn game-dpad-left" id="powLeftBtn" aria-label="왼쪽으로">◀</button>
+      <button type="button" class="game-dpad-btn game-dpad-right" id="powRightBtn" aria-label="오른쪽으로">▶</button>
+      <button type="button" class="game-dpad-btn game-dpad-down" id="powDownBtn" aria-label="아래로">▼</button>
+    </div>
   </div>
 
   <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
@@ -66,7 +69,7 @@
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608271316"></script>
-<script src="js/power.js?v=202608271316"></script>
+<script src="js/child-store.js?v=202608271343"></script>
+<script src="js/power.js?v=202608271343"></script>
 </body>
 </html>
