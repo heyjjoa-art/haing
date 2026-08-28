@@ -4,12 +4,15 @@
 (function () {
   "use strict";
 
-  var LEVELS = {
-    easy: { label: "쉬운 단계", givens: 38 },
-    medium: { label: "중간 단계", givens: 30 },
-    hard: { label: "어려운 단계", givens: 24 }
-  };
-  var LEVEL_ORDER = ["easy", "medium", "hard"];
+  // 예전 easy/medium/hard 문자열 키를 그대로 최고기록 키에 쓴다 - 이미 쌓인
+  // 아이들의 실제 최고기록을 안 날리려고, 레벨 번호(1/2/3)는 화면 표시에만 쓴다.
+  var LEVEL_KEYS = ["easy", "medium", "hard"];
+  var LEVELS = [
+    { label: "쉬움", givens: 38 },
+    { label: "보통", givens: 30 },
+    { label: "어려움", givens: 24 }
+  ];
+  var LEVEL_COUNT = LEVELS.length;
 
   var creditsEl = document.getElementById("sudokuCredits");
   var bestEl = document.getElementById("sudokuBest");
@@ -21,15 +24,14 @@
   var overlayEl = document.getElementById("sudokuOverlay");
   var overlayDescEl = document.getElementById("sudokuOverlayDesc");
   var overlayNoteEl = document.getElementById("sudokuOverlayNote");
+  var nextBtn = document.getElementById("sudokuNextBtn");
   var retryBtn = document.getElementById("sudokuRetryBtn");
 
-  var tabs = {
-    easy: document.getElementById("sudokuEasyTab"),
-    medium: document.getElementById("sudokuMediumTab"),
-    hard: document.getElementById("sudokuHardTab")
-  };
+  var levelNumEl = document.getElementById("sudokuLevelNum");
+  var levelTotalEl = document.getElementById("sudokuLevelTotal");
+  var levelSelectEl = document.getElementById("sudokuLevelSelect");
 
-  var currentLevel = "easy";
+  var currentLevel = 1;
   var userGrid = [];
   var fixed = [];
   var selected = null;
@@ -37,9 +39,43 @@
   var startTime = 0;
   var timerId = null;
 
-  function bestTimeKey(level) {
+  function childKeyPart() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
-    return "haingSudokuBest_" + (childId ? childId + "_" : "guest_") + level;
+    return childId ? childId + "_" : "guest_";
+  }
+
+  function unlockedLevelKey() {
+    return "haingSudokuUnlockedLevel_" + childKeyPart();
+  }
+
+  function getUnlockedLevel() {
+    var raw = parseInt(localStorage.getItem(unlockedLevelKey()), 10);
+    if (isNaN(raw) || raw < 1) return 1;
+    return Math.min(raw, LEVEL_COUNT);
+  }
+
+  function unlockLevel(level) {
+    if (level > getUnlockedLevel()) {
+      localStorage.setItem(unlockedLevelKey(), String(level));
+    }
+  }
+
+  function bestTimeKey(level) {
+    return "haingSudokuBest_" + childKeyPart() + LEVEL_KEYS[level - 1];
+  }
+
+  // 잠긴 레벨은 셀렉트에 아예 안 보이게 - 이미 깬(해금된) 레벨 중에서만
+  // 고를 수 있다.
+  function renderLevelChoice() {
+    var unlocked = getUnlockedLevel();
+    levelSelectEl.innerHTML = "";
+    for (var level = 1; level <= unlocked; level++) {
+      var opt = document.createElement("option");
+      opt.value = String(level);
+      opt.textContent = "레벨 " + level + " · " + LEVELS[level - 1].label;
+      levelSelectEl.appendChild(opt);
+    }
+    levelSelectEl.value = String(currentLevel);
   }
 
   function formatTime(totalSeconds) {
@@ -290,9 +326,14 @@
     if (isNewBest) localStorage.setItem(key, String(elapsed));
     showBestTime();
 
+    var isFinalLevel = currentLevel === LEVEL_COUNT;
+    if (currentLevel === getUnlockedLevel() && !isFinalLevel) unlockLevel(currentLevel + 1);
+    renderLevelChoice();
+
     var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("sudoku") : 0;
     overlayDescEl.textContent =
-      LEVELS[currentLevel].label + " 스도쿠를 " + formatTime(elapsed) + "만에 다 풀었어요!" + (isNewBest ? " 🎉 신기록!" : "");
+      LEVELS[currentLevel - 1].label + " 스도쿠를 " + formatTime(elapsed) + "만에 다 풀었어요!" + (isNewBest ? " 🎉 신기록!" : "");
+    nextBtn.hidden = isFinalLevel;
     retryBtn.hidden = creditsLeft <= 0;
     overlayNoteEl.hidden = creditsLeft > 0;
     overlayEl.hidden = false;
@@ -300,12 +341,11 @@
 
   function newGame(level) {
     currentLevel = level;
-    LEVEL_ORDER.forEach(function (key) {
-      tabs[key].classList.toggle("active", key === level);
-    });
+    levelNumEl.textContent = String(level);
+    renderLevelChoice();
 
     var solution = generateSolution();
-    var puzzle = makePuzzle(solution, LEVELS[level].givens);
+    var puzzle = makePuzzle(solution, LEVELS[level - 1].givens);
     userGrid = clone2D(puzzle);
     fixed = puzzle.map(function (row) {
       return row.map(function (v) {
@@ -320,11 +360,15 @@
     renderBoard();
   }
 
-  LEVEL_ORDER.forEach(function (level) {
-    tabs[level].addEventListener("click", function () {
-      if (isSolved) return;
-      newGame(level);
-    });
+  // 레벨을 바꾸는 것 자체는 기회를 안 쓴다(예전 탭 전환도 무료였다) - 기회는
+  // "다시 하기"로 같은 레벨에서 새 퍼즐을 받을 때만 쓴다.
+  levelSelectEl.addEventListener("change", function () {
+    if (isSolved) return;
+    newGame(parseInt(levelSelectEl.value, 10));
+  });
+
+  nextBtn.addEventListener("click", function () {
+    newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
   });
 
   numpadEl.addEventListener("click", function (e) {
@@ -359,5 +403,6 @@
   });
 
   creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("sudoku") : "0";
-  newGame("easy");
+  levelTotalEl.textContent = String(LEVEL_COUNT);
+  newGame(getUnlockedLevel());
 })();

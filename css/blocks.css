@@ -1,3 +1,9 @@
+.blocks-level-line {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .blocks-hint {
   margin: 0 0 12px;
   font-size: 0.8rem;

@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>스도쿠 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608281244">
-<link rel="stylesheet" href="css/game-ui.css?v=202608281244">
-<link rel="stylesheet" href="css/sudoku.css?v=202608281244">
+<link rel="stylesheet" href="css/style.css?v=202608281321">
+<link rel="stylesheet" href="css/game-ui.css?v=202608281321">
+<link rel="stylesheet" href="css/sudoku.css?v=202608281321">
 </head>
 <body>
 
@@ -22,10 +22,11 @@
 <main class="game-main">
   <h2 class="game-title">🔢 스도쿠</h2>
 
-  <div class="stage-tabs">
-    <button type="button" class="stage-tab active" id="sudokuEasyTab" data-level="easy">🟢 쉬움</button>
-    <button type="button" class="stage-tab" id="sudokuMediumTab" data-level="medium">🟡 보통</button>
-    <button type="button" class="stage-tab" id="sudokuHardTab" data-level="hard">🔴 어려움</button>
+  <p class="sudoku-level-line">레벨 <strong id="sudokuLevelNum">1</strong> / <span id="sudokuLevelTotal">3</span></p>
+
+  <div class="stage-select-wrap">
+    <label class="stage-select-label" for="sudokuLevelSelect">레벨 선택</label>
+    <select class="stage-select" id="sudokuLevelSelect"></select>
   </div>
 
   <div class="game-stats">
@@ -57,7 +58,8 @@
     <div class="game-overlay-box">
       <p class="game-overlay-title">🎉 완성했어요!</p>
       <p class="game-overlay-desc" id="sudokuOverlayDesc"></p>
-      <button type="button" class="game-btn game-btn--primary" id="sudokuRetryBtn">🔄 새 퍼즐</button>
+      <button type="button" class="game-btn game-btn--primary" id="sudokuNextBtn" hidden>➡️ 다음 레벨</button>
+      <button type="button" class="game-btn" id="sudokuRetryBtn">🔄 새 퍼즐</button>
       <p class="game-overlay-note" id="sudokuOverlayNote" hidden>게임 기회를 모두 썼어요! 트로피 카드나 별 스티커를 더 모으면 기회가 또 생겨요.</p>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
@@ -66,15 +68,15 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202608281244"></script>
-<script src="js/child-store.js?v=202608281244"></script>
-<script src="js/admin-auth-store.js?v=202608281244"></script>
-<script src="js/growth-store.js?v=202608281244"></script>
-<script src="js/child-badge.js?v=202608281244"></script>
-<script src="js/word-card-store.js?v=202608281244"></script>
-<script src="js/progress-store.js?v=202608281244"></script>
-<script src="journeys/js/stamp-store.js?v=202608281244"></script>
-<script src="js/word-game-store.js?v=202608281244"></script>
-<script src="js/sudoku.js?v=202608281244"></script>
+<script src="js/firebase-init.js?v=202608281321"></script>
+<script src="js/child-store.js?v=202608281321"></script>
+<script src="js/admin-auth-store.js?v=202608281321"></script>
+<script src="js/growth-store.js?v=202608281321"></script>
+<script src="js/child-badge.js?v=202608281321"></script>
+<script src="js/word-card-store.js?v=202608281321"></script>
+<script src="js/progress-store.js?v=202608281321"></script>
+<script src="journeys/js/stamp-store.js?v=202608281321"></script>
+<script src="js/word-game-store.js?v=202608281321"></script>
+<script src="js/sudoku.js?v=202608281321"></script>
 </body>
 </html>

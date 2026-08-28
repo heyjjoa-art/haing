@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>벽돌깨기 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608281244">
-<link rel="stylesheet" href="css/game-ui.css?v=202608281244">
-<link rel="stylesheet" href="css/breakout.css?v=202608281244">
+<link rel="stylesheet" href="css/style.css?v=202608281321">
+<link rel="stylesheet" href="css/game-ui.css?v=202608281321">
+<link rel="stylesheet" href="css/breakout.css?v=202608281321">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/breakout-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608281244"></script>
-<script src="js/breakout-gate.js?v=202608281244"></script>
+<script src="js/admin-auth-store.js?v=202608281321"></script>
+<script src="js/breakout-gate.js?v=202608281321"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -28,10 +28,11 @@
   <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
   <h2 class="game-title">🧱 벽돌깨기</h2>
 
-  <div class="stage-tabs">
-    <button type="button" class="stage-tab active" id="brkEasyTab" data-difficulty="easy">🟢 쉬움</button>
-    <button type="button" class="stage-tab" id="brkNormalTab" data-difficulty="normal">🟡 보통</button>
-    <button type="button" class="stage-tab" id="brkHardTab" data-difficulty="hard">🔴 어려움</button>
+  <p class="brk-level-line">레벨 <strong id="brkLevelNum">1</strong> / <span id="brkLevelTotal">3</span></p>
+
+  <div class="stage-select-wrap">
+    <label class="stage-select-label" for="brkLevelSelect">레벨 선택</label>
+    <select class="stage-select" id="brkLevelSelect"></select>
   </div>
 
   <div class="game-stats">
@@ -57,13 +58,14 @@
     <div class="game-overlay-box">
       <p class="game-overlay-title" id="brkOverlayTitle">게임 오버!</p>
       <p class="game-overlay-desc" id="brkOverlayScore"></p>
-      <button type="button" class="game-btn game-btn--primary" id="brkRetryBtn">🔄 다시 하기</button>
+      <button type="button" class="game-btn game-btn--primary" id="brkNextBtn" hidden>➡️ 다음 레벨</button>
+      <button type="button" class="game-btn" id="brkRetryBtn">🔄 다시 하기</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608281244"></script>
-<script src="js/breakout.js?v=202608281244"></script>
+<script src="js/child-store.js?v=202608281321"></script>
+<script src="js/breakout.js?v=202608281321"></script>
 </body>
 </html>

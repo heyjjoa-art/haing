@@ -1,3 +1,9 @@
+.pac-level-line {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .pac-board-wrap {
   position: relative;
   width: 100%;

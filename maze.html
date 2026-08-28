@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>미로찾기 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202608281244">
-<link rel="stylesheet" href="css/game-ui.css?v=202608281244">
-<link rel="stylesheet" href="css/maze.css?v=202608281244">
+<link rel="stylesheet" href="css/style.css?v=202608281321">
+<link rel="stylesheet" href="css/game-ui.css?v=202608281321">
+<link rel="stylesheet" href="css/maze.css?v=202608281321">
 </head>
 <body>
 
 <!-- 관리자 계정에서만 개발/테스트하는 게임 - 아직 아이 계정에는 열지 않는다.
      관리자로 로그인돼 있지 않으면 바로 홈으로 돌려보낸다(js/maze-gate.js). -->
-<script src="js/admin-auth-store.js?v=202608281244"></script>
-<script src="js/maze-gate.js?v=202608281244"></script>
+<script src="js/admin-auth-store.js?v=202608281321"></script>
+<script src="js/maze-gate.js?v=202608281321"></script>
 
 <header class="app-header">
   <h1><a href="index.html">Haing 🐣</a></h1>
@@ -28,10 +28,11 @@
   <p class="game-dev-badge">🛠️ 개발 중 - 관리자 전용 (아직 아이 계정에는 안 보여요)</p>
   <h2 class="game-title">🐶 미로찾기</h2>
 
-  <div class="stage-tabs">
-    <button type="button" class="stage-tab active" id="mazeEasyTab" data-difficulty="easy">🟢 쉬움</button>
-    <button type="button" class="stage-tab" id="mazeNormalTab" data-difficulty="normal">🟡 보통</button>
-    <button type="button" class="stage-tab" id="mazeHardTab" data-difficulty="hard">🔴 어려움</button>
+  <p class="maze-level-line">레벨 <strong id="mazeLevelNum">1</strong> / <span id="mazeLevelTotal">3</span></p>
+
+  <div class="stage-select-wrap">
+    <label class="stage-select-label" for="mazeLevelSelect">레벨 선택</label>
+    <select class="stage-select" id="mazeLevelSelect"></select>
   </div>
 
   <div class="game-stats">
@@ -58,14 +59,15 @@
     <div class="game-overlay-box">
       <p class="game-overlay-title">🎉 도착했어요!</p>
       <p class="game-overlay-desc" id="mazeOverlayScore"></p>
-      <button type="button" class="game-btn game-btn--primary" id="mazeRetryBtn">🔄 새 미로</button>
+      <button type="button" class="game-btn game-btn--primary" id="mazeNextBtn" hidden>➡️ 다음 레벨</button>
+      <button type="button" class="game-btn" id="mazeRetryBtn">🔄 새 미로</button>
       <p class="back-link"><a href="wordcards.html?tab=games">← 게임 목록</a></p>
     </div>
   </div>
 </main>
 
-<script src="js/child-store.js?v=202608281244"></script>
-<script src="js/game-ui.js?v=202608281244"></script>
-<script src="js/maze.js?v=202608281244"></script>
+<script src="js/child-store.js?v=202608281321"></script>
+<script src="js/game-ui.js?v=202608281321"></script>
+<script src="js/maze.js?v=202608281321"></script>
 </body>
 </html>

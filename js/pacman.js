@@ -7,18 +7,17 @@
   var BOARD_PX = 320;
   var GHOST_COLORS = ["#ff6b6b", "#ff9fe0", "#6bd9ff", "#ffb454"];
 
-  var DIFFICULTIES = {
-    easy: { label: "쉬움", size: 7, ghosts: 1, interval: 480, chase: 0.4 },
-    normal: { label: "보통", size: 7, ghosts: 2, interval: 400, chase: 0.55 },
-    hard: { label: "어려움", size: 8, ghosts: 3, interval: 320, chase: 0.7 }
-  };
-  var DIFFICULTY_ORDER = ["easy", "normal", "hard"];
-  var difficultyTabs = {
-    easy: document.getElementById("pacEasyTab"),
-    normal: document.getElementById("pacNormalTab"),
-    hard: document.getElementById("pacHardTab")
-  };
-  var currentDifficulty = "easy";
+  var LEVELS = [
+    { label: "쉬움", size: 7, ghosts: 1, interval: 480, chase: 0.4 },
+    { label: "보통", size: 7, ghosts: 2, interval: 400, chase: 0.55 },
+    { label: "어려움", size: 8, ghosts: 3, interval: 320, chase: 0.7 }
+  ];
+  var LEVEL_COUNT = LEVELS.length;
+
+  var levelNumEl = document.getElementById("pacLevelNum");
+  var levelTotalEl = document.getElementById("pacLevelTotal");
+  var levelSelectEl = document.getElementById("pacLevelSelect");
+  var currentLevel = 1;
 
   var boardCanvas = document.getElementById("pacBoard");
   var boardCtx = boardCanvas.getContext("2d");
@@ -31,6 +30,7 @@
   var overlayEl = document.getElementById("pacOverlay");
   var overlayTitleEl = document.getElementById("pacOverlayTitle");
   var overlayScoreEl = document.getElementById("pacOverlayScore");
+  var nextBtn = document.getElementById("pacNextBtn");
   var retryBtn = document.getElementById("pacRetryBtn");
 
   var upBtn = document.getElementById("pacUpBtn");
@@ -60,9 +60,42 @@
   var isGameOver = false;
   var ghostTimerId = null;
 
-  function bestScoreKey() {
+  function childKeyPart() {
     var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
-    return "haingPacmanBest_" + (childId ? childId + "_" : "guest_") + currentDifficulty;
+    return childId ? childId + "_" : "guest_";
+  }
+
+  function unlockedLevelKey() {
+    return "haingPacmanUnlockedLevel_" + childKeyPart();
+  }
+
+  function getUnlockedLevel() {
+    var raw = parseInt(localStorage.getItem(unlockedLevelKey()), 10);
+    if (isNaN(raw) || raw < 1) return 1;
+    return Math.min(raw, LEVEL_COUNT);
+  }
+
+  function unlockLevel(level) {
+    if (level > getUnlockedLevel()) {
+      localStorage.setItem(unlockedLevelKey(), String(level));
+    }
+  }
+
+  // 잠긴 레벨은 셀렉트에 아예 안 보이게 - 이미 깬(해금된) 레벨 중에서만 고를 수 있다.
+  function renderLevelChoice() {
+    var unlocked = getUnlockedLevel();
+    levelSelectEl.innerHTML = "";
+    for (var level = 1; level <= unlocked; level++) {
+      var opt = document.createElement("option");
+      opt.value = String(level);
+      opt.textContent = "레벨 " + level + " · " + LEVELS[level - 1].label;
+      levelSelectEl.appendChild(opt);
+    }
+    levelSelectEl.value = String(currentLevel);
+  }
+
+  function bestScoreKey() {
+    return "haingPacmanBest_" + childKeyPart() + currentLevel;
   }
 
   var bestScore = 0;
@@ -143,7 +176,7 @@
 
   function resetPositions() {
     player = { x: 0, y: 0, dir: "E" };
-    var conf = DIFFICULTIES[currentDifficulty];
+    var conf = LEVELS[currentLevel - 1];
     ghosts = ghostHomes(conf.ghosts).map(function (home, i) {
       return { x: home.x, y: home.y, color: GHOST_COLORS[i % GHOST_COLORS.length], dir: null };
     });
@@ -172,7 +205,7 @@
       if (noReverse.length > 0) filtered = noReverse;
     }
 
-    var conf = DIFFICULTIES[currentDifficulty];
+    var conf = LEVELS[currentLevel - 1];
     var choice;
     if (Math.random() < conf.chase) {
       filtered.sort(function (a, b) {
@@ -208,9 +241,17 @@
     isGameOver = true;
     stopGhostTimer();
     var isNewBest = score > 0 && score >= bestScore;
+
+    var isFinalLevel = currentLevel === LEVEL_COUNT;
+    var justUnlockedNext = won && currentLevel === getUnlockedLevel() && !isFinalLevel;
+    if (justUnlockedNext) unlockLevel(currentLevel + 1);
+    renderLevelChoice();
+
     overlayTitleEl.textContent = won ? "🎉 클리어!" : "게임 오버!";
     overlayScoreEl.textContent =
-      DIFFICULTIES[currentDifficulty].label + " · 점수 " + score + (isNewBest ? " 🎉 신기록!" : "");
+      LEVELS[currentLevel - 1].label + " · 점수 " + score + (isNewBest ? " 🎉 신기록!" : "") +
+      (justUnlockedNext ? " · 다음 레벨이 열렸어요!" : "");
+    nextBtn.hidden = !(won && !isFinalLevel);
     overlayEl.hidden = false;
     draw();
   }
@@ -255,7 +296,7 @@
 
   function startGhostTimer() {
     stopGhostTimer();
-    var conf = DIFFICULTIES[currentDifficulty];
+    var conf = LEVELS[currentLevel - 1];
     ghostTimerId = setInterval(function () {
       if (paused || isGameOver) return;
       ghosts.forEach(moveGhost);
@@ -331,8 +372,12 @@
     boardCtx.fill();
   }
 
-  function resetGame() {
-    size = DIFFICULTIES[currentDifficulty].size;
+  function newGame(level) {
+    currentLevel = level;
+    levelNumEl.textContent = String(level);
+    renderLevelChoice();
+
+    size = LEVELS[currentLevel - 1].size;
     generateMaze();
     placeDots();
     score = 0;
@@ -349,18 +394,8 @@
     startGhostTimer();
   }
 
-  function setDifficulty(key) {
-    currentDifficulty = key;
-    DIFFICULTY_ORDER.forEach(function (k) {
-      difficultyTabs[k].classList.toggle("active", k === key);
-    });
-    resetGame();
-  }
-
-  DIFFICULTY_ORDER.forEach(function (key) {
-    difficultyTabs[key].addEventListener("click", function () {
-      setDifficulty(key);
-    });
+  levelSelectEl.addEventListener("change", function () {
+    newGame(parseInt(levelSelectEl.value, 10));
   });
 
   GameUI.bindHold(upBtn, function () { tryMove("N"); });
@@ -401,7 +436,13 @@
     if (document.hidden) setPaused(true);
   });
 
-  retryBtn.addEventListener("click", resetGame);
+  retryBtn.addEventListener("click", function () {
+    newGame(currentLevel);
+  });
+  nextBtn.addEventListener("click", function () {
+    newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
+  });
 
-  setDifficulty("easy");
+  levelTotalEl.textContent = String(LEVEL_COUNT);
+  newGame(getUnlockedLevel());
 })();

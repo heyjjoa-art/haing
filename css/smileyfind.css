@@ -1,3 +1,9 @@
+.sf-level-line {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .sf-status {
   margin: 0 0 10px;
   font-size: 0.85rem;

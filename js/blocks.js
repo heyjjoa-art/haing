@@ -22,18 +22,17 @@
   var TILE_H = 20;
   var CUBE_H = 40;
 
-  var DIFFICULTIES = {
-    easy: { label: "쉬움", size: 2, maxHeight: 2, minCount: 3, maxCount: 5 },
-    medium: { label: "보통", size: 3, maxHeight: 3, minCount: 6, maxCount: 12 },
-    hard: { label: "어려움", size: 4, maxHeight: 4, minCount: 12, maxCount: 24 }
-  };
-  var DIFFICULTY_ORDER = ["easy", "medium", "hard"];
-  var difficultyTabs = {
-    easy: document.getElementById("blocksEasyTab"),
-    medium: document.getElementById("blocksMediumTab"),
-    hard: document.getElementById("blocksHardTab")
-  };
-  var currentDifficulty = "easy";
+  var LEVELS = [
+    { label: "쉬움", size: 2, maxHeight: 2, minCount: 3, maxCount: 5 },
+    { label: "보통", size: 3, maxHeight: 3, minCount: 6, maxCount: 12 },
+    { label: "어려움", size: 4, maxHeight: 4, minCount: 12, maxCount: 24 }
+  ];
+  var LEVEL_COUNT = LEVELS.length;
+
+  var levelNumEl = document.getElementById("blocksLevelNum");
+  var levelTotalEl = document.getElementById("blocksLevelTotal");
+  var levelSelectEl = document.getElementById("blocksLevelSelect");
+  var currentLevel = 1;
 
   var timerEl = document.getElementById("blocksTimer");
   var bestEl = document.getElementById("blocksBest");
@@ -52,7 +51,8 @@
   var overlayEl = document.getElementById("blocksOverlay");
   var overlayTitleEl = document.getElementById("blocksOverlayTitle");
   var overlayDescEl = document.getElementById("blocksOverlayDesc");
-  var nextBtn = document.getElementById("blocksNextBtn");
+  var nextLevelBtn = document.getElementById("blocksNextLevelBtn");
+  var newPuzzleBtn = document.getElementById("blocksNextBtn");
 
   var size = 2;
   var maxHeight = 2;
@@ -116,8 +116,37 @@
     return childId ? childId + "_" : "guest_";
   }
 
+  function unlockedLevelKey() {
+    return "haingBlocksUnlockedLevel_" + childKeyPart();
+  }
+
+  function getUnlockedLevel() {
+    var raw = parseInt(localStorage.getItem(unlockedLevelKey()), 10);
+    if (isNaN(raw) || raw < 1) return 1;
+    return Math.min(raw, LEVEL_COUNT);
+  }
+
+  function unlockLevel(level) {
+    if (level > getUnlockedLevel()) {
+      localStorage.setItem(unlockedLevelKey(), String(level));
+    }
+  }
+
+  // 잠긴 레벨은 셀렉트에 아예 안 보이게 - 이미 깬(해금된) 레벨 중에서만 고를 수 있다.
+  function renderLevelChoice() {
+    var unlocked = getUnlockedLevel();
+    levelSelectEl.innerHTML = "";
+    for (var level = 1; level <= unlocked; level++) {
+      var opt = document.createElement("option");
+      opt.value = String(level);
+      opt.textContent = "레벨 " + level + " · " + LEVELS[level - 1].label;
+      levelSelectEl.appendChild(opt);
+    }
+    levelSelectEl.value = String(currentLevel);
+  }
+
   function bestTimeKey() {
-    return "haingBlocksBest_" + childKeyPart() + currentDifficulty;
+    return "haingBlocksBest_" + childKeyPart() + currentLevel;
   }
 
   function formatTime(ms) {
@@ -573,10 +602,18 @@
     stopTimer();
     var elapsed = Date.now() - startTime;
     var isNewBest = maybeSaveBestTime(elapsed);
+
+    var isFinalLevel = currentLevel === LEVEL_COUNT;
+    var justUnlockedNext = currentLevel === getUnlockedLevel() && !isFinalLevel;
+    if (justUnlockedNext) unlockLevel(currentLevel + 1);
+    renderLevelChoice();
+
     overlayTitleEl.textContent = "🎉 완성했어요!";
     overlayDescEl.textContent =
-      DIFFICULTIES[currentDifficulty].label + " · 쌓기나무 " + countBlocks(current, size) + "개 · 시간 " +
-      formatTime(elapsed) + (isNewBest ? " 🎉 신기록!" : "");
+      LEVELS[currentLevel - 1].label + " · 쌓기나무 " + countBlocks(current, size) + "개 · 시간 " +
+      formatTime(elapsed) + (isNewBest ? " 🎉 신기록!" : "") +
+      (justUnlockedNext ? " · 다음 레벨이 열렸어요!" : "");
+    nextLevelBtn.hidden = isFinalLevel;
     overlayEl.hidden = false;
   }
 
@@ -590,8 +627,13 @@
     startTimer();
   }
 
-  function newGame() {
-    var conf = DIFFICULTIES[currentDifficulty];
+  // level을 안 주면(예: "다음 문제" 버튼) 지금 레벨에서 새 문제만 다시 낸다.
+  function newGame(level) {
+    currentLevel = level || currentLevel;
+    levelNumEl.textContent = String(currentLevel);
+    renderLevelChoice();
+
+    var conf = LEVELS[currentLevel - 1];
     size = conf.size;
     maxHeight = conf.maxHeight;
     var target = generatePuzzle(size, maxHeight, conf.minCount, conf.maxCount);
@@ -606,27 +648,23 @@
     resetBoard();
   }
 
-  function setDifficulty(key) {
-    currentDifficulty = key;
-    DIFFICULTY_ORDER.forEach(function (k) {
-      difficultyTabs[k].classList.toggle("active", k === key);
-    });
-    newGame();
-  }
-
-  DIFFICULTY_ORDER.forEach(function (key) {
-    difficultyTabs[key].addEventListener("click", function () {
-      setDifficulty(key);
-    });
+  levelSelectEl.addEventListener("change", function () {
+    newGame(parseInt(levelSelectEl.value, 10));
   });
 
   restartBtn.addEventListener("click", resetBoard);
-  nextBtn.addEventListener("click", newGame);
+  newPuzzleBtn.addEventListener("click", function () {
+    newGame(currentLevel);
+  });
+  nextLevelBtn.addEventListener("click", function () {
+    newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
+  });
 
   document.addEventListener("visibilitychange", function () {
     if (document.hidden && !solved) stopTimer();
     else if (!document.hidden && !solved) startTimer();
   });
 
-  setDifficulty("easy");
+  levelTotalEl.textContent = String(LEVEL_COUNT);
+  newGame(getUnlockedLevel());
 })();
