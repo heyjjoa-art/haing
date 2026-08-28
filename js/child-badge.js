@@ -40,29 +40,55 @@
 
   // ── 성장 레벨 배지 ────────────────────────────────────────────────
   var TIER_PALETTE = {
+    iron: { light: "#dde2e6", mid: "#9aa5ad", dark: "#5b6670", ring: "#3f474e" },
     bronze: { light: "#f0c49a", mid: "#d78f52", dark: "#8a4c22", ring: "#6e3a19" },
     silver: { light: "#fbfcfd", mid: "#cfd6dc", dark: "#8f99a3", ring: "#6b747d" },
     gold: { light: "#fff1b8", mid: "#f0bd3e", dark: "#c2860f", ring: "#8f6208" },
     platinum: { light: "#e3f6fb", mid: "#8fc7dd", dark: "#3f7591", ring: "#2c5468" },
-    diamond: { light: "#d9fbff", mid: "#5fd6e6", dark: "#1490a3", ring: "#0d6c7a" }
+    sapphire: { light: "#d6e4ff", mid: "#4a7fe0", dark: "#1f4aa8", ring: "#16357c" },
+    emerald: { light: "#d3f7de", mid: "#33b56b", dark: "#157a41", ring: "#0e5a2f" },
+    ruby: { light: "#ffd9de", mid: "#e6435f", dark: "#a01e37", ring: "#7a1529" },
+    diamond: { light: "#d9fbff", mid: "#5fd6e6", dark: "#1490a3", ring: "#0d6c7a" },
+    master: { light: "#ecdcff", mid: "#a76ef0", dark: "#6d2fb8", ring: "#4d1f85" },
+    grandmaster: { light: "#ffdfc9", mid: "#ef6a3c", dark: "#b8371a", ring: "#8a2711" },
+    challenger: { light: "#fffbe0", mid: "#ffd94a", dark: "#d1a41a", ring: "#9c7a10" }
   };
+
+  // 금속(별 장식)·보석(컷팅된 보석)·정상급 랭크(왕관) 세 재질로 12단계를 나눠
+  // 재질감이 등급에 따라 눈에 띄게 달라 보이게 한다.
+  var METAL_TIERS = { iron: true, bronze: true, silver: true, gold: true };
+  var GEM_TIERS = { platinum: true, sapphire: true, emerald: true, ruby: true, diamond: true };
 
   var badgeIdSeq = 0;
 
-  // 은은한 금속/보석 배지 하나를 그린다 - 메달류(브론즈~골드)는 별, 보석류
-  // (플래티넘·다이아몬드)는 컷팅된 보석 모양을 가운데 얹어서 재질감을 구분한다.
+  // 은은한 금속/보석/왕관 배지 하나를 그린다 - 메달류(아이언~골드)는 별,
+  // 보석류(플래티넘~다이아몬드)는 컷팅된 보석, 최상위 랭크류(마스터 이상)는
+  // 왕관 모양을 가운데 얹어서 재질감·격을 구분한다.
   function badgeSvg(tierKey, size) {
     var c = TIER_PALETTE[tierKey] || TIER_PALETTE.bronze;
     badgeIdSeq++;
     var gradId = "gbGrad" + badgeIdSeq;
     var shineId = "gbShine" + badgeIdSeq;
-    var isGem = tierKey === "platinum" || tierKey === "diamond";
-    var emblem = isGem
-      ? '<path d="M32 15 L46 25 L32 51 L18 25 Z" fill="rgba(255,255,255,0.28)"/>' +
+    var isGem = !!GEM_TIERS[tierKey];
+    var isMetal = !!METAL_TIERS[tierKey];
+    var emblem;
+    if (isGem) {
+      emblem =
+        '<path d="M32 15 L46 25 L32 51 L18 25 Z" fill="rgba(255,255,255,0.28)"/>' +
         '<path d="M32 15 L46 25 L32 33 L18 25 Z" fill="rgba(255,255,255,0.85)"/>' +
         '<path d="M18 25 L32 33 L32 51 Z" fill="rgba(255,255,255,0.5)"/>' +
-        '<path d="M46 25 L32 33 L32 51 Z" fill="rgba(255,255,255,0.32)"/>'
-      : '<path d="M32 16 L36.3 27 L48 27.4 L38.6 34.6 L42 46 L32 39 L22 46 L25.4 34.6 L16 27.4 L27.7 27 Z" fill="rgba(255,255,255,0.92)"/>';
+        '<path d="M46 25 L32 33 L32 51 Z" fill="rgba(255,255,255,0.32)"/>';
+    } else if (isMetal) {
+      emblem = '<path d="M32 16 L36.3 27 L48 27.4 L38.6 34.6 L42 46 L32 39 L22 46 L25.4 34.6 L16 27.4 L27.7 27 Z" fill="rgba(255,255,255,0.92)"/>';
+    } else {
+      // 마스터·그랜드마스터·챌린저 - 왕관
+      emblem =
+        '<path d="M17 40 L20 22 L28 32 L32 18 L36 32 L44 22 L47 40 Z" fill="rgba(255,255,255,0.92)"/>' +
+        '<rect x="17" y="40" width="30" height="5" rx="1.5" fill="rgba(255,255,255,0.92)"/>' +
+        '<circle cx="20" cy="21" r="2.4" fill="rgba(255,255,255,0.95)"/>' +
+        '<circle cx="32" cy="17" r="2.6" fill="rgba(255,255,255,0.95)"/>' +
+        '<circle cx="44" cy="21" r="2.4" fill="rgba(255,255,255,0.95)"/>';
+    }
     return (
       '<svg viewBox="0 0 64 64" width="' + size + '" height="' + size + '" aria-hidden="true">' +
       "<defs>" +
@@ -86,11 +112,18 @@
   }
 
   var TIER_DESC = {
-    bronze: "게임을 처음 시작한 단계예요.",
+    iron: "게임을 처음 시작한 단계예요.",
+    bronze: "조금씩 게임에 익숙해지고 있어요!",
     silver: "꾸준히 게임을 즐기고 있어요!",
     gold: "많이 놀아본 실력자예요!",
     platinum: "정말 열심히 했어요, 대단해요!",
-    diamond: "최고 등급이에요! 진짜 노력파예요 💎"
+    sapphire: "보석 등급에 들어섰어요! 반짝반짝 ✨",
+    emerald: "실력이 눈에 띄게 늘었어요!",
+    ruby: "루비처럼 빛나는 실력이에요!",
+    diamond: "최고 등급이에요! 진짜 노력파예요 💎",
+    master: "마스터 등급! 진짜 고수예요!",
+    grandmaster: "그랜드마스터! 최상위 실력자예요!",
+    challenger: "챌린저! 최고 중의 최고예요 👑"
   };
 
   function injectStylesOnce() {

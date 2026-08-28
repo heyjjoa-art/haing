@@ -1,4 +1,4 @@
-// 게임을 얼마나 많이 플레이했는지로 매기는 계정 전체 성장 레벨(브론즈~다이아몬드).
+// 게임을 얼마나 많이 플레이했는지로 매기는 계정 전체 성장 레벨(아이언~챌린저, 12단계).
 // 단어 카드/트로피/저니스 도장 같은 공부 활동은 이미 게임 기회(크레딧)로 보상되므로
 // 여기서 다시 세지 않는다 - 그 크레딧을 실제로 "써서 게임을 한 판 시작한 횟수"만
 // XP로 잡는다(1회 = 20XP). 크레딧 게임(테트리스/스도쿠/가로세로)은 크레딧 자체가
@@ -8,11 +8,18 @@ var GrowthStore = (function () {
   var XP_PER_PLAY = 20;
 
   var TIERS = [
-    { key: "bronze", label: "브론즈", emoji: "🥉", min: 0 },
-    { key: "silver", label: "실버", emoji: "🥈", min: 700 },
-    { key: "gold", label: "골드", emoji: "🥇", min: 2200 },
-    { key: "platinum", label: "플래티넘", emoji: "💠", min: 5000 },
-    { key: "diamond", label: "다이아몬드", emoji: "💎", min: 9500 }
+    { key: "iron", label: "아이언", emoji: "🔩", min: 0 },
+    { key: "bronze", label: "브론즈", emoji: "🥉", min: 300 },
+    { key: "silver", label: "실버", emoji: "🥈", min: 800 },
+    { key: "gold", label: "골드", emoji: "🥇", min: 1600 },
+    { key: "platinum", label: "플래티넘", emoji: "💠", min: 2800 },
+    { key: "sapphire", label: "사파이어", emoji: "🔷", min: 4400 },
+    { key: "emerald", label: "에메랄드", emoji: "💚", min: 6400 },
+    { key: "ruby", label: "루비", emoji: "❤️", min: 8800 },
+    { key: "diamond", label: "다이아몬드", emoji: "💎", min: 11800 },
+    { key: "master", label: "마스터", emoji: "⭐", min: 15400 },
+    { key: "grandmaster", label: "그랜드마스터", emoji: "🌟", min: 19600 },
+    { key: "challenger", label: "챌린저", emoji: "👑", min: 24400 }
   ];
 
   function playsKey(childId) {
@@ -58,7 +65,7 @@ var GrowthStore = (function () {
   }
 
   // xp가 속한 티어와, 다음 티어까지 얼마나 남았는지를 돌려준다. 이미 최고
-  // 티어(다이아몬드)면 next는 null, xpToNext는 0, progressPct는 100.
+  // 티어(챌린저)면 next는 null, xpToNext는 0, progressPct는 100.
   function getTier(xp) {
     var current = TIERS[0];
     var next = null;
