@@ -10,9 +10,9 @@
 (function () {
   "use strict";
 
-  var COLS = 10;
-  var ROWS = 10;
-  var BLOCK = 32;
+  var COLS = 20;
+  var ROWS = 20;
+  var BLOCK = 16;
   var DAN_START = 2;
   var LEVEL_COUNT = 19; // 2단(레벨1) ~ 20단(레벨19)
   var MIN_K = 1;
@@ -35,9 +35,7 @@
   var levelNumEl = document.getElementById("powLevelNum");
   var levelTotalEl = document.getElementById("powLevelTotal");
   var baseNumEl = document.getElementById("powBaseNum");
-  var resumeTab = document.getElementById("powResumeTab");
-  var restartTab = document.getElementById("powRestartTab");
-  var resumeNumEl = document.getElementById("powResumeNum");
+  var levelSelectEl = document.getElementById("powLevelSelect");
   var bestEl = document.getElementById("powBest");
   var timerEl = document.getElementById("powTimer");
   var scoreEl = document.getElementById("powScore");
@@ -119,14 +117,19 @@
     scoreEl.textContent = String(score);
   }
 
-  // 자물쇠 19개를 다 보여주는 대신, "이어하기(가장 높이 해금된 레벨)"와
-  // "처음부터(레벨1)" 두 선택지만 보여준다. 기본값은 이어하기.
+  // 잠긴 레벨은 셀렉트에 아예 안 보이게 - 이미 깬(해금된) 레벨 중에서만
+  // 고를 수 있다.
   function renderLevelChoice() {
     var unlocked = getUnlockedLevel();
-    resumeNumEl.textContent = String(unlocked);
-    var onResume = currentLevel === unlocked;
-    resumeTab.classList.toggle("active", onResume);
-    restartTab.classList.toggle("active", !onResume);
+    levelSelectEl.innerHTML = "";
+    for (var level = 1; level <= unlocked; level++) {
+      var conf = LEVELS[level - 1];
+      var opt = document.createElement("option");
+      opt.value = String(level);
+      opt.textContent = "레벨 " + level + " · " + conf.dan + "단";
+      levelSelectEl.appendChild(opt);
+    }
+    levelSelectEl.value = String(currentLevel);
   }
 
   // 지금 목표(단,몇 번째,정답)를 기준으로 흔한 구구단 실수 값을 미끼로 만든다:
@@ -244,7 +247,7 @@
     renderLevelChoice();
 
     var clearedNine = reachedK >= UNLOCK_K;
-    var nextUnlocked = currentLevel < LEVEL_COUNT && currentLevel + 1 <= getUnlockedLevel();
+    var nextAvailable = clearedNine && currentLevel < LEVEL_COUNT;
 
     overlayTitleEl.textContent = clearedNine ? "🎉 " + conf.dan + "단 도전 완료!" : "😵 아쉬워요!";
     overlayDescEl.textContent =
@@ -252,7 +255,7 @@
       (isNewBest && reachedK > 0 ? " 🎉 신기록!" : "") +
       (clearedNine ? "" : " " + conf.dan + "×" + UNLOCK_K + "까지 먹으면 다음 레벨이 열려요.");
 
-    nextBtn.hidden = !nextUnlocked;
+    nextBtn.hidden = !nextAvailable;
     retryBtn.textContent = "🔄 다시 하기";
     overlayEl.hidden = false;
   }
@@ -360,7 +363,7 @@
       boardCtx.fillRect(left, top, boxSize, boxSize);
 
       var text = String(f.value);
-      var size = text.length <= 2 ? 14 : text.length === 3 ? 12 : 10;
+      var size = text.length <= 2 ? 8 : text.length === 3 ? 7 : 6;
       boardCtx.font = "bold " + size + "px 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
       boardCtx.fillStyle = "#3a2e26";
       boardCtx.textAlign = "center";
@@ -488,13 +491,8 @@
     newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
   });
 
-  resumeTab.addEventListener("click", function () {
-    if (isLevelOver) return;
-    newGame(getUnlockedLevel());
-  });
-  restartTab.addEventListener("click", function () {
-    if (isLevelOver) return;
-    newGame(1);
+  levelSelectEl.addEventListener("change", function () {
+    newGame(parseInt(levelSelectEl.value, 10));
   });
 
   levelTotalEl.textContent = String(LEVEL_COUNT);

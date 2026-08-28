@@ -24,9 +24,7 @@
   var minMovesEl = document.getElementById("hanoiMinMoves");
   var levelNumEl = document.getElementById("hanoiLevelNum");
   var levelTotalEl = document.getElementById("hanoiLevelTotal");
-  var resumeTab = document.getElementById("hanoiResumeTab");
-  var restartTab = document.getElementById("hanoiRestartTab");
-  var resumeNumEl = document.getElementById("hanoiResumeNum");
+  var levelSelectEl = document.getElementById("hanoiLevelSelect");
   var hintEl = document.getElementById("hanoiHint");
   var boardEl = document.getElementById("hanoiBoard");
   var restartBtn = document.getElementById("hanoiRestartBtn");
@@ -106,14 +104,18 @@
     pegs = [start, [], []];
   }
 
-  // 자물쇠 6개를 다 보여주는 대신, "이어하기(가장 높이 해금된 레벨)"와
-  // "처음부터(레벨1)" 두 선택지만 보여준다. 기본값은 이어하기.
+  // 잠긴 레벨은 셀렉트에 아예 안 보이게 - 이미 깬(해금된) 레벨 중에서만
+  // 고를 수 있다.
   function renderLevelChoice() {
     var unlocked = getUnlockedLevel();
-    resumeNumEl.textContent = String(unlocked);
-    var onResume = currentLevel === unlocked;
-    resumeTab.classList.toggle("active", onResume);
-    restartTab.classList.toggle("active", !onResume);
+    levelSelectEl.innerHTML = "";
+    for (var level = 1; level <= unlocked; level++) {
+      var opt = document.createElement("option");
+      opt.value = String(level);
+      opt.textContent = "레벨 " + level + " · 원반 " + disksForLevel(level) + "개";
+      levelSelectEl.appendChild(opt);
+    }
+    levelSelectEl.value = String(currentLevel);
   }
 
   function renderBoard() {
@@ -260,13 +262,8 @@
     newGame(Math.min(currentLevel + 1, LEVEL_COUNT));
   });
 
-  resumeTab.addEventListener("click", function () {
-    if (isSolved) return;
-    newGame(getUnlockedLevel());
-  });
-  restartTab.addEventListener("click", function () {
-    if (isSolved) return;
-    newGame(1);
+  levelSelectEl.addEventListener("change", function () {
+    newGame(parseInt(levelSelectEl.value, 10));
   });
 
   levelTotalEl.textContent = String(LEVEL_COUNT);

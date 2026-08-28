@@ -95,6 +95,34 @@
   font-size: 0.85rem;
 }
 
+/* 깬(해금된) 레벨 중에서만 고르는 셀렉트 박스 - 잠긴 레벨은 목록에 아예
+   넣지 않는다(하노이의 탑, 구구단 스네이크). */
+.stage-select-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.stage-select-label {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text-muted);
+}
+
+.stage-select {
+  min-height: var(--tap-min);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-weight: bold;
+  font-size: 0.88rem;
+  color: var(--color-accent-deep);
+  touch-action: manipulation;
+}
+
 /* ── 점수 / 최고기록 / 타이머 / 크레딧 한 줄 ─────────────────────────── */
 .game-stats {
   display: flex;
@@ -260,6 +288,10 @@
 }
 
 .game-overlay-note[hidden] {
+  display: none;
+}
+
+.game-btn[hidden] {
   display: none;
 }
 
