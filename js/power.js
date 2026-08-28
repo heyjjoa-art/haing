@@ -363,7 +363,7 @@
       boardCtx.fillRect(left, top, boxSize, boxSize);
 
       var text = String(f.value);
-      var size = text.length <= 2 ? 8 : text.length === 3 ? 7 : 6;
+      var size = text.length <= 2 ? 10 : text.length === 3 ? 9 : 8;
       boardCtx.font = "bold " + size + "px 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
       boardCtx.fillStyle = "#3a2e26";
       boardCtx.textAlign = "center";
