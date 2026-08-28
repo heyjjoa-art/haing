@@ -161,6 +161,30 @@
     boardCtx.fillRect(x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, BLOCK - 2);
   }
 
+  function drawApple(x, y) {
+    var cx = x * BLOCK + BLOCK / 2;
+    var cy = y * BLOCK + BLOCK / 2 + 1;
+    var r = BLOCK / 2 - 2;
+
+    boardCtx.beginPath();
+    boardCtx.fillStyle = "#e8433a";
+    boardCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    boardCtx.fill();
+
+    boardCtx.beginPath();
+    boardCtx.fillStyle = "rgba(255, 255, 255, 0.35)";
+    boardCtx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, Math.PI * 2);
+    boardCtx.fill();
+
+    boardCtx.fillStyle = "#6b4226";
+    boardCtx.fillRect(cx - 1, cy - r - 3, 2, 4);
+
+    boardCtx.beginPath();
+    boardCtx.fillStyle = "#6bcb77";
+    boardCtx.ellipse(cx + 3, cy - r - 1, 3, 1.8, Math.PI / 4, 0, Math.PI * 2);
+    boardCtx.fill();
+  }
+
   function draw() {
     boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
@@ -179,7 +203,7 @@
       boardCtx.stroke();
     }
 
-    if (food) drawCell(food.x, food.y, "#ff6b6b");
+    if (food) drawApple(food.x, food.y);
     snake.forEach(function (seg, i) {
       drawCell(seg.x, seg.y, i === 0 ? "#ffd93d" : "#6bcb77");
     });

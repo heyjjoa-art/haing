@@ -11,8 +11,8 @@
   "use strict";
 
   var COLS = 10;
-  var ROWS = 14;
-  var BLOCK = 28;
+  var ROWS = 10;
+  var BLOCK = 32;
   var DAN_START = 2;
   var LEVEL_COUNT = 19; // 2단(레벨1) ~ 20단(레벨19)
   var MIN_K = 1;

@@ -15,7 +15,7 @@
 .pow-board-wrap {
   position: relative;
   width: 100%;
-  max-width: 280px;
+  max-width: 320px;
   margin: 0 auto;
 }
 
@@ -23,7 +23,7 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 280 / 392;
+  aspect-ratio: 1;
   background: #2f3d2a;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
