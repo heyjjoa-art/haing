@@ -1,8 +1,9 @@
 // 초등 필수 영단어 800개 데이터. 스토리북 본문이 없는 "단어 전용" 학습용이라
 // 20개씩 끊어서 초등1, 초등2, ... 식으로 자동 구분한다(진짜 유닛처럼 로컬/클라우드에
 // 업로드하는 게 아니라, 이 파일에 고정으로 들어있는 값을 그대로 쓴다).
-// 지금은 사진 9장(001~105번)까지만 반영했고, 나머지는 사진을 더 받으면 이 배열
+// 지금은 사진 8장(001~100번)까지만 반영했고, 나머지는 사진을 더 받으면 이 배열
 // 뒤에 이어 붙이면 된다 - 20개를 채울 때마다 다음 초등 단계가 자동으로 생긴다.
+// (101~105번 초등6은 잘못 들어간 테스트 데이터라 빼뒀다 - 제대로 된 20개를 받으면 다시 붙인다.)
 // definition: 영영 설명(단어 학습 2단계에서 먼저 들려주는 힌트, 정답 단어 자체는 안 넣는다)
 // meaningKo: 교재의 한글 뜻
 // emoji: 단어를 그림으로 표현한 이모지 힌트(단어 학습 1단계용)
@@ -106,19 +107,14 @@ var ELEMENTARY_WORD_POOL = [
   { word: "smile", pos: "v.", meaningKo: "미소 짓다, 웃다", definition: "To smile means to move your mouth to show you are happy.", emoji: "😊" },
   { word: "thank", pos: "v.", meaningKo: "감사하다", definition: "To thank means to tell someone you are grateful for something.", emoji: "🙏" },
   { word: "congratulate", pos: "v.", meaningKo: "축하하다", definition: "To congratulate means to tell someone you are happy about their success.", emoji: "🎉" },
-  { word: "welcome", pos: "v.", meaningKo: "환영하다", definition: "To welcome means to greet someone warmly when they arrive.", emoji: "👋" },
-  { word: "like", pos: "v.", meaningKo: "좋아하다", definition: "To like means to enjoy or feel good about something.", emoji: "👍" },
-  { word: "favorite", pos: "adj.", meaningKo: "가장 좋아하는", definition: "Your favorite thing is the one you like best of all.", emoji: "⭐" },
-  { word: "miss", pos: "v.", meaningKo: "그리워하다", definition: "To miss means to feel sad because someone or something is not with you.", emoji: "🥺" },
-  { word: "worry", pos: "v.", meaningKo: "걱정하다", definition: "To worry means to feel nervous about something that might happen.", emoji: "😟" },
-  { word: "love", pos: "v.", meaningKo: "사랑하다", definition: "To love means to care about someone or something very deeply.", emoji: "❤️" }
+  { word: "welcome", pos: "v.", meaningKo: "환영하다", definition: "To welcome means to greet someone warmly when they arrive.", emoji: "👋" }
 ];
 
 var ELEMENTARY_LEVEL_SIZE = 20;
 
 // 20개씩 끊어서 초등1, 초등2...로 나눈다. ELEMENTARY_WORD_POOL 뒤에 단어를 더 추가하면
-// 자동으로 다음 단계(초등7...)가 생긴다 - 마지막 묶음이 20개가 안 채워져도 그대로
-// 부분 단계로 보여준다(예: 지금의 초등6 = 101~105번, 5개).
+// 자동으로 다음 단계(초등6...)가 생긴다 - 마지막 묶음이 20개가 안 채워져도 그대로
+// 부분 단계로 보여준다.
 var ELEMENTARY_WORD_LEVELS = (function () {
   var levels = {};
   for (var i = 0; i < ELEMENTARY_WORD_POOL.length; i += ELEMENTARY_LEVEL_SIZE) {
