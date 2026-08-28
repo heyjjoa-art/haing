@@ -47,6 +47,30 @@
 
   var currentTab = "words"; // "words" | "trophies" | "games"
 
+  // 성장 레벨(GrowthStore)은 2026-08-27 16:48에 생겨서, 그 전날 하루(2026-08-27
+  // 00:00~16:48) 동안 이미 한 게임 플레이는 XP로 못 셌다. WordGameStore의 소비
+  // 로그({game, spentAt}, 최근 30건)에 그 시간대 기록이 남아있으니, 딱 그 구간만
+  // 한 번씩 GrowthStore에 채워 넣는다. 그 이후(실기록 시작 이후) 기록은 당시
+  // startGame()에서 이미 실시간으로 recordPlay가 불렸으므로 다시 넣으면 중복
+  // 카운트가 되어 여기서는 건드리지 않는다. 아이별 1회 실행 후 플래그로 막아둔다.
+  (function backfillYesterdayGrowthPlays() {
+    if (typeof WordGameStore === "undefined" || typeof GrowthStore === "undefined") return;
+    if (typeof ChildStore === "undefined") return;
+    var FROM = new Date(2026, 7, 27, 0, 0, 0).getTime();
+    var LIVE_SINCE = new Date(2026, 7, 27, 16, 48, 48).getTime();
+    ChildStore.CHILDREN.forEach(function (child) {
+      var flagKey = "haingGrowthBackfilled20260827_" + child.id;
+      if (localStorage.getItem(flagKey)) return;
+      var log = WordGameStore.getSpendLogForChild(child.id) || [];
+      log.forEach(function (entry) {
+        if (entry.spentAt >= FROM && entry.spentAt < LIVE_SINCE) {
+          GrowthStore.recordPlay(child.id, entry.game);
+        }
+      });
+      localStorage.setItem(flagKey, "1");
+    });
+  })();
+
   function speakDefinition(record) {
     if (typeof Tts === "undefined" || !record || !record.definition) return;
     Tts.stop();
