@@ -1,9 +1,9 @@
 // 저니스는 같은 유닛을 한 달 정도 반복해서 공부한다. 그래서 스탬프는 "한 번 깨면 끝"이
 // 아니라 하루 단위 미션으로 동작한다: 오늘 1.음원 듣기 / 2.따라 읽기 / 3.혼자 읽기를
 // 모두 끝내면 도장을 하나 받고, 도장은 월~금 도장 모음판에 쌓인다.
-// 하루에 여러 번 다 끝낼 수도 있다: 처음 끝내면 오늘 칸에 도장이 찍히고, 같은 날
-// 또 다 끝내면(밀린 날이 있을 때) 가장 앞선(오래된) 빈 칸부터 채워진다 - 주말에만
-// 되던 보충 기능은 없앴고, 평일 언제든 여러 번 끝내면 이렇게 밀린 칸을 채운다.
+// 하루에 여러 번 다 끝낼 수도 있다: 평일에 처음 끝내면 오늘 칸에 도장이 찍히고,
+// 같은 날 또 다 끝내거나 오늘이 주말이면(도장판엔 월~금 칸밖에 없어서 주말은
+// "오늘 칸" 자체가 없다) 가장 앞선(오래된) 빈 칸부터 채워진다.
 // 세 단계 체크(1·2·3번 버튼)는 도장을 하나 받을 때마다 다시 빈 상태로 돌아가서
 // 바로 다음 번 도장을 향해 새로 시작할 수 있다.
 // 아이(child id)별로 따로 저장해서 하정이와 하진이의 기록이 섞이지 않게 한다.
@@ -96,12 +96,35 @@ var StampStore = (function () {
   // 이 필드가 아직 없는 예전 기록은, 그때까지 완료된 날짜를 그대로 도장으로 옮겨서
   // 한 번만 마이그레이션한다.
   function ensureStampsMigrated(unitRecords) {
-    if (unitRecords._stamps) return;
-    var stamps = [];
-    Object.keys(unitRecords).forEach(function (dateStr) {
-      if (dateStr !== "_stamps" && isDayComplete(unitRecords[dateStr])) stamps.push(dateStr);
+    if (!unitRecords._stamps) {
+      var stamps = [];
+      Object.keys(unitRecords).forEach(function (dateStr) {
+        if (dateStr !== "_stamps" && isDayComplete(unitRecords[dateStr])) stamps.push(dateStr);
+      });
+      unitRecords._stamps = stamps;
+    }
+    fixMisplacedWeekendStamps(unitRecords);
+  }
+
+  // 8/27~8/29 사이엔 주말에 미션을 다 끝내면 그날 날짜(토/일) 그대로 도장을 찍었는데,
+  // 도장판은 월~금 칸밖에 없어서 그렇게 찍힌 도장은 화면 어디에도 보이지 않았다(같은
+  // 버그로 그 이전 옛 기록에도 주말 날짜가 섞여 들어갔을 수 있다 - isDayComplete만
+  // 보고 옮기던 예전 마이그레이션도 요일을 안 가렸다). 이미 그렇게 묻혀버린 주말
+  // 도장을 찾으면, 원래 의도(주말에 하면 그 주의 빈 평일 칸부터 채워짐)대로 옮겨준다.
+  // 옮길 빈 평일 칸이 없으면(그 주가 이미 다 채워진 상태) 그냥 버린다 - 어차피 표시될
+  // 칸이 없었으니 잃는 건 없다.
+  function fixMisplacedWeekendStamps(unitRecords) {
+    var stamps = unitRecords._stamps;
+    var weekendStamps = stamps.filter(function (d) {
+      return !isWeekday(d);
     });
-    unitRecords._stamps = stamps;
+    if (!weekendStamps.length) return;
+    weekendStamps.sort().forEach(function (d) {
+      var idx = stamps.indexOf(d);
+      if (idx !== -1) stamps.splice(idx, 1);
+      var earliest = findEarliestMissingWeekday(unitRecords, stamps, d);
+      if (earliest) stamps.push(earliest);
+    });
   }
 
   // 이미 기록이 있는 가장 이른 날짜의 그 주 월요일부터 오늘까지, 아직 도장이 안 찍힌
@@ -130,12 +153,18 @@ var StampStore = (function () {
     return null;
   }
 
-  // 오늘 도장이 아직 없으면 오늘 칸에 찍고, 오늘 이미 찍혀 있으면(같은 날 두 번째
-  // 이상 다 끝낸 것) 가장 앞선 빈 칸을 찾아 채운다. 채울 칸이 없으면(이미 오늘까지
-  // 다 채워진 상태) 아무것도 안 하고 null을 돌려준다.
+  function isWeekday(dateStr) {
+    var day = new Date(dateStr + "T00:00:00").getDay(); // 0 Sun .. 6 Sat
+    return day >= 1 && day <= 5;
+  }
+
+  // 오늘이 평일(월~금)이고 오늘 도장이 아직 없으면 오늘 칸에 찍는다. 오늘이 주말이거나
+  // (도장판엔 월~금 칸밖에 없어서 주말 날짜로 찍으면 어디에도 표시가 안 된다), 오늘
+  // 이미 찍혀 있으면(같은 날 두 번째 이상 다 끝낸 것) 가장 앞선 빈 칸을 찾아 채운다.
+  // 채울 칸이 없으면(이미 오늘까지 다 채워진 상태) 아무것도 안 하고 null을 돌려준다.
   function creditStamp(unitRecords, todayKey) {
     var stamps = unitRecords._stamps;
-    if (stamps.indexOf(todayKey) === -1) {
+    if (isWeekday(todayKey) && stamps.indexOf(todayKey) === -1) {
       stamps.push(todayKey);
       return todayKey;
     }
