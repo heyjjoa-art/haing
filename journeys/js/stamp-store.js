@@ -122,19 +122,19 @@ var StampStore = (function () {
     weekendStamps.sort().forEach(function (d) {
       var idx = stamps.indexOf(d);
       if (idx !== -1) stamps.splice(idx, 1);
-      var earliest = findEarliestMissingWeekday(unitRecords, stamps, d);
+      var earliest = findEarliestMissingWeekday(stamps, d);
       if (earliest) stamps.push(earliest);
     });
   }
 
-  // 이미 기록이 있는 가장 이른 날짜의 그 주 월요일부터 오늘까지, 아직 도장이 안 찍힌
-  // 월~금 중 가장 이른 날을 찾는다 - "또 하면 앞에서부터 채워지게" 하는 부분.
-  function findEarliestMissingWeekday(unitRecords, stamps, todayKey) {
-    var dateKeys = Object.keys(unitRecords).filter(function (k) {
-      return k !== "_stamps";
-    });
-    var candidates = dateKeys.concat(stamps, [todayKey]);
-    var earliestKey = candidates.reduce(function (min, s) {
+  // 실제로 도장을 받은 가장 이른 날짜의 그 주 월요일부터 오늘까지, 아직 도장이 안
+  // 찍힌 월~금 중 가장 이른 날을 찾는다 - "또 하면 앞에서부터 채워지게" 하는 부분.
+  // unitRecords의 날짜별 원본 진행 기록(1·2·3번 체크, unitRecords 자체의 키)은 여기
+  // 기준에서 뺀다 - 끝까지 못 끝내고 만 날(예: 듣기만 하고 만 날)까지 "그 주부터
+  // 밀렸다"고 잡으면, 아주 예전에 어쩌다 한 번 건드리기만 한 날 때문에 그 뒤로 계속
+  // 그 오래된 주로 채워져서 정작 이번 주가 언제까지고 안 채워지는 문제가 생긴다.
+  function findEarliestMissingWeekday(stamps, todayKey) {
+    var earliestKey = stamps.concat([todayKey]).reduce(function (min, s) {
       return s < min ? s : min;
     }, todayKey);
 
@@ -168,7 +168,7 @@ var StampStore = (function () {
       stamps.push(todayKey);
       return todayKey;
     }
-    var earliest = findEarliestMissingWeekday(unitRecords, stamps, todayKey);
+    var earliest = findEarliestMissingWeekday(stamps, todayKey);
     if (earliest) {
       stamps.push(earliest);
       return earliest;
