@@ -1,11 +1,9 @@
 // 초등 필수 영단어 800개(CATS ENGLISH 초등 필수 영단어) 데이터. 스토리북 본문이 없는
 // "단어 전용" 학습용이라 20개씩 끊어서 초등1, 초등2, ... 식으로 자동 구분한다(진짜
 // 유닛처럼 로컬/클라우드에 업로드하는 게 아니라, 이 파일에 고정으로 들어있는 값을 그대로 쓴다).
-// 지금 반영된 범위: 1~100번, 106~464번, 529~800번 (총 731개). 사진을 더 받으면
-// 아래 두 구멍을 채워야 한다 - 배열은 flat list라 번호를 저장하지 않으니, 채울 때는
-// 해당 자리(현재 array 기준 100번째 뒤, 459번째 뒤)에 끼워 넣어야 순서가 안 깨진다.
-//   - 101~105번(Day08 꼬리, 초등6 앞부분): 예전에 잘못 들어간 테스트 데이터를 빼서
-//     지운 뒤로 진짜 데이터를 받은 적이 없다. 100번("welcome") 바로 뒤에 끼워 넣을 것.
+// 지금 반영된 범위: 1~464번, 529~800번 (총 736개). 사진을 더 받으면 아래 구멍을
+// 채워야 한다 - 배열은 flat list라 번호를 저장하지 않으니, 채울 때는 해당 자리
+// (현재 array 기준 464번째 뒤)에 끼워 넣어야 순서가 안 깨진다.
 //   - 465~528번(Day36~40): 아직 사진이 없다. 464번("rich")과 529번("home") 사이에 끼워 넣을 것.
 // definition: 영영 설명(단어 학습 2단계에서 먼저 들려주는 힌트) - 교재에는 없어서 직접 작성했고,
 // 정답 단어를 문장에 포함해도 test.js의 maskWordForDisplay/maskWordForSpeech가 정규식으로 가려준다.
@@ -112,6 +110,11 @@ var ELEMENTARY_WORD_POOL = [
   { word: "thank", pos: "v.", meaningKo: "감사하다", definition: "To thank means to tell someone you are grateful for something.", emoji: "🙏" },
   { word: "congratulate", pos: "v.", meaningKo: "축하하다", definition: "To congratulate means to tell someone you are happy about their success.", emoji: "🎉" },
   { word: "welcome", pos: "v.", meaningKo: "환영하다", definition: "To welcome means to greet someone warmly when they arrive.", emoji: "👋" },
+  { word: "like", pos: "v.", meaningKo: "좋아하다", definition: "To like means to enjoy or feel good about something.", emoji: "👍" },
+  { word: "favorite", pos: "adj.", meaningKo: "가장 좋아하는", definition: "Your favorite thing is the one you like best of all.", emoji: "⭐" },
+  { word: "miss", pos: "v.", meaningKo: "그리워하다", definition: "To miss means to feel sad because someone or something is not with you.", emoji: "🥺" },
+  { word: "worry", pos: "v.", meaningKo: "걱정하다", definition: "To worry means to feel nervous about something that might happen.", emoji: "😟" },
+  { word: "love", pos: "v.", meaningKo: "사랑하다", definition: "To love means to care about someone or something very deeply.", emoji: "❤️" },
   { word: "think", pos: "v.", meaningKo: "생각하다", definition: "To think means to use your mind to have ideas.", emoji: "🤔" },
   { word: "understand", pos: "v.", meaningKo: "이해하다", definition: "To understand means to know what something means.", emoji: "💡" },
   { word: "accept", pos: "v.", meaningKo: "받아들이다", definition: "To accept means to agree to take or receive something.", emoji: "🤝" },
