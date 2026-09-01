@@ -86,26 +86,35 @@
     return String(text || "").replace(maskWordRegex(word), "blank");
   }
 
-  // ── 유닛 목록: 주간 유닛(초등 단어장 제외) 중, 단어+본문이 갖춰져 있고
-  // "4. 스펠링 게임"까지 1~4단계를 이미 다 끝낸 유닛만 시험을 볼 수 있다 -
-  // 아직 안 배운 단어로 시험을 보는 건 앞뒤가 안 맞기 때문이다.
-  function buildUnitCandidates() {
-    var all = DataStore.getAllUnits();
-    var pool = all.length > 0 ? all : [{ unit: "unspecified", data: null }];
-    return pool.filter(function (entry) {
-      var words = DataStore.getWords(entry.unit) || [];
-      var hasStory = DataStore.getStoryParagraphs(entry.unit).length > 0;
-      var doneHangman =
-        typeof ProgressStore !== "undefined" &&
-        ProgressStore.isDoneForUnit &&
-        ProgressStore.isDoneForUnit("hangman", entry.unit);
-      return words.length > 0 && hasStory && doneHangman;
-    });
+  // ── 유닛 목록: "4. 스펠링 게임"까지 1~4단계(초등은 2~4단계)를 이미 다 끝낸
+  // 유닛만 시험을 볼 수 있다 - 아직 안 배운 단어로 시험을 보는 건 앞뒤가 안 맞기
+  // 때문이다. 주간 유닛(본문 있음)은 1~4단계를 다 보고, 초등 단어장은 본문이
+  // 없어서 스토리 빈칸(4단계)을 낼 수 없으니 1~3단계만으로 시험을 구성한다.
+  function doneHangmanFor(unitKey) {
+    return typeof ProgressStore !== "undefined" && ProgressStore.isDoneForUnit && ProgressStore.isDoneForUnit("hangman", unitKey);
   }
 
-  function unitLabel(entry) {
-    if (entry.unit === "unspecified") return "기본 단어 (Unit 15)";
-    return "Unit " + entry.unit;
+  function buildUnitCandidates() {
+    var candidates = [];
+    var all = DataStore.getAllUnits();
+    var pool = all.length > 0 ? all : [{ unit: "unspecified", data: null }];
+    pool.forEach(function (entry) {
+      var words = DataStore.getWords(entry.unit) || [];
+      var hasStory = DataStore.getStoryParagraphs(entry.unit).length > 0;
+      if (words.length > 0 && hasStory && doneHangmanFor(entry.unit)) {
+        candidates.push({
+          unit: entry.unit,
+          label: entry.unit === "unspecified" ? "기본 단어 (Unit 15)" : "Unit " + entry.unit,
+          isElementary: false
+        });
+      }
+    });
+    (DataStore.getElementaryLevels() || []).forEach(function (entry) {
+      if (doneHangmanFor(entry.level)) {
+        candidates.push({ unit: entry.level, label: entry.level, isElementary: true });
+      }
+    });
+    return candidates;
   }
 
   // ── 단계 진행 저장 - 1~3단계를 하나 끝낼 때마다 그 유닛의 "여기까지 통과함"을
@@ -143,8 +152,11 @@
     }
   }
 
+  var candidatesByUnit = {};
+
   function populateUnitSelect() {
     var candidates = buildUnitCandidates();
+    candidatesByUnit = {};
     unitSelectEl.innerHTML = "";
     if (candidates.length === 0) {
       unitEmptyHintEl.hidden = false;
@@ -156,9 +168,10 @@
     unitSelectEl.hidden = false;
     startBtn.disabled = false;
     candidates.forEach(function (entry) {
+      candidatesByUnit[entry.unit] = entry;
       var opt = document.createElement("option");
       opt.value = entry.unit;
-      opt.textContent = unitLabel(entry);
+      opt.textContent = entry.label + (entry.isElementary ? " (1~3단계)" : "");
       unitSelectEl.appendChild(opt);
     });
     restartCheckbox.checked = false;
@@ -168,8 +181,9 @@
   unitSelectEl.addEventListener("change", updateResumeHint);
 
   // ── 시험 상태 ──
-  var STAGE_COUNT = 4; // 0~2: 단어 퀴즈, 3: 스토리 빈칸
+  var STAGE_COUNT = 4; // 0~2: 단어 퀴즈, 3: 스토리 빈칸(초등 단어장은 이 단계 없이 3단계까지만)
   var currentUnit = null;
+  var currentUnitIsElementary = false;
   var WORDS = [];
   var TOTAL = 0;
   var stageIndex = 0;
@@ -256,6 +270,10 @@
       queue = shuffle(WORDS.slice());
       showOnly(answerCardEl);
       nextItem();
+    } else if (currentUnitIsElementary) {
+      // 초등 단어장은 본문이 없어서 4단계(스토리 빈칸)를 낼 수 없다 - 1~3단계만
+      // 다 맞히면 바로 통과로 치고 무지개 카드를 준다.
+      finishAllStages();
     } else {
       startStoryStage();
     }
@@ -544,12 +562,14 @@
     var candidates = buildUnitCandidates();
     if (candidates.length === 0) return;
     currentUnit = unitSelectEl.value;
+    currentUnitIsElementary = !!(candidatesByUnit[currentUnit] && candidatesByUnit[currentUnit].isElementary);
     WORDS = DataStore.getWords(currentUnit) || [];
     TOTAL = WORDS.length;
     if (TOTAL === 0) {
       alert("이 유닛에는 아직 단어가 없어요.");
       return;
     }
+    if (stepEls.length > 3) stepEls[3].hidden = currentUnitIsElementary;
     unitPickEl.hidden = true;
     quizPanelEl.hidden = false;
     var resumeIdx = restartCheckbox.checked ? 0 : getSavedStageCount(currentUnit);
