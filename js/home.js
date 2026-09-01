@@ -122,12 +122,8 @@
     // 단어의 별 개수를 그 유닛의 복습 진행으로 본다 - isStarLimitReached와 같은 논리.
     function reviewStarsLabel(unitKey) {
       if (typeof WordCardStore === "undefined" || !WordCardStore.hasTrophy(unitKey)) return "";
-      var cards = WordCardStore.getUnitWordCards(unitKey);
-      if (cards.length === 0) return "";
-      var minStars = cards.reduce(function (min, r) {
-        return Math.min(min, r.stars || 0);
-      }, 5);
-      return " -복습 " + minStars + "/5";
+      var hasRainbow = typeof WordCardStore.hasRainbowCard === "function" && WordCardStore.hasRainbowCard(unitKey);
+      return " 🏆" + (hasRainbow ? " 🌈" : "");
     }
 
     function populateNumberOptions() {
@@ -141,12 +137,12 @@
         option.value = key;
         var label =
           category === "elementary"
-            ? entry.level + " (" + entry.count + "개)"
+            ? entry.level
             : entry.unit === "unspecified"
               ? "이름 없는 자료"
               : "Unit " + entry.unit;
         label += reviewStarsLabel(key);
-        option.textContent = label + (key === currentUnit ? " (현재)" : "");
+        option.textContent = label;
         numberSelect.appendChild(option);
         if (key === currentUnit) currentInThisCategory = true;
       });
