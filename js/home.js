@@ -6,19 +6,13 @@
     return unit ? "?unit=" + encodeURIComponent(unit) : "";
   }
 
-  // TEST(단어 시험) 카드는 test.js가 거는 조건(그 유닛의 "4. 스펠링 게임"까지
-  // 끝났는지)과 똑같이, 주간 유닛이든 초등 단어장이든 하나라도 그 조건을
-  // 채운 유닛이 있을 때만 보여준다 - 아직 하나도 없으면 눌러도 시험 볼 유닛이
-  // 없다는 안내만 보게 되니, 카드 자체를 숨겨서 헷갈리지 않게 한다.
-  function anyUnitReadyForTest() {
-    if (typeof ProgressStore === "undefined" || !ProgressStore.isDoneForUnit) return false;
-    var weeklyReady = (DataStore.getAllUnits() || []).some(function (entry) {
-      return ProgressStore.isDoneForUnit("hangman", entry.unit);
-    });
-    if (weeklyReady) return true;
-    return (DataStore.getElementaryLevels() || []).some(function (entry) {
-      return ProgressStore.isDoneForUnit("hangman", entry.level);
-    });
+  // TEST(단어 시험) 카드는 지금 화면에 떠 있는 그 유닛(주간이든 초등이든)이
+  // test.js가 거는 조건(그 유닛의 "4. 스펠링 게임"까지 끝났는지)을 채웠을 때만
+  // 보여준다 - 아직 1회 학습도 안 끝난 유닛에서는 시험 볼 게 없으니 카드
+  // 자체를 숨긴다. 조건을 채웠으면 test.html로 갈 때 그 유닛 번호를 그대로
+  // 넘겨서, TEST 쪽에서 유닛을 다시 고를 필요 없이 바로 그 유닛 시험으로 들어간다.
+  function currentUnitTestReady(unit) {
+    return !!unit && typeof ProgressStore !== "undefined" && ProgressStore.isDoneForUnit && ProgressStore.isDoneForUnit("hangman", unit);
   }
 
   function renderCards() {
@@ -84,10 +78,14 @@
 
     var testCard = document.querySelector(".home-card-test");
     if (testCard) {
-      var testEligible = anyUnitReadyForTest();
+      var currentUnit = DataStore.getCurrentUnit();
+      var testEligible = currentUnitTestReady(currentUnit);
       // .home-card가 display:flex를 지정해서 hidden 속성만으로는 안 숨겨진다.
       testCard.hidden = !testEligible;
       testCard.style.display = testEligible ? "" : "none";
+      if (testEligible) {
+        testCard.setAttribute("href", "test.html?unit=" + encodeURIComponent(currentUnit));
+      }
     }
   }
 

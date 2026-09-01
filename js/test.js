@@ -582,4 +582,16 @@
   });
 
   populateUnitSelect();
+
+  // 홈 화면에서 특정 유닛의 TEST 카드로 들어온 경우(?unit=18 등) - 유닛
+  // 고르는 화면 없이 그 유닛으로 바로 시험을 시작한다. 그 유닛이 아직 시험볼
+  // 조건을 못 채웠으면(직접 주소를 바꿔 들어온 경우 등) 그냥 평소처럼
+  // 유닛 선택 화면을 보여준다.
+  (function autoStartFromUrl() {
+    var paramUnit = new URLSearchParams(location.search).get("unit");
+    if (!paramUnit || !candidatesByUnit[paramUnit]) return;
+    unitSelectEl.value = paramUnit;
+    updateResumeHint();
+    startBtn.click();
+  })();
 })();
