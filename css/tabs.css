@@ -368,6 +368,13 @@
   font-weight: bold;
 }
 
+.admin-glance-unit-chip.rainbow {
+  background: #f7f0ff;
+  border-color: #c9a6ff;
+  color: #7a4fd1;
+  font-weight: bold;
+}
+
 /* ── Word 진행 관리 ───────────────────────────────────────────── */
 .admin-progress-summary {
   background: var(--color-surface-soft);

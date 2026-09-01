@@ -1,14 +1,18 @@
 // 단어 시험(TEST) 페이지 - 이미 공부한 유닛을 골라 1~4단계를 순서대로 통과하는 복습 시험.
 // 1) 영어 보고 한글 뜻 쓰기 → 2) 한글 뜻 보고 영어 쓰기 → 3) 설명 문장 보고 단어 쓰기 →
-// 4) 스토리를 들려준 뒤 빈칸 채우기. 각 단계는 그 유닛 단어를 전부(20개) 맞힐 때까지
-// 틀린 문제가 다시 나오고, 4단계를 모두 통과하면 트로피 카드와 완전히 같은 기능의
-// 무지개 카드를 준다(WordCardStore.awardRainbowCard).
+// 4) 스토리를 문장 단위로 들려주다 빈칸 앞에서 멈추고, 다 채울 때까지 반복해 들으며 쓰기.
+// 각 단계는 그 유닛 단어를 전부 맞힐 때까지 틀린 문제가 다시 나오고, 4단계를 모두
+// 통과하면 트로피 카드와 완전히 같은 기능의 무지개 카드를 준다
+// (WordCardStore.awardRainbowCard - 기존 1~4번 공부 완주로 받는 골드 트로피와는
+// 저장은 같은 배열을 쓰되 완전히 별개의 카드로 구분된다).
 (function () {
   "use strict";
 
   var unitPickEl = document.getElementById("testUnitPick");
   var unitSelectEl = document.getElementById("testUnitSelect");
   var unitEmptyHintEl = document.getElementById("testUnitEmptyHint");
+  var restartCheckbox = document.getElementById("testRestartCheckbox");
+  var resumeHintEl = document.getElementById("testResumeHint");
   var startBtn = document.getElementById("testStartBtn");
 
   var quizPanelEl = document.getElementById("testQuizPanel");
@@ -28,15 +32,14 @@
   var stageNextBtn = document.getElementById("testStageNextBtn");
 
   var storyReadCardEl = document.getElementById("testStoryReadCard");
-  var storyReadTextEl = document.getElementById("testStoryReadText");
-  var storyReplayBtn = document.getElementById("testStoryReplayBtn");
   var storyReadyBtn = document.getElementById("testStoryReadyBtn");
 
   var storyFillCardEl = document.getElementById("testStoryFillCard");
   var storyProgressEl = document.getElementById("testStoryProgress");
   var storyFillTextEl = document.getElementById("testStoryFillText");
+  var storyReplayBtn = document.getElementById("testStoryReplayBtn");
   var storyFeedbackEl = document.getElementById("testStoryFeedback");
-  var storyGradeBtn = document.getElementById("testStoryGradeBtn");
+  var storySubmitBtn = document.getElementById("testStoryGradeBtn");
 
   var switchUnitBtn = document.getElementById("testSwitchUnitBtn");
 
@@ -65,6 +68,24 @@
     return String(s || "").trim().replace(/\s+/g, "");
   }
 
+  // 3단계 설명 문장 중에는 "A boss is a person in charge..."처럼 정답 단어 자체가
+  // 문장 안에 그대로 들어있는 경우가 많다 - 화면 글자뿐 아니라 TTS 음성도 정답을
+  // 그대로 읽어버리면 문제가 성립하지 않으므로 둘 다 가려서 보여준다/들려준다.
+  function maskWordRegex(word) {
+    var escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("\\b" + escaped + "[a-z]{0,5}\\b", "gi");
+  }
+
+  function maskWordForDisplay(text, word) {
+    return String(text || "").replace(maskWordRegex(word), function (match) {
+      return new Array(match.length + 1).join("_");
+    });
+  }
+
+  function maskWordForSpeech(text, word) {
+    return String(text || "").replace(maskWordRegex(word), "blank");
+  }
+
   // ── 유닛 목록: 단어 + 본문이 둘 다 등록된(=스토리 빈칸까지 낼 수 있는) 유닛만. ──
   function buildUnitCandidates() {
     var all = DataStore.getAllUnits();
@@ -81,6 +102,41 @@
   function unitLabel(entry) {
     if (entry.unit === "unspecified") return "기본 단어 (Unit 15)";
     return "Unit " + entry.unit;
+  }
+
+  // ── 단계 진행 저장 - 1~3단계를 하나 끝낼 때마다 그 유닛의 "여기까지 통과함"을
+  // 저장해서, 나중에 같은 유닛을 다시 고르면 이어서 다음 단계부터 시작할 수 있다.
+  // 4단계까지 전부 통과하면(무지개 카드 지급 시점) 기록을 지워서 다음 도전은
+  // 다시 1단계부터 새로 풀게 한다.
+  function testProgressKey(unit) {
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    var prefix = childId ? childId + "_" : "guest_";
+    return "haingTestProgress_" + prefix + String(unit);
+  }
+
+  function getSavedStageCount(unit) {
+    var n = parseInt(localStorage.getItem(testProgressKey(unit)), 10);
+    return isNaN(n) ? 0 : Math.min(n, STAGE_COUNT - 1);
+  }
+
+  function saveStageCount(unit, n) {
+    localStorage.setItem(testProgressKey(unit), String(n));
+  }
+
+  function clearStageCount(unit) {
+    localStorage.removeItem(testProgressKey(unit));
+  }
+
+  function updateResumeHint() {
+    var unit = unitSelectEl.value;
+    var saved = unit ? getSavedStageCount(unit) : 0;
+    if (saved > 0) {
+      resumeHintEl.hidden = false;
+      resumeHintEl.textContent = "📌 이 유닛은 " + saved + "단계까지 통과했어요. 이어서 " + (saved + 1) + "단계부터 시작해요.";
+    } else {
+      resumeHintEl.hidden = true;
+      resumeHintEl.textContent = "";
+    }
   }
 
   function populateUnitSelect() {
@@ -101,9 +157,14 @@
       opt.textContent = unitLabel(entry);
       unitSelectEl.appendChild(opt);
     });
+    restartCheckbox.checked = false;
+    updateResumeHint();
   }
 
+  unitSelectEl.addEventListener("change", updateResumeHint);
+
   // ── 시험 상태 ──
+  var STAGE_COUNT = 4; // 0~2: 단어 퀴즈, 3: 스토리 빈칸
   var currentUnit = null;
   var WORDS = [];
   var TOTAL = 0;
@@ -111,6 +172,8 @@
   var queue = [];
   var currentItem = null;
   var correctSoFar = 0;
+  var correctWordKeys = null; // Set-비슷한 객체 - 이번 단계에서 이미 맞힌 단어(중복 집계 방지)
+  var awaitingNext = false; // 채점 직후 "다음"을 누르기 전까지는 새 문제로 못 넘어가게 막는 잠금
 
   var STAGE_DEFS = [
     {
@@ -144,10 +207,10 @@
     {
       label: "3단계 (설명 문장 → 단어)",
       prompt: function (w) {
-        return w.definition || w.word;
+        return maskWordForDisplay(w.definition || w.word, w.word);
       },
       speak: function (w) {
-        return w.definition || w.word;
+        return maskWordForSpeech(w.definition || w.word, w.word);
       },
       check: function (input, w) {
         return normalizeEn(input) === normalizeEn(w.word);
@@ -181,9 +244,11 @@
 
   function startStage(idx) {
     stageIndex = idx;
+    awaitingNext = false;
     updateStepDots();
     if (idx < STAGE_DEFS.length) {
       correctSoFar = 0;
+      correctWordKeys = {};
       queue = shuffle(WORDS.slice());
       showOnly(answerCardEl);
       nextItem();
@@ -192,10 +257,22 @@
     }
   }
 
+  // 큐가 비어도, 실제로 맞힌 고유 단어 수가 전체 단어 수와 정확히 같을 때만 그
+  // 단계를 완료로 친다 - 어떤 이유로든(연타 등) 큐가 먼저 비어버려도 이 확인을
+  // 통과하지 못하면 그 단어를 다시 큐에 넣어 계속 재도전하게 한다.
   function nextItem() {
     if (queue.length === 0) {
-      stageComplete();
-      return;
+      if (Object.keys(correctWordKeys).length >= TOTAL) {
+        stageComplete();
+      } else {
+        queue = shuffle(WORDS.filter(function (w) {
+          return !correctWordKeys[normalizeEn(w.word)];
+        }));
+      }
+      if (queue.length === 0) {
+        stageComplete();
+        return;
+      }
     }
     currentItem = queue.shift();
     renderItem();
@@ -203,6 +280,7 @@
 
   function renderItem() {
     var stage = STAGE_DEFS[stageIndex];
+    awaitingNext = false;
     progressEl.textContent = "정답 " + correctSoFar + " / " + TOTAL;
     questionEl.textContent = stage.prompt(currentItem);
     answerInput.placeholder = stage.placeholder;
@@ -229,11 +307,19 @@
     answerInput.disabled = true;
     submitBtn.hidden = true;
     nextBtn.hidden = false;
+    awaitingNext = true;
     nextBtn.focus();
 
-    if (ok) {
-      correctSoFar++;
+    var key = normalizeEn(currentItem.word);
+    if (ok && !correctWordKeys[key]) {
+      correctWordKeys[key] = true;
+      correctSoFar = Object.keys(correctWordKeys).length;
       progressEl.textContent = "정답 " + correctSoFar + " / " + TOTAL;
+      feedbackEl.textContent = "✅ 정답이에요!";
+      feedbackEl.className = "test-feedback test-feedback-correct";
+    } else if (ok) {
+      // 이미 한 번 맞힌 단어(재도전 큐 정리 과정의 우연한 중복)라도 다시 맞혔다는
+      // 사실은 그대로 알려준다.
       feedbackEl.textContent = "✅ 정답이에요!";
       feedbackEl.className = "test-feedback test-feedback-correct";
     } else {
@@ -243,20 +329,29 @@
     }
   }
 
+  function goNext() {
+    if (!awaitingNext) return;
+    awaitingNext = false;
+    nextItem();
+  }
+
   function stageComplete() {
     showOnly(stageCompleteCardEl);
     if (stageIndex < STAGE_DEFS.length) {
       stageCompleteTextEl.textContent =
         "🎉 " + STAGE_DEFS[stageIndex].label + " 완료! " + TOTAL + "개 단어를 모두 맞혔어요!";
+      saveStageCount(currentUnit, stageIndex + 1);
     }
     stageNextBtn.onclick = function () {
       startStage(stageIndex + 1);
     };
   }
 
-  // ── 4단계: 스토리 읽어주기 + 빈칸 채우기 ──
+  // ── 4단계: 문장을 들려주다 빈칸 앞에서 멈추고, 맞히면 이어서 다음 문장을 들려준다 ──
   var storyFullText = "";
+  var storySegments = []; // segments[i] = blanks[i] 앞의 본문, segments[blanks.length] = 마지막 빈칸 뒤 나머지
   var storyBlanks = []; // [{ word, start, end, surface }]
+  var currentBlankIdx = 0;
 
   function buildStoryBlanks(fullText, words) {
     var used = [];
@@ -265,8 +360,10 @@
       var word = w.word;
       if (!word) return;
       var escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      // 단어의 활용형(-s, -ed, -ing 등)까지 잡아내도록 뒤에 소문자 0~4글자를 더 허용한다.
-      var re = new RegExp("\\b" + escaped + "[a-z]{0,4}\\b", "gi");
+      // 단어의 활용형(-s, -ed, -ing 등, 시제 변화 포함)까지 잡아내도록 뒤에 소문자
+      // 0~5글자를 더 허용한다 - 스토리 안에서는 사전형이 아니라 실제로 쓰인
+      // 시제/활용형 그대로가 빈칸의 정답이 된다.
+      var re = new RegExp("\\b" + escaped + "[a-z]{0,5}\\b", "gi");
       var m;
       while ((m = re.exec(fullText)) !== null) {
         var start = m.index;
@@ -287,8 +384,19 @@
     return blanks;
   }
 
-  function paragraphsToHtml(text) {
-    return text
+  function buildStorySegments(fullText, blanks) {
+    var segments = [];
+    var cursor = 0;
+    blanks.forEach(function (b) {
+      segments.push(fullText.slice(cursor, b.start));
+      cursor = b.end;
+    });
+    segments.push(fullText.slice(cursor));
+    return segments;
+  }
+
+  function paragraphSafeHtml(html) {
+    return html
       .split(/\n\s*\n/)
       .map(function (p) {
         return "<p>" + p + "</p>";
@@ -296,85 +404,102 @@
       .join("");
   }
 
-  function renderStoryFillHtml() {
-    var html = "";
-    var cursor = 0;
-    storyBlanks.forEach(function (b, i) {
-      html += escapeHtml(storyFullText.slice(cursor, b.start));
-      html +=
-        '<input type="text" class="test-story-blank" data-idx="' +
-        i +
-        '" autocomplete="off" autocapitalize="off" spellcheck="false">';
-      cursor = b.end;
-    });
-    html += escapeHtml(storyFullText.slice(cursor));
-    return paragraphsToHtml(html);
-  }
-
   function startStoryStage() {
     var paragraphs = DataStore.getStoryParagraphs(currentUnit);
     storyFullText = paragraphs.join("\n\n");
     storyBlanks = buildStoryBlanks(storyFullText, WORDS);
-
+    storySegments = buildStorySegments(storyFullText, storyBlanks);
+    currentBlankIdx = 0;
+    if (storyBlanks.length === 0) {
+      // 본문에서 단어를 하나도 못 찾은 예외적인 경우 - 빈칸을 낼 수 없으니 그냥 통과로 친다.
+      finishAllStages();
+      return;
+    }
     showOnly(storyReadCardEl);
-    storyReadTextEl.innerHTML = paragraphsToHtml(escapeHtml(storyFullText));
-
-    Tts.stop();
-    Tts.speak(storyFullText);
   }
 
-  storyReplayBtn.addEventListener("click", function () {
-    Tts.stop();
-    Tts.speak(storyFullText);
-  });
-
   storyReadyBtn.addEventListener("click", function () {
-    Tts.stop();
     showOnly(storyFillCardEl);
-    storyFillTextEl.innerHTML = renderStoryFillHtml();
     storyFeedbackEl.textContent = "";
     storyFeedbackEl.className = "test-feedback";
-    updateStoryProgress();
-    var firstInput = storyFillTextEl.querySelector(".test-story-blank");
-    if (firstInput) firstInput.focus();
+    renderStoryProgressive();
+    speakCurrentSegment();
   });
 
   function updateStoryProgress() {
-    var inputs = storyFillTextEl.querySelectorAll(".test-story-blank");
-    var done = storyFillTextEl.querySelectorAll(".test-story-blank:disabled").length;
-    storyProgressEl.textContent = "정답 " + done + " / " + inputs.length;
+    storyProgressEl.textContent = "정답 " + currentBlankIdx + " / " + storyBlanks.length;
   }
 
-  storyGradeBtn.addEventListener("click", function () {
-    var inputs = storyFillTextEl.querySelectorAll(".test-story-blank");
-    inputs.forEach(function (inp) {
-      if (inp.disabled) return;
-      var idx = parseInt(inp.dataset.idx, 10);
-      var answer = normalizeEn(storyBlanks[idx].surface);
-      if (normalizeEn(inp.value) === answer) {
-        inp.disabled = true;
-        inp.classList.remove("test-blank-wrong");
-        inp.classList.add("test-blank-correct");
-      } else {
-        inp.classList.add("test-blank-wrong");
-        inp.value = "";
-      }
-    });
-    updateStoryProgress();
-
-    var remaining = storyFillTextEl.querySelectorAll(".test-story-blank:not(:disabled)").length;
-    if (remaining === 0) {
-      storyFeedbackEl.textContent = "🎉 20개 빈칸을 모두 맞혔어요!";
-      storyFeedbackEl.className = "test-feedback test-feedback-correct";
-      finishAllStages();
+  function renderStoryProgressive() {
+    var html = "";
+    for (var i = 0; i < currentBlankIdx; i++) {
+      html += escapeHtml(storySegments[i]);
+      html += '<span class="test-story-answered">' + escapeHtml(storyBlanks[i].surface) + "</span>";
+    }
+    if (currentBlankIdx < storyBlanks.length) {
+      html += escapeHtml(storySegments[currentBlankIdx]);
+      var w = storyBlanks[currentBlankIdx].surface;
+      var blankSize = Math.max(3, w.length);
+      html +=
+        '<input type="text" id="testStoryLiveBlank" class="test-story-blank" size="' +
+        blankSize +
+        '" style="width:' +
+        (blankSize + 1) +
+        'ch" placeholder="' +
+        new Array(w.length + 1).join("_") +
+        '" autocomplete="off" autocapitalize="off" spellcheck="false">';
     } else {
-      storyFeedbackEl.textContent = "❌ 아직 " + remaining + "개 남았어요. 틀린 칸은 지워졌으니 다시 써보세요!";
+      html += escapeHtml(storySegments[storyBlanks.length]);
+    }
+    storyFillTextEl.innerHTML = paragraphSafeHtml(html);
+    updateStoryProgress();
+    var liveInput = document.getElementById("testStoryLiveBlank");
+    if (liveInput) liveInput.focus();
+  }
+
+  function speakCurrentSegment() {
+    Tts.stop();
+    var text = storySegments[currentBlankIdx];
+    if (text && text.trim()) Tts.speak(text);
+  }
+
+  storyReplayBtn.addEventListener("click", speakCurrentSegment);
+
+  function submitStoryBlank() {
+    var input = document.getElementById("testStoryLiveBlank");
+    if (!input) return;
+    var answer = normalizeEn(storyBlanks[currentBlankIdx].surface);
+    if (normalizeEn(input.value) === answer) {
+      storyFeedbackEl.textContent = "✅ 정답이에요!";
+      storyFeedbackEl.className = "test-feedback test-feedback-correct";
+      currentBlankIdx++;
+      if (currentBlankIdx >= storyBlanks.length) {
+        renderStoryProgressive();
+        Tts.stop();
+        storyFeedbackEl.textContent = "🎉 스토리 빈칸을 모두 맞혔어요!";
+        finishAllStages();
+      } else {
+        renderStoryProgressive();
+        speakCurrentSegment();
+      }
+    } else {
+      storyFeedbackEl.textContent = "❌ 다시 써보세요! (다시 듣기를 눌러 들어보세요)";
       storyFeedbackEl.className = "test-feedback test-feedback-wrong";
+      input.value = "";
+      input.focus();
+    }
+  }
+
+  storySubmitBtn.addEventListener("click", submitStoryBlank);
+  storyFillTextEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target && e.target.id === "testStoryLiveBlank") {
+      submitStoryBlank();
     }
   });
 
   // ── 4단계까지 전부 통과: 무지개 카드 지급 ──
   function finishAllStages() {
+    clearStageCount(currentUnit);
     var reward = WordCardStore.awardRainbowCard(currentUnit);
     if (reward) {
       WordCardPopup.show(reward, "index.html", "홈으로 🎉", {
@@ -395,12 +520,12 @@
     if (e.key === "Enter") {
       if (!answerInput.disabled) {
         submitAnswer();
-      } else if (!nextBtn.hidden) {
-        nextBtn.click();
+      } else {
+        goNext();
       }
     }
   });
-  nextBtn.addEventListener("click", nextItem);
+  nextBtn.addEventListener("click", goNext);
   replayBtn.addEventListener("click", function () {
     var stage = STAGE_DEFS[stageIndex];
     if (stage && stage.speak) {
@@ -423,7 +548,13 @@
     }
     unitPickEl.hidden = true;
     quizPanelEl.hidden = false;
-    startStage(0);
+    var resumeIdx = restartCheckbox.checked ? 0 : getSavedStageCount(currentUnit);
+    if (resumeIdx > 0 && resumeIdx < STAGE_DEFS.length) {
+      alert("📌 이 유닛은 " + resumeIdx + "단계까지 통과했어요! " + (resumeIdx + 1) + "단계부터 이어서 시작할게요.");
+    } else if (restartCheckbox.checked) {
+      clearStageCount(currentUnit);
+    }
+    startStage(resumeIdx);
   });
 
   populateUnitSelect();

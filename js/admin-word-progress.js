@@ -40,19 +40,27 @@
     var map = {};
     cards.forEach(function (r) {
       var key = String(r.unit);
-      if (!map[key]) map[key] = { roundsSum: 0, hasTrophy: false };
-      if (r.isTrophy) map[key].hasTrophy = true;
+      if (!map[key]) map[key] = { roundsSum: 0, hasTrophy: false, hasRainbow: false };
+      if (r.rainbowCard) map[key].hasRainbow = true;
+      else if (r.isTrophy) map[key].hasTrophy = true;
       else map[key].roundsSum += 1 + (r.stars || 0);
     });
     return map;
   }
 
   function statsFor(unitStatsMap, unit) {
-    var entry = unitStatsMap[String(unit.key)] || { roundsSum: 0, hasTrophy: false };
+    var entry = unitStatsMap[String(unit.key)] || { roundsSum: 0, hasTrophy: false, hasRainbow: false };
     var maxRounds = unit.total * MAX_ROUNDS_PER_WORD;
     var roundsSum = Math.min(entry.roundsSum, maxRounds);
     var pct = unit.total > 0 ? Math.round((roundsSum / unit.total) * 100) : 0;
-    return { total: unit.total, maxRounds: maxRounds, roundsSum: roundsSum, pct: pct, hasTrophy: entry.hasTrophy };
+    return {
+      total: unit.total,
+      maxRounds: maxRounds,
+      roundsSum: roundsSum,
+      pct: pct,
+      hasTrophy: entry.hasTrophy,
+      hasRainbow: entry.hasRainbow
+    };
   }
 
   function childLine(child, stats) {
@@ -75,7 +83,9 @@
 
     var count = document.createElement("span");
     count.className = "admin-progress-child-count";
-    count.textContent = stats.roundsSum + "/" + stats.maxRounds + "회 · " + stats.pct + "%" + (stats.hasTrophy ? " 🏆" : "");
+    count.textContent =
+      stats.roundsSum + "/" + stats.maxRounds + "회 · " + stats.pct + "%" +
+      (stats.hasTrophy ? " 🏆" : "") + (stats.hasRainbow ? " 🌈" : "");
     line.appendChild(count);
 
     return line;
@@ -107,11 +117,13 @@
       var totalWords = 0;
       var roundsSum = 0;
       var trophyCount = 0;
+      var rainbowCount = 0;
       units.forEach(function (unit) {
         var stats = statsFor(statsMapByChild[child.id], unit);
         totalWords += stats.total;
         roundsSum += stats.roundsSum;
         if (stats.hasTrophy) trophyCount++;
+        if (stats.hasRainbow) rainbowCount++;
       });
       var pct = totalWords > 0 ? Math.round((roundsSum / totalWords) * 100) : 0;
 
@@ -119,7 +131,7 @@
       line.className = "admin-progress-summary-line";
       line.textContent =
         child.zodiacEmoji + " " + child.name + " 전체 " +
-        roundsSum + "/" + (totalWords * MAX_ROUNDS_PER_WORD) + "회 (" + pct + "%) · 🏆 " + trophyCount + "개";
+        roundsSum + "/" + (totalWords * MAX_ROUNDS_PER_WORD) + "회 (" + pct + "%) · 🏆 " + trophyCount + "개 · 🌈 " + rainbowCount + "개";
       summary.appendChild(line);
     });
     listEl.appendChild(summary);

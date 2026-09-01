@@ -26,6 +26,21 @@
   margin-bottom: 14px;
 }
 
+.test-restart-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--color-text-faint);
+  margin: 4px 0 10px;
+  cursor: pointer;
+}
+
+.test-resume-hint {
+  color: var(--color-accent-deep);
+  font-weight: bold;
+}
+
 #testStartBtn {
   width: 100%;
 }
@@ -166,6 +181,16 @@
 .test-blank-wrong {
   border-bottom-color: var(--color-danger);
   background: var(--color-danger-bg);
+}
+
+.test-story-answered {
+  display: inline-block;
+  margin: 0 2px;
+  padding: 1px 4px;
+  font-weight: bold;
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: 4px;
 }
 
 .test-switch-unit-btn {

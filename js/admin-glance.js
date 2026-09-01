@@ -39,8 +39,9 @@
     var map = {};
     cards.forEach(function (r) {
       var key = String(r.unit);
-      if (!map[key]) map[key] = { wordCount: 0, starSum: 0, hasTrophy: false };
-      if (r.isTrophy) map[key].hasTrophy = true;
+      if (!map[key]) map[key] = { wordCount: 0, starSum: 0, hasTrophy: false, hasRainbow: false };
+      if (r.rainbowCard) map[key].hasRainbow = true;
+      else if (r.isTrophy) map[key].hasTrophy = true;
       else {
         map[key].wordCount += 1;
         map[key].starSum += r.stars || 0;
@@ -48,17 +49,18 @@
     });
     return units
       .map(function (u) {
-        var m = map[String(u.key)] || { wordCount: 0, starSum: 0, hasTrophy: false };
+        var m = map[String(u.key)] || { wordCount: 0, starSum: 0, hasTrophy: false, hasRainbow: false };
         return {
           label: u.label,
           total: u.total,
           wordCount: m.wordCount,
           starSum: m.starSum,
-          hasTrophy: m.hasTrophy
+          hasTrophy: m.hasTrophy,
+          hasRainbow: m.hasRainbow
         };
       })
       .filter(function (u) {
-        return u.hasTrophy || u.wordCount > 0;
+        return u.hasTrophy || u.hasRainbow || u.wordCount > 0;
       });
   }
 
@@ -105,8 +107,10 @@
       var line = document.createElement("span");
       line.className = "admin-glance-unit-chip";
       if (u.hasTrophy) line.classList.add("trophy");
+      if (u.hasRainbow) line.classList.add("rainbow");
+      var badges = (u.hasTrophy ? " 🏆" : "") + (u.hasRainbow ? " 🌈" : "");
       line.textContent =
-        u.label + (u.hasTrophy ? " 🏆" : " " + u.wordCount + "/" + u.total) + (u.starSum > 0 ? " ⭐" + u.starSum : "");
+        u.label + (badges || " " + u.wordCount + "/" + u.total) + (u.starSum > 0 ? " ⭐" + u.starSum : "");
       wrap.appendChild(line);
     });
     return wrap;
