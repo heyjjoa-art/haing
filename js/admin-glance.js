@@ -1,27 +1,14 @@
-// 관리자 탭 - 학습 한눈에 보기: 아이 하나를 골라서 이번주 저니스 도장, 오늘
-// 단어 공부 여부, 유닛별 트로피/별 스티커/무지개 현황, 이번 달 달력(저니스·단어
-// 완료 여부를 같이 표기)까지 한 화면에 모아 보여준다. 예전에는 유닛별 상세
-// 진행률(Word 진행 관리)과 달력(Journeys 진행 관리)이 따로 있었는데, 트로피·
-// 별·무지개만으로도 유닛별 확인이 되고 달력도 여기 아이별로 들어와 있어서
-// 둘 다 여기로 흡수했다.
-(function () {
+// 아이 한 명의 학습 현황(이번주 저니스/오늘 단어 공부/트로피·별 스티커·무지개/
+// 이번 달 달력)을 그려주는 공용 렌더러(GlanceView)와, 그걸 써서 "관리자 > 학습"
+// 탭(아이 선택 탭 있음)을 그리는 코드. 같은 렌더러를 js/my-glance.js가 그대로
+// 재사용해서, 아이가 직접 로그인했을 때 보는 "학습" 탭(본인 것만)도 만든다.
+// 예전에는 유닛별 상세 진행률(Word 진행 관리)과 달력(Journeys 진행 관리)이
+// 따로 있었는데, 트로피·별·무지개만으로도 유닛별 확인이 되고 달력도 여기
+// 아이별로 들어와 있어서 둘 다 여기로 흡수했다.
+var GlanceView = (function () {
   "use strict";
 
-  var tabsEl = document.getElementById("adminGlanceChildTabs");
-  var bodyEl = document.getElementById("adminGlanceBody");
-  if (!tabsEl || !bodyEl) return;
-
-  var STORAGE_KEY = "haingAdminGlanceChild";
-  var selectedChildId = null;
-
   var WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-  var today = new Date();
-  var viewYear = today.getFullYear();
-  var viewMonth = today.getMonth() + 1; // 1~12
-
-  function isCurrentMonthView() {
-    return viewYear === today.getFullYear() && viewMonth === today.getMonth() + 1;
-  }
 
   // admin-word-progress.js의 getAllTrackedUnits()와 같은 목록 - 유닛번호별로
   // 트로피/별 스티커를 보여주려면 등록된 유닛 전체 목록이 먼저 있어야 한다.
@@ -131,151 +118,182 @@
     return wrap;
   }
 
-  // 이번 달(또는 이전 달) 날짜마다 저니스 완료 여부와 단어 공부 완료 여부를
-  // 같이 표기하는 달력. 둘 다 한 날짜 문자열(YYYY-MM-DD) 기준으로 비교 가능해서
-  // 같은 칸에 나란히 표시할 수 있다.
-  function buildCalendar(childId) {
-    var journeysDays = StampStore.getMonthDays(childId, viewYear, viewMonth);
-    var days = journeysDays.map(function (d) {
-      return {
-        date: d.date,
-        day: d.day,
-        weekday: d.weekday,
-        isFuture: d.isFuture,
-        journeysDone: d.completed,
-        wordDone: ProgressStore.isWordDoneForDay(childId, d.date)
-      };
-    });
-    var considered = days.filter(function (d) {
-      return !d.isFuture;
-    });
-    var bothCount = considered.filter(function (d) {
-      return d.journeysDone && d.wordDone;
-    }).length;
+  // 렌더러 하나를 만든다 - 달력 이동(연/월) 상태를 이 인스턴스가 따로 들고
+  // 있어서, 관리자 쪽과 아이 본인 쪽이 서로 다른 달을 보고 있어도 안 꼬인다.
+  function createRenderer(bodyEl) {
+    var today = new Date();
+    var viewYear = today.getFullYear();
+    var viewMonth = today.getMonth() + 1; // 1~12
+    var currentChildId = null;
 
-    var wrap = document.createElement("div");
-    wrap.className = "admin-glance-calendar-wrap";
-
-    var nav = document.createElement("div");
-    nav.className = "admin-glance-calendar-nav";
-
-    var prevBtn = document.createElement("button");
-    prevBtn.type = "button";
-    prevBtn.className = "secondary-btn";
-    prevBtn.textContent = "◀";
-    prevBtn.addEventListener("click", function () {
-      viewMonth -= 1;
-      if (viewMonth < 1) {
-        viewMonth = 12;
-        viewYear -= 1;
-      }
-      renderBody();
-    });
-    nav.appendChild(prevBtn);
-
-    var label = document.createElement("span");
-    label.className = "admin-glance-calendar-month-label";
-    label.textContent = viewYear + "년 " + viewMonth + "월";
-    nav.appendChild(label);
-
-    var nextBtn = document.createElement("button");
-    nextBtn.type = "button";
-    nextBtn.className = "secondary-btn";
-    nextBtn.textContent = "▶";
-    nextBtn.disabled = isCurrentMonthView();
-    nextBtn.addEventListener("click", function () {
-      viewMonth += 1;
-      if (viewMonth > 12) {
-        viewMonth = 1;
-        viewYear += 1;
-      }
-      renderBody();
-    });
-    nav.appendChild(nextBtn);
-    wrap.appendChild(nav);
-
-    var summary = document.createElement("p");
-    summary.className = "admin-glance-calendar-summary";
-    summary.textContent = "둘 다 완료한 날 " + bothCount + "/" + considered.length + "일";
-    wrap.appendChild(summary);
-
-    wrap.appendChild(document.createRange().createContextualFragment(
-      '<p class="admin-glance-calendar-legend">' +
-      '<span class="legend-swatch journeys-done"></span>저니스 ' +
-      '<span class="legend-swatch word-done"></span>단어 ' +
-      '<span class="legend-swatch journeys-done word-done"></span>둘 다' +
-      "</p>"
-    ));
-
-    var grid = document.createElement("div");
-    grid.className = "admin-glance-calendar";
-
-    WEEKDAY_LABELS.forEach(function (wd) {
-      var head = document.createElement("div");
-      head.className = "admin-glance-calendar-weekday";
-      head.textContent = wd;
-      grid.appendChild(head);
-    });
-
-    var leadingBlank = days.length > 0 ? days[0].weekday : 0;
-    for (var i = 0; i < leadingBlank; i++) {
-      var blank = document.createElement("div");
-      blank.className = "admin-glance-calendar-day empty";
-      grid.appendChild(blank);
+    function isCurrentMonthView() {
+      return viewYear === today.getFullYear() && viewMonth === today.getMonth() + 1;
     }
 
-    days.forEach(function (d) {
-      var cell = document.createElement("div");
-      cell.className = "admin-glance-calendar-day";
-      if (d.isFuture) {
-        cell.classList.add("future");
-      } else {
-        if (d.journeysDone) cell.classList.add("journeys-done");
-        if (d.wordDone) cell.classList.add("word-done");
+    // 이번 달(또는 이전 달) 날짜마다 저니스 완료 여부와 단어 공부 완료 여부를
+    // 같이 표기하는 달력. 둘 다 한 날짜 문자열(YYYY-MM-DD) 기준으로 비교
+    // 가능해서 같은 칸에 나란히 표시할 수 있다.
+    function buildCalendar(childId) {
+      var journeysDays = StampStore.getMonthDays(childId, viewYear, viewMonth);
+      var days = journeysDays.map(function (d) {
+        return {
+          date: d.date,
+          day: d.day,
+          weekday: d.weekday,
+          isFuture: d.isFuture,
+          journeysDone: d.completed,
+          wordDone: ProgressStore.isWordDoneForDay(childId, d.date)
+        };
+      });
+      var considered = days.filter(function (d) {
+        return !d.isFuture;
+      });
+      var bothCount = considered.filter(function (d) {
+        return d.journeysDone && d.wordDone;
+      }).length;
+
+      var wrap = document.createElement("div");
+      wrap.className = "admin-glance-calendar-wrap";
+
+      var nav = document.createElement("div");
+      nav.className = "admin-glance-calendar-nav";
+
+      var prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "secondary-btn";
+      prevBtn.textContent = "◀";
+      prevBtn.addEventListener("click", function () {
+        viewMonth -= 1;
+        if (viewMonth < 1) {
+          viewMonth = 12;
+          viewYear -= 1;
+        }
+        render(currentChildId);
+      });
+      nav.appendChild(prevBtn);
+
+      var label = document.createElement("span");
+      label.className = "admin-glance-calendar-month-label";
+      label.textContent = viewYear + "년 " + viewMonth + "월";
+      nav.appendChild(label);
+
+      var nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "secondary-btn";
+      nextBtn.textContent = "▶";
+      nextBtn.disabled = isCurrentMonthView();
+      nextBtn.addEventListener("click", function () {
+        viewMonth += 1;
+        if (viewMonth > 12) {
+          viewMonth = 1;
+          viewYear += 1;
+        }
+        render(currentChildId);
+      });
+      nav.appendChild(nextBtn);
+      wrap.appendChild(nav);
+
+      var summary = document.createElement("p");
+      summary.className = "admin-glance-calendar-summary";
+      summary.textContent = "둘 다 완료한 날 " + bothCount + "/" + considered.length + "일";
+      wrap.appendChild(summary);
+
+      wrap.appendChild(document.createRange().createContextualFragment(
+        '<p class="admin-glance-calendar-legend">' +
+        '<span class="legend-swatch journeys-done"></span>저니스 ' +
+        '<span class="legend-swatch word-done"></span>단어 ' +
+        '<span class="legend-swatch journeys-done word-done"></span>둘 다' +
+        "</p>"
+      ));
+
+      var grid = document.createElement("div");
+      grid.className = "admin-glance-calendar";
+
+      WEEKDAY_LABELS.forEach(function (wd) {
+        var head = document.createElement("div");
+        head.className = "admin-glance-calendar-weekday";
+        head.textContent = wd;
+        grid.appendChild(head);
+      });
+
+      var leadingBlank = days.length > 0 ? days[0].weekday : 0;
+      for (var i = 0; i < leadingBlank; i++) {
+        var blank = document.createElement("div");
+        blank.className = "admin-glance-calendar-day empty";
+        grid.appendChild(blank);
       }
-      cell.textContent = String(d.day);
-      grid.appendChild(cell);
-    });
 
-    wrap.appendChild(grid);
-    return wrap;
+      days.forEach(function (d) {
+        var cell = document.createElement("div");
+        cell.className = "admin-glance-calendar-day";
+        if (d.isFuture) {
+          cell.classList.add("future");
+        } else {
+          if (d.journeysDone) cell.classList.add("journeys-done");
+          if (d.wordDone) cell.classList.add("word-done");
+        }
+        cell.textContent = String(d.day);
+        grid.appendChild(cell);
+      });
+
+      wrap.appendChild(grid);
+      return wrap;
+    }
+
+    function render(childId) {
+      currentChildId = childId;
+      bodyEl.innerHTML = "";
+      if (!childId) return;
+
+      var studiedToday = ProgressStore.hasCompletedSetTodayForChild(childId);
+
+      var section1 = document.createElement("div");
+      section1.className = "admin-glance-section";
+      section1.innerHTML = "<h3>📅 이번주 저니스</h3>";
+      section1.appendChild(buildWeekRow(childId));
+      bodyEl.appendChild(section1);
+
+      var section2 = document.createElement("div");
+      section2.className = "admin-glance-section";
+      section2.innerHTML =
+        "<h3>✏️ 오늘 단어 공부</h3><p class=\"admin-glance-today-line\">" +
+        (studiedToday ? "✅ 오늘 단어 공부를 끝냈어요." : "❌ 아직 안 했어요.") +
+        "</p>";
+      bodyEl.appendChild(section2);
+
+      var section3 = document.createElement("div");
+      section3.className = "admin-glance-section";
+      section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
+      section3.appendChild(buildUnitList(childId));
+      bodyEl.appendChild(section3);
+
+      var section4 = document.createElement("div");
+      section4.className = "admin-glance-section";
+      section4.innerHTML = "<h3>📅 " + (function () {
+        var info = typeof ChildStore !== "undefined" && ChildStore.CHILDREN.find(function (c) { return c.id === childId; });
+        return info ? info.zodiacEmoji + " " + info.name : "";
+      })() + " 달력</h3>";
+      section4.appendChild(buildCalendar(childId));
+      bodyEl.appendChild(section4);
+    }
+
+    return { render: render };
   }
 
-  function renderBody() {
-    bodyEl.innerHTML = "";
-    if (!selectedChildId) return;
+  return { createRenderer: createRenderer };
+})();
 
-    var studiedToday = ProgressStore.hasCompletedSetTodayForChild(selectedChildId);
+// ── 관리자 > 학습 탭: 아이를 골라서 보는 화면(GlanceView + 아이 선택 탭) ──
+(function () {
+  "use strict";
 
-    var section1 = document.createElement("div");
-    section1.className = "admin-glance-section";
-    section1.innerHTML = "<h3>📅 이번주 저니스</h3>";
-    section1.appendChild(buildWeekRow(selectedChildId));
-    bodyEl.appendChild(section1);
+  var tabsEl = document.getElementById("adminGlanceChildTabs");
+  var bodyEl = document.getElementById("adminGlanceBody");
+  if (!tabsEl || !bodyEl) return;
 
-    var section2 = document.createElement("div");
-    section2.className = "admin-glance-section";
-    section2.innerHTML =
-      "<h3>✏️ 오늘 단어 공부</h3><p class=\"admin-glance-today-line\">" +
-      (studiedToday ? "✅ 오늘 단어 공부를 끝냈어요." : "❌ 아직 안 했어요.") +
-      "</p>";
-    bodyEl.appendChild(section2);
-
-    var section3 = document.createElement("div");
-    section3.className = "admin-glance-section";
-    section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
-    section3.appendChild(buildUnitList(selectedChildId));
-    bodyEl.appendChild(section3);
-
-    var section4 = document.createElement("div");
-    section4.className = "admin-glance-section";
-    section4.innerHTML = "<h3>📅 " + (function () {
-      var info = ChildStore.CHILDREN.find(function (c) { return c.id === selectedChildId; });
-      return info ? info.zodiacEmoji + " " + info.name : "";
-    })() + " 달력</h3>";
-    section4.appendChild(buildCalendar(selectedChildId));
-    bodyEl.appendChild(section4);
-  }
+  var STORAGE_KEY = "haingAdminGlanceChild";
+  var selectedChildId = null;
+  var renderer = null;
 
   function selectChild(childId) {
     selectedChildId = childId;
@@ -283,7 +301,7 @@
     Array.prototype.forEach.call(tabsEl.children, function (btn) {
       btn.classList.toggle("active", btn.dataset.childId === childId);
     });
-    renderBody();
+    renderer.render(childId);
   }
 
   function renderTabs() {
@@ -311,6 +329,7 @@
     ) {
       return;
     }
+    if (!renderer) renderer = GlanceView.createRenderer(bodyEl);
     renderTabs();
     var saved = localStorage.getItem(STORAGE_KEY);
     var validIds = ChildStore.CHILDREN.map(function (c) {

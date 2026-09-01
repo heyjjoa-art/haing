@@ -175,8 +175,9 @@
 
     // 로그인한 아이가 바뀌면 진행 상황/카드 컬렉션도 그 아이 것으로 다시 그린다.
     if (window.__haingRenderHome) window.__haingRenderHome();
-    // 관리자로 로그인했을 때만 관리자 탭이 보이게 한다(js/tabs.js).
-    if (window.__haingUpdateAdminAccess) window.__haingUpdateAdminAccess();
+    // 아이로 로그인했을 때만 학습 탭이, 관리자로 로그인했을 때만 관리자 탭이
+    // 보이게 한다(js/tabs.js).
+    if (window.__haingUpdateTabAccess) window.__haingUpdateTabAccess();
 
     // Journeys는 iframe이라 ChildStore가 그 안에서 따로 실행돼서, 부모 창에서
     // 아이를 바꿔도 iframe 안 스크립트는 그걸 모른다 - Journeys 탭을 보고 있지
