@@ -108,9 +108,13 @@
       line.className = "admin-glance-unit-chip";
       if (u.hasTrophy) line.classList.add("trophy");
       if (u.hasRainbow) line.classList.add("rainbow");
-      var badges = (u.hasTrophy ? " 🏆" : "") + (u.hasRainbow ? " 🌈" : "");
-      line.textContent =
-        u.label + (badges || " " + u.wordCount + "/" + u.total) + (u.starSum > 0 ? " ⭐" + u.starSum : "");
+      // 🏆 트로피 → ⭐ 별 스티커 → 🌈 무지개 순서로 통일(섹션 제목과 같은 순서).
+      var parts = [];
+      if (u.hasTrophy) parts.push("🏆");
+      if (u.starSum > 0) parts.push("⭐" + u.starSum);
+      if (u.hasRainbow) parts.push("🌈");
+      var suffix = parts.length > 0 ? " " + parts.join(" ") : " " + u.wordCount + "/" + u.total;
+      line.textContent = u.label + suffix;
       wrap.appendChild(line);
     });
     return wrap;
@@ -138,7 +142,7 @@
 
     var section3 = document.createElement("div");
     section3.className = "admin-glance-section";
-    section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 (유닛별)</h3>";
+    section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개 (유닛별)</h3>";
     section3.appendChild(buildUnitList(selectedChildId));
     bodyEl.appendChild(section3);
   }

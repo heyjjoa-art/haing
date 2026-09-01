@@ -102,11 +102,43 @@ var ProgressStore = (function () {
     return getTodaySetInfo().count > 0;
   }
 
+  // 관리자 화면에서 보는 아이가 이 기기에서 로그인한 적이 없으면(부모 기기와
+  // 아이 기기가 다른 경우) "오늘 단어 공부"가 이 기기 localStorage에 한 번도
+  // 안 내려온 적이 없어서, 실제로는 공부를 끝냈는데도 관리자 화면엔 "안 했다"로
+  // 잘못 보였다. word-card-store.js/stamp-store.js의 ensureCloudSync와 같은
+  // 방식으로, 지금 로그인한 아이와 무관하게 그 아이 몫을 클라우드에서 따로
+  // 받아와 이 기기에도 채워 넣는다.
+  var watchedChildrenForAdmin = {};
+
+  function ensureCloudSyncForChild(childId) {
+    if (!childId) return;
+    // 지금 로그인한 아이면 setupCloudSyncForActiveChild가 이미 실시간으로 맞춰주고 있다.
+    if (typeof ChildStore !== "undefined" && ChildStore.getActive() === childId) return;
+    if (watchedChildrenForAdmin[childId]) return;
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    watchedChildrenForAdmin[childId] = true;
+
+    var path = "progress/" + childId;
+    function applyRemote(data) {
+      if (!data || !data.entries) return;
+      Object.keys(data.entries).forEach(function (key) {
+        localStorage.setItem(key, data.entries[key]);
+      });
+      if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
+      if (window.__haingRenderAdminWordProgress) window.__haingRenderAdminWordProgress();
+    }
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      applyRemote(remote);
+      HaingCloud.watchDoc(path, applyRemote);
+    });
+  }
+
   // 관리자 화면에서 로그인 중인 아이와 무관하게 특정 아이의 오늘 학습 여부를
   // 확인할 때 쓴다(hasCompletedSetToday는 ChildStore.getActive()에 묶여 있어서
   // 관리자로 로그인한 상태에서는 그대로 못 쓴다).
   function hasCompletedSetTodayForChild(childId) {
     if (!childId) return false;
+    ensureCloudSyncForChild(childId);
     var raw = localStorage.getItem("haingWordSetsToday_" + childId + "_");
     if (!raw) return false;
     try {
