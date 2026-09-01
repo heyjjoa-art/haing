@@ -429,18 +429,18 @@
 }
 
 .legend-swatch.journeys-done {
-  background: var(--color-success-bg);
-  border-color: var(--color-success-border);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
 }
 
 .legend-swatch.word-done {
-  background: var(--color-accent-tint);
-  border-color: var(--color-accent);
+  background: var(--color-pink-bg);
+  border-color: var(--color-pink-border);
 }
 
 .legend-swatch.journeys-done.word-done {
-  background: var(--color-gold-soft);
-  border-color: var(--color-gold);
+  background: linear-gradient(135deg, var(--color-info-bg) 50%, var(--color-pink-bg) 50%);
+  border-color: var(--color-border);
 }
 
 .admin-glance-calendar {
@@ -474,23 +474,24 @@
 }
 
 .admin-glance-calendar-day.journeys-done {
-  background: var(--color-success-bg);
-  border-color: var(--color-success-border);
-  color: var(--color-success);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-border);
+  color: var(--color-info);
   font-weight: bold;
 }
 
 .admin-glance-calendar-day.word-done {
-  background: var(--color-accent-tint);
-  border-color: var(--color-accent);
-  color: var(--color-accent-deep);
+  background: var(--color-pink-bg);
+  border-color: var(--color-pink-border);
+  color: var(--color-pink);
   font-weight: bold;
 }
 
+/* 둘 다 완료한 날은 파랑(저니스)·핑크(단어) 대각선으로 나눠 표기 */
 .admin-glance-calendar-day.journeys-done.word-done {
-  background: var(--color-gold-soft);
-  border-color: var(--color-gold);
-  color: var(--color-accent-deep);
+  background: linear-gradient(135deg, var(--color-info-bg) 50%, var(--color-pink-bg) 50%);
+  border-color: var(--color-border);
+  color: var(--color-text);
   font-weight: bold;
 }
 
