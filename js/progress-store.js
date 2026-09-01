@@ -153,6 +153,20 @@ var ProgressStore = (function () {
     return !!load()[step];
   }
 
+  // isDone은 항상 "지금 보고 있는(?unit= 또는 현재) 유닛" 기준인데, TEST
+  // 페이지처럼 특정 유닛 하나를 콕 집어 "그 유닛은 1~4번을 다 끝냈는지"
+  // 확인해야 할 때 쓴다(예: 4번 스펠링 게임까지 끝난 유닛만 시험을 볼 수 있게).
+  function isDoneForUnit(step, unitKey) {
+    var raw = localStorage.getItem("haingProgress_" + childPrefix() + String(unitKey));
+    if (!raw) return false;
+    try {
+      var data = JSON.parse(raw) || {};
+      return !!data[step];
+    } catch (e) {
+      return false;
+    }
+  }
+
   function isAllDone() {
     var data = load();
     return currentSteps().every(function (s) {
@@ -345,6 +359,7 @@ var ProgressStore = (function () {
     STEPS: STEPS,
     markDone: markDone,
     isDone: isDone,
+    isDoneForUnit: isDoneForUnit,
     isUnlocked: isUnlocked,
     isAllDone: isAllDone,
     markReviewStep: markReviewStep,

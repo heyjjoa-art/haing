@@ -86,17 +86,21 @@
     return String(text || "").replace(maskWordRegex(word), "blank");
   }
 
-  // ── 유닛 목록: 단어 + 본문이 둘 다 등록된(=스토리 빈칸까지 낼 수 있는) 유닛만. ──
+  // ── 유닛 목록: 주간 유닛(초등 단어장 제외) 중, 단어+본문이 갖춰져 있고
+  // "4. 스펠링 게임"까지 1~4단계를 이미 다 끝낸 유닛만 시험을 볼 수 있다 -
+  // 아직 안 배운 단어로 시험을 보는 건 앞뒤가 안 맞기 때문이다.
   function buildUnitCandidates() {
     var all = DataStore.getAllUnits();
-    var withStory = all.filter(function (entry) {
-      return entry.data && entry.data.words && entry.data.words.length && entry.data.storyText && entry.data.storyText.trim();
+    var pool = all.length > 0 ? all : [{ unit: "unspecified", data: null }];
+    return pool.filter(function (entry) {
+      var words = DataStore.getWords(entry.unit) || [];
+      var hasStory = DataStore.getStoryParagraphs(entry.unit).length > 0;
+      var doneHangman =
+        typeof ProgressStore !== "undefined" &&
+        ProgressStore.isDoneForUnit &&
+        ProgressStore.isDoneForUnit("hangman", entry.unit);
+      return words.length > 0 && hasStory && doneHangman;
     });
-    if (all.length === 0) {
-      // 등록된 유닛이 하나도 없으면 다른 페이지들과 마찬가지로 기본 샘플(Unit 15)로 시험을 볼 수 있게 한다.
-      withStory = [{ unit: "unspecified", data: null }];
-    }
-    return withStory;
   }
 
   function unitLabel(entry) {
