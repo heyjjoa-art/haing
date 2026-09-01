@@ -157,6 +157,28 @@
   font-weight: bold;
 }
 
+/* TEST 페이지 4단계 통과 시 받는 무지개 카드 - 트로피/Journeys 트로피와 확실히
+   구분되는 무지개 그라디언트 톤 */
+.wc-card-trophy-rainbow {
+  border-color: #ff9fe0;
+  box-shadow: 0 2px 10px rgba(160, 130, 255, 0.35);
+}
+
+.wc-card-trophy-rainbow .wc-card-band {
+  background: linear-gradient(135deg, #ff9fe0, #ffd93d, #6bcb77, #6bb6ff);
+}
+
+.wc-card-trophy-rainbow .wc-card-word {
+  color: #7a4fd1;
+}
+
+.wc-card-trophy-rainbow .wc-card-unit {
+  background: #f7f0ff;
+  border-top-color: #c9a6ff;
+  color: #7a4fd1;
+  font-weight: bold;
+}
+
 .wc-card-lg {
   width: 220px;
 }

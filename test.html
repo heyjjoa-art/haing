@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 시험 TEST - Haing</title>
+<link rel="stylesheet" href="css/style.css?v=202609011324">
+<link rel="stylesheet" href="css/word-card.css?v=202609011324">
+<link rel="stylesheet" href="css/test.css?v=202609011324">
+</head>
+<body>
+
+<header class="app-header">
+  <h1><a href="index.html">Haing 🐣</a></h1>
+  <p class="subtitle" id="appSubtitle">영어를 좋아하는</p>
+  <a class="wordcard-link-btn" href="wordcards.html">
+    <span class="wordcard-link-icon" aria-hidden="true">📔</span>
+    <span class="wordcard-link-label">단어도감</span>
+  </a>
+</header>
+
+<main class="test-main">
+  <h2 class="test-title">🌈 단어 시험 TEST</h2>
+  <p class="hint test-intro-hint">이미 공부한 유닛을 골라서 1~4단계를 순서대로 통과해보세요.<br>각 단계는 전부 다 맞힐 때까지 틀린 문제가 다시 나와요!</p>
+
+  <section class="card" id="testUnitPick">
+    <p class="field-label">📚 시험 볼 유닛</p>
+    <select class="test-unit-select" id="testUnitSelect"></select>
+    <p class="hint" id="testUnitEmptyHint" hidden>본문과 단어가 등록된 유닛이 아직 없어요.</p>
+    <button type="button" class="file-btn" id="testStartBtn">시험 시작하기 ▶</button>
+  </section>
+
+  <section class="test-quiz" id="testQuizPanel" hidden>
+    <div class="test-steps" id="testSteps">
+      <span class="test-step" data-step="0">1. 영→한</span>
+      <span class="test-step" data-step="1">2. 한→영</span>
+      <span class="test-step" data-step="2">3. 설명→단어</span>
+      <span class="test-step" data-step="3">4. 스토리 빈칸</span>
+    </div>
+
+    <div class="test-card" id="testAnswerCard">
+      <p class="test-progress" id="testProgress"></p>
+      <p class="test-question" id="testQuestion"></p>
+      <button type="button" class="secondary-btn tts-replay-btn" id="testReplayBtn" hidden>🔊 다시 듣기</button>
+
+      <input type="text" id="testAnswerInput" placeholder="정답을 입력하세요" autocomplete="off" autocapitalize="off" spellcheck="false">
+
+      <p class="test-feedback" id="testFeedback"></p>
+
+      <button type="button" class="file-btn" id="testSubmitBtn">확인</button>
+      <button type="button" class="file-btn" id="testNextBtn" hidden>다음 ▶</button>
+    </div>
+
+    <div class="test-card test-stage-complete" id="testStageCompleteCard" hidden>
+      <p class="test-stage-complete-text" id="testStageCompleteText"></p>
+      <button type="button" class="file-btn" id="testStageNextBtn">다음 단계로 ▶</button>
+    </div>
+
+    <div class="test-card test-story" id="testStoryReadCard" hidden>
+      <p class="test-question">📖 먼저 이야기를 잘 들어보세요!</p>
+      <div class="test-story-text" id="testStoryReadText"></div>
+      <button type="button" class="secondary-btn tts-replay-btn" id="testStoryReplayBtn">🔊 다시 듣기</button>
+      <button type="button" class="file-btn" id="testStoryReadyBtn">빈칸 채우기 ▶</button>
+    </div>
+
+    <div class="test-card test-story" id="testStoryFillCard" hidden>
+      <p class="test-progress" id="testStoryProgress"></p>
+      <p class="test-question">✏️ 빈칸에 들어갈 단어를 써보세요!</p>
+      <div class="test-story-text" id="testStoryFillText"></div>
+      <p class="test-feedback" id="testStoryFeedback"></p>
+      <button type="button" class="file-btn" id="testStoryGradeBtn">채점하기 ✅</button>
+    </div>
+
+    <button type="button" class="secondary-btn test-switch-unit-btn" id="testSwitchUnitBtn">← 다른 유닛 고르기</button>
+  </section>
+
+  <p class="back-link"><a href="index.html">← 홈으로</a></p>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js?v=202609011324"></script>
+<script src="js/child-store.js?v=202609011324"></script>
+<script src="js/growth-store.js?v=202609011324"></script>
+<script src="js/child-badge.js?v=202609011324"></script>
+<script src="js/words-data.js?v=202609011324"></script>
+<script src="js/elementary-words-data.js?v=202609011324"></script>
+<script src="js/data-store.js?v=202609011324"></script>
+<script src="js/progress-store.js?v=202609011324"></script>
+<script src="js/word-card-store.js?v=202609011324"></script>
+<script src="js/word-card-view.js?v=202609011324"></script>
+<script src="js/word-card-popup.js?v=202609011324"></script>
+<script src="js/word-game-store.js?v=202609011324"></script>
+<script src="js/tts.js?v=202609011324"></script>
+<script src="js/test.js?v=202609011324"></script>
+</body>
+</html>

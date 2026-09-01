@@ -68,6 +68,15 @@
   color: var(--color-danger);
 }
 
+.home-card-test {
+  border-color: #ff9fe0;
+  background: linear-gradient(135deg, #fff0fb, #fffef0);
+}
+
+.home-card-test .home-status {
+  color: #7a4fd1;
+}
+
 .unit-history-row {
   display: flex;
   flex-wrap: wrap;

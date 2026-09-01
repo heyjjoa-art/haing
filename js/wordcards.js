@@ -209,7 +209,7 @@
       var isNew = pending.indexOf(String(record.word || "").toLowerCase()) !== -1;
       var el = WordCardView.cardEl(record, { isNew: isNew });
       el.addEventListener("click", function () {
-        if (record.isTrophy && !record.journeysTrophy) {
+        if (record.isTrophy && !record.journeysTrophy && !record.rainbowCard) {
           openUnitDetail(record);
         } else {
           openLightbox(record);

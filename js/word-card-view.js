@@ -44,6 +44,29 @@ var WordCardView = (function () {
     return html;
   }
 
+  // TEST 페이지(1~4단계 20개 다 맞히기)를 통과하면 받는 무지개 카드. 완전정복
+  // 트로피와 같은 모양(.wc-card-trophy)에 무지개 톤만 덧씌운다(.wc-card-trophy-rainbow).
+  function rainbowCardHtml(record, opts) {
+    var classes = "wc-card wc-card-trophy wc-card-trophy-rainbow" + (opts.large ? " wc-card-lg" : "");
+    var label = unitLabel(record);
+
+    var html = '<article class="' + classes + '">';
+    if (opts.isNew) html += '<span class="wc-card-new">NEW</span>';
+    html +=
+      '<div class="wc-card-band"><span class="wc-card-emoji">🌈</span></div>' +
+      '<div class="wc-card-body">' +
+      '<strong class="wc-card-word">TEST 통과!</strong>' +
+      '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>4단계를 모두 통과했어요</span>";
+    if (opts.large) {
+      html += '<p class="wc-card-def">이 유닛의 단어를 시험 4단계 모두 20개씩 맞혔어요. 최고예요!</p>';
+    }
+    html +=
+      "</div>" +
+      '<span class="wc-card-unit">' + escapeHtml(label) + "</span>" +
+      "</article>";
+    return html;
+  }
+
   // Journeys 트로피 카드를 확대해서 볼 때 보여주는 꾸준함/성실 명언. 카드마다 하나로
   // 고정돼야 해서(볼 때마다 바뀌면 안 됨) 매번 랜덤으로 고르지 않는다 - 트로피를 줄 때
   // word-card-store.js가 record.quoteIndex를 순서대로 매겨서(0,1,2...) 저장해두면,
@@ -111,6 +134,7 @@ var WordCardView = (function () {
   function cardHtml(record, opts) {
     opts = opts || {};
     if (record && record.journeysTrophy) return journeysTrophyCardHtml(record, opts);
+    if (record && record.rainbowCard) return rainbowCardHtml(record, opts);
     if (record && record.isTrophy) return trophyCardHtml(record, opts);
 
     var tone = toneIndex(record);

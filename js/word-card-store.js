@@ -213,6 +213,41 @@ var WordCardStore = (function () {
     return record;
   }
 
+  // TEST 페이지(1~4단계를 순서대로 20개 다 맞혀야 통과하는 복습 시험)를 한 유닛에서
+  // 전부 통과하면 주는 무지개 카드. 저장 방식/집계 방식 모두 완전정복 트로피와 완전히
+  // 같다(같은 배열, isTrophy:true, WordGameStore 게임 기회 집계도 그대로 같이 잡힌다) -
+  // 가짜 word 값만 "__rainbow_유닛키"로 달라서 완전정복 트로피와 안 겹치고 따로 쌓인다.
+  function rainbowWordKey(unitKey) {
+    return "__rainbow_" + String(unitKey);
+  }
+
+  function hasRainbowCard(unitKey) {
+    var resolvedUnit = typeof DataStore !== "undefined" ? DataStore.resolveUnitKey(unitKey) : unitKey;
+    return hasWord(rainbowWordKey(resolvedUnit));
+  }
+
+  function awardRainbowCard(unitKey) {
+    if (typeof DataStore === "undefined") return null;
+    var resolvedUnit = DataStore.resolveUnitKey(unitKey);
+    if (hasRainbowCard(resolvedUnit)) return null;
+    if (dailyWordCapReached()) return null;
+
+    var record = {
+      word: rainbowWordKey(resolvedUnit),
+      isTrophy: true,
+      rainbowCard: true,
+      unit: resolvedUnit,
+      collectedAt: Date.now()
+    };
+    var collected = getCollected();
+    collected.push(record);
+    saveCollected(collected);
+    pushPending(record);
+    syncToCloud();
+    if (typeof WordGameStore !== "undefined") WordGameStore.syncCredits();
+    return record;
+  }
+
   // Journeys 쪽에서 한 주(월~금) 도장을 다 채웠을 때 트로피 카드를 하나 준다.
   // 같은 유닛의 같은 주는 한 번만(hasWord로 중복 방지 - 이 카드 자체가 "이미
   // 줬는지"의 기록이라 따로 상태를 안 둬도 된다). Word 쪽 트로피와 같은 배열에
@@ -439,6 +474,8 @@ var WordCardStore = (function () {
     hasTrophy: hasTrophy,
     isStarLimitReached: isStarLimitReached,
     awardTrophyIfComplete: awardTrophyIfComplete,
+    hasRainbowCard: hasRainbowCard,
+    awardRainbowCard: awardRainbowCard,
     awardJourneysTrophy: awardJourneysTrophy,
     getTrophyCards: getTrophyCards,
     getInProgressCards: getInProgressCards,

@@ -33,6 +33,7 @@ const HTML_FILES = [
   "snake.html",
   "storybook.html",
   "sudoku.html",
+  "test.html",
   "tetris.html",
   "word-edit.html",
   "wordcards.html",

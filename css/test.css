@@ -1,0 +1,174 @@
+.test-main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.test-title {
+  text-align: center;
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+}
+
+.test-intro-hint {
+  text-align: center;
+}
+
+.test-unit-select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-weight: bold;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  margin-bottom: 14px;
+}
+
+#testStartBtn {
+  width: 100%;
+}
+
+/* ── 4단계 진행 표시줄 ───────────────────────────────── */
+.test-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.test-step {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-faint);
+  font-size: 0.72rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.test-step.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.test-step.done {
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+/* ── 문제 카드 ─────────────────────────────────────── */
+.test-card {
+  background: var(--color-surface);
+  border-radius: 20px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 14px;
+}
+
+.test-progress {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-accent-deep);
+}
+
+.test-question {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--color-text);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.test-card #testAnswerInput {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  text-align: center;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+
+.test-card #testAnswerInput:disabled {
+  background: var(--color-surface-soft);
+}
+
+.test-feedback {
+  min-height: 1.4em;
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.test-feedback-correct {
+  color: var(--color-success);
+}
+
+.test-feedback-wrong {
+  color: var(--color-danger);
+}
+
+.test-card .file-btn,
+.test-card .secondary-btn {
+  width: 100%;
+}
+
+.test-stage-complete-text {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: var(--color-accent-deep);
+  margin: 0 0 16px;
+}
+
+/* ── 4단계: 스토리 읽기/빈칸 채우기 ───────────────────── */
+.test-story-text {
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.9;
+  color: var(--color-text);
+  margin-bottom: 14px;
+}
+
+.test-story-text p {
+  margin: 0 0 12px;
+}
+
+.test-story-blank {
+  display: inline-block;
+  width: 90px;
+  padding: 2px 6px;
+  margin: 0 2px;
+  border: none;
+  border-bottom: 2px solid var(--color-accent-deep);
+  background: var(--color-surface-soft);
+  font-size: 0.95rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.test-story-blank:disabled {
+  border-bottom-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.test-blank-wrong {
+  border-bottom-color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.test-switch-unit-btn {
+  width: 100%;
+  margin-top: 4px;
+}
