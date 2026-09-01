@@ -32,7 +32,7 @@ var WordCardView = (function () {
     html +=
       '<div class="wc-card-band"><span class="wc-card-emoji">🏆</span></div>' +
       '<div class="wc-card-body">' +
-      '<strong class="wc-card-word">완전정복!</strong>' +
+      '<strong class="wc-card-word">단어정복!</strong>' +
       '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>단어를 다 모았어요</span>";
     if (opts.large) {
       html += '<p class="wc-card-def">이 유닛의 단어를 전부 완벽하게 외웠어요. 정말 대단해요!</p>';
@@ -55,7 +55,7 @@ var WordCardView = (function () {
     html +=
       '<div class="wc-card-band"><span class="wc-card-emoji">🌈</span></div>' +
       '<div class="wc-card-body">' +
-      '<strong class="wc-card-word">4단계 모두 통과!</strong>' +
+      '<strong class="wc-card-word">TEST정복!</strong>' +
       '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>4단계를 모두 통과했어요</span>";
     if (opts.large) {
       html += '<p class="wc-card-def">이 유닛의 단어를 시험 4단계 모두 20개씩 맞혔어요. 최고예요!</p>';

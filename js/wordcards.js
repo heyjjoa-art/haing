@@ -99,7 +99,7 @@
   // 트로피 카드를 누르면 그 유닛에서 모은 단어 카드 전체를 보여준다.
   function openUnitDetail(trophyRecord) {
     var words = WordCardStore.getUnitWordCards(trophyRecord.unit);
-    unitTitleEl.textContent = "🏆 " + WordCardView.unitLabel(trophyRecord) + " 완전정복!";
+    unitTitleEl.textContent = "🏆 " + WordCardView.unitLabel(trophyRecord) + " 단어정복!";
     unitGridEl.innerHTML = "";
     words.forEach(function (record) {
       var el = WordCardView.cardEl(record);
