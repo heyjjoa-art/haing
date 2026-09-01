@@ -56,7 +56,7 @@ var WordCardView = (function () {
       '<div class="wc-card-band"><span class="wc-card-emoji">🌈</span></div>' +
       '<div class="wc-card-body">' +
       '<strong class="wc-card-word">TEST정복!</strong>' +
-      '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>4단계를 모두 통과했어요</span>";
+      '<span class="wc-card-meaning">' + escapeHtml(label) + "<br>4단계 모두 완벽통과</span>";
     if (opts.large) {
       html += '<p class="wc-card-def">이 유닛의 단어를 시험 4단계 모두 20개씩 맞혔어요. 최고예요!</p>';
     }
