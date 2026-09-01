@@ -95,6 +95,50 @@ var ProgressStore = (function () {
       info.count += 1;
       localStorage.setItem(wordSetsTodayKey(), JSON.stringify(info));
     }
+    recordWordStudyDay();
+  }
+
+  // 관리자 달력(저니스와 나란히)에 "이 날 단어 공부를 했는지"를 보여주기 위한
+  // 날짜 기록. haingWordSetsToday_는 "오늘" 하루치만 들고 있고 지나간 날짜는
+  // 남지 않아서, 저니스의 _stamps 배열처럼 날짜 문자열을 계속 쌓아두는 별도
+  // 기록을 둔다(하루에 여러 번 세트를 끝내도 그 날짜는 한 번만 들어간다).
+  function wordStudyDaysKey() {
+    return "haingWordStudyDays_" + childPrefix();
+  }
+
+  function getWordStudyDays() {
+    var raw = localStorage.getItem(wordStudyDaysKey());
+    if (!raw) return [];
+    try {
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function recordWordStudyDay() {
+    var days = getWordStudyDays();
+    var today = todayStr();
+    if (days.indexOf(today) === -1) {
+      days.push(today);
+      localStorage.setItem(wordStudyDaysKey(), JSON.stringify(days));
+    }
+  }
+
+  // 관리자 달력용 - 로그인 중인 아이와 무관하게 특정 아이의 특정 날짜에 단어
+  // 공부를 했는지. StampStore.isDayCompleteFor와 같은 자리에서 같이 쓴다.
+  function isWordDoneForDay(childId, dateStr) {
+    if (!childId) return false;
+    ensureCloudSyncForChild(childId);
+    var raw = localStorage.getItem("haingWordStudyDays_" + childId + "_");
+    if (!raw) return false;
+    try {
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) && arr.indexOf(dateStr) !== -1;
+    } catch (e) {
+      return false;
+    }
   }
 
   // 오늘 단어 공부를 한 세트라도 끝냈는지 - 게임 잠금 해제 조건에 쓴다.
@@ -125,7 +169,6 @@ var ProgressStore = (function () {
         localStorage.setItem(key, data.entries[key]);
       });
       if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
-      if (window.__haingRenderAdminWordProgress) window.__haingRenderAdminWordProgress();
     }
     HaingCloud.getDocOnce(path).then(function (remote) {
       applyRemote(remote);
@@ -315,6 +358,7 @@ var ProgressStore = (function () {
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
+        key.indexOf("haingWordStudyDays_" + prefix) === 0 ||
         key.indexOf("haingUnitLaps_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1)
       ) {
@@ -343,6 +387,7 @@ var ProgressStore = (function () {
         key.indexOf("haingStepProgress_" + prefix) === 0 ||
         key.indexOf("haingReviewProgress_" + prefix) === 0 ||
         key.indexOf("haingWordSetsToday_" + prefix) === 0 ||
+        key.indexOf("haingWordStudyDays_" + prefix) === 0 ||
         key.indexOf("haingUnitLaps_" + prefix) === 0 ||
         (key.indexOf("haingCustom_") === 0 && key.indexOf("_" + prefix) !== -1);
       if (isProgressKey && (!data || !data.entries || !(key in data.entries))) {
@@ -402,6 +447,7 @@ var ProgressStore = (function () {
     getCustomState: getCustomState,
     hasCompletedSetToday: hasCompletedSetToday,
     hasCompletedSetTodayForChild: hasCompletedSetTodayForChild,
+    isWordDoneForDay: isWordDoneForDay,
     reachedDailyWordCap: reachedDailyWordCap,
     getCompletedLapCount: getCompletedLapCount
   };

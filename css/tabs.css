@@ -375,125 +375,81 @@
   font-weight: bold;
 }
 
-/* ── Word 진행 관리 ───────────────────────────────────────────── */
-.admin-progress-summary {
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  margin-bottom: 14px;
-}
-
-.admin-progress-summary-line {
-  margin: 4px 0;
-  font-size: 0.88rem;
-  color: var(--color-text);
-}
-
-.admin-progress-unit-card {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border-soft);
-}
-
-.admin-progress-unit-card:last-child {
-  border-bottom: none;
-}
-
-.admin-progress-unit-title {
-  font-weight: bold;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-
-.admin-progress-child-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 0;
-}
-
-.admin-progress-child-name {
-  min-width: 64px;
-  font-size: 0.82rem;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-.admin-progress-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--color-border-soft);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.admin-progress-bar-fill {
-  height: 100%;
-  background: var(--color-accent);
-  border-radius: 999px;
-}
-
-.admin-progress-child-count {
-  min-width: 96px;
-  text-align: right;
-  font-size: 0.78rem;
-  color: var(--color-text-faint);
-  flex-shrink: 0;
-}
-
-/* ── Journeys 진행 관리(달력) ─────────────────────────────────── */
-.admin-journeys-progress-month-nav {
+/* ── 한눈에 보기: 아이별 달력(저니스·단어 완료 여부 같이 표기) ────────── */
+.admin-glance-calendar-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
-.admin-journeys-progress-month-nav .secondary-btn {
+.admin-glance-calendar-nav .secondary-btn {
   margin-top: 0;
   padding: 6px 14px;
 }
 
-.admin-journeys-progress-month-label {
+.admin-glance-calendar-month-label {
   font-weight: bold;
   color: var(--color-text);
   min-width: 90px;
   text-align: center;
 }
 
-.admin-journeys-progress-children {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.admin-journeys-progress-child-col {
-  flex: 1;
-  min-width: 220px;
-}
-
-.admin-journeys-progress-child-heading {
-  text-align: center;
-  margin: 0 0 4px;
-  color: var(--color-text);
-}
-
-.admin-journeys-progress-summary-line {
+.admin-glance-calendar-summary {
   text-align: center;
   font-size: 0.85rem;
   color: var(--color-text-muted);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
-.admin-journeys-progress-calendar {
+.admin-glance-calendar-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+  margin: 0 0 10px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  margin-left: 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border-soft);
+}
+
+.legend-swatch:first-child {
+  margin-left: 0;
+}
+
+.legend-swatch.journeys-done {
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.legend-swatch.word-done {
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent);
+}
+
+.legend-swatch.journeys-done.word-done {
+  background: var(--color-gold-soft);
+  border-color: var(--color-gold);
+}
+
+.admin-glance-calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
-.admin-journeys-progress-calendar-weekday {
+.admin-glance-calendar-weekday {
   text-align: center;
   font-size: 0.7rem;
   font-weight: bold;
@@ -501,7 +457,7 @@
   padding-bottom: 2px;
 }
 
-.admin-journeys-progress-calendar-day {
+.admin-glance-calendar-day {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -510,19 +466,34 @@
   background: var(--color-surface-soft);
   font-size: 0.78rem;
   color: var(--color-text-muted);
+  border: 1px solid transparent;
 }
 
-.admin-journeys-progress-calendar-day.empty {
+.admin-glance-calendar-day.empty {
   background: transparent;
 }
 
-.admin-journeys-progress-calendar-day.completed {
+.admin-glance-calendar-day.journeys-done {
   background: var(--color-success-bg);
-  border: 1px solid var(--color-success-border);
+  border-color: var(--color-success-border);
   color: var(--color-success);
   font-weight: bold;
 }
 
-.admin-journeys-progress-calendar-day.future {
+.admin-glance-calendar-day.word-done {
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent);
+  color: var(--color-accent-deep);
+  font-weight: bold;
+}
+
+.admin-glance-calendar-day.journeys-done.word-done {
+  background: var(--color-gold-soft);
+  border-color: var(--color-gold);
+  color: var(--color-accent-deep);
+  font-weight: bold;
+}
+
+.admin-glance-calendar-day.future {
   opacity: 0.4;
 }

@@ -354,7 +354,6 @@ var WordCardStore = (function () {
       if (!data) return;
       localStorage.setItem(storageKey, JSON.stringify(data.cards || []));
       if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
-      if (window.__haingRenderAdminWordProgress) window.__haingRenderAdminWordProgress();
     }
     HaingCloud.getDocOnce(path).then(function (remote) {
       applyRemote(remote);
