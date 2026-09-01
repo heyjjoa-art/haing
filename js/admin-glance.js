@@ -142,7 +142,7 @@
 
     var section3 = document.createElement("div");
     section3.className = "admin-glance-section";
-    section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개 (유닛별)</h3>";
+    section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
     section3.appendChild(buildUnitList(selectedChildId));
     bodyEl.appendChild(section3);
   }
