@@ -395,8 +395,12 @@ var ProgressStore = (function () {
   // (예전엔 클라우드에 있는 키만 덮어쓰고 없는 키는 안 지워서, 관리자가 진행률을
   // 초기화해도 클라우드가 빈 상태로 반영되면 오히려 이 기기의 예전 값을 다시
   // 클라우드로 밀어올려 초기화가 무효화되는 문제가 있었다.)
-  function applyCloudEntries(data) {
-    var prefix = childPrefix();
+  // childId를 fetch를 시작한 시점 값 그대로 인자로 받는다 - 여기서 다시
+  // ChildStore.getActive()로 구하면, 응답이 오는 사이에 다른 아이로 로그인이
+  // 바뀐 경우 지금 로그인한(엉뚱한) 아이의 기록을 이 데이터 기준으로 지워버리는
+  // 사고가 날 수 있다(이 fetch가 시작될 때의 아이 기준으로만 적용해야 한다).
+  function applyCloudEntries(data, childId) {
+    var prefix = childId ? childId + "_" : "guest_";
     Object.keys(localStorage).forEach(function (key) {
       var isProgressKey =
         key.indexOf("haingProgress_" + prefix) === 0 ||
@@ -429,17 +433,20 @@ var ProgressStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     var path = cloudPath();
     if (!path) return;
+    var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
       // 클라우드에 문서 자체가 없으면(이 아이가 클라우드에 처음 연결) 이 기기 값을
       // 시작점으로 올린다. 문서가 있으면 entries가 비어있어도(=관리자가 초기화한
       // 경우 포함) 클라우드를 그대로 따른다 - "비어있음"과 "아직 없음"을 구분해야
       // 초기화가 이 기기에도 실제로 반영된다.
       if (remote) {
-        applyCloudEntries(remote);
+        applyCloudEntries(remote, syncedChildId);
       } else {
         syncToCloud();
       }
-      unsubscribeCloud = HaingCloud.watchDoc(path, applyCloudEntries);
+      unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
+        applyCloudEntries(data, syncedChildId);
+      });
     });
   }
 

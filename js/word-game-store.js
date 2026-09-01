@@ -211,6 +211,7 @@ var WordGameStore = (function () {
         credits: normalizeCredits(parsed.credits),
         trophiesCounted: parsed.trophiesCounted || 0,
         starBlocksCounted: parsed.starBlocksCounted || 0,
+        updatedAt: parsed.updatedAt || 0,
         log: normalizeLog(parsed.log)
       };
     } catch (e) {
@@ -267,11 +268,15 @@ var WordGameStore = (function () {
   // 덮어써서, 아직 동기화가 안 된(또는 느린) 기기가 최신 값을 받아오는 도중에
   // 화면을 그리면 순간적으로 옛날 값(심하면 0)이 보이거나, 그 옛날 로컬 값이
   // 오히려 클라우드로 다시 밀려 올라가 실제로 쌓인 기회가 사라지는 문제가 있었다.
-  function applyCloudState(data) {
+  // childId를 fetch 시작 시점 값 그대로 인자로 받는다 - stateKey()는 지금
+  // 로그인한 아이 기준이라, 응답이 오는 사이에 다른 아이로 로그인이 바뀌면
+  // 그 새 아이의 기회 칸에 엉뚱한(이전 아이) 값을 덮어써버리는 사고가 날 수
+  // 있어서 childId를 직접 넘겨 받는다(stateKeyFor는 관리자 조정용으로 이미 있던 것).
+  function applyCloudState(childId, data) {
     if (!data) return;
-    var local = getState();
+    var local = getStateFor(childId);
     if ((data.updatedAt || 0) < (local.updatedAt || 0)) return;
-    localStorage.setItem(stateKey(), JSON.stringify({
+    localStorage.setItem(stateKeyFor(childId), JSON.stringify({
       credits: normalizeCredits(data.credits),
       trophiesCounted: data.trophiesCounted || 0,
       starBlocksCounted: data.starBlocksCounted || 0,
@@ -290,13 +295,16 @@ var WordGameStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     var path = cloudPath();
     if (!path) return;
+    var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
       if (remote) {
-        applyCloudState(remote);
+        applyCloudState(syncedChildId, remote);
       } else {
         syncToCloud(getState());
       }
-      unsubscribeCloud = HaingCloud.watchDoc(path, applyCloudState);
+      unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
+        applyCloudState(syncedChildId, data);
+      });
     });
   }
 

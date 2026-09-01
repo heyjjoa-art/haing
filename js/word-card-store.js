@@ -425,9 +425,18 @@ var WordCardStore = (function () {
     HaingCloud.writeDoc(path, { cards: getCollected() });
   }
 
-  function applyCloudCards(data) {
+  // childId를 fetch 시작 시점 값 그대로 인자로 받는다 - saveCollected가 쓰는
+  // collectionKey()는 지금 로그인한 아이 기준이라, 응답이 오는 사이에 다른
+  // 아이로 로그인이 바뀌면 그 새 아이의 카드 칸에 엉뚱한(이전 아이) 카드를
+  // 덮어써버리는 사고가 날 수 있다 - 그래서 childId를 직접 넘겨 받는다.
+  function saveCollectedFor(childId, cards) {
+    var key = "haingWordCards_" + (childId ? childId + "_" : "guest_");
+    localStorage.setItem(key, JSON.stringify(cards));
+  }
+
+  function applyCloudCards(childId, data) {
     if (!data || !data.cards) return;
-    saveCollected(data.cards);
+    saveCollectedFor(childId, data.cards);
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderWordCards) window.__haingRenderWordCards();
   }
@@ -441,19 +450,20 @@ var WordCardStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     var path = cloudPath();
     if (!path) return;
+    var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
       // 클라우드에 문서 자체가 없으면(이 아이가 클라우드에 처음 연결) 이 기기 카드를
       // 시작점으로 올린다. 문서가 있으면 카드가 0장이어도(=관리자가 삭제한 경우 포함)
       // 클라우드를 그대로 따른다 - "0장"과 "아직 연결 안 됨"을 구분해야 삭제가 이
       // 기기에도 실제로 반영된다.
       if (remote) {
-        saveCollected(remote.cards || []);
-        if (window.__haingRenderHome) window.__haingRenderHome();
-        if (window.__haingRenderWordCards) window.__haingRenderWordCards();
+        applyCloudCards(syncedChildId, remote);
       } else {
         syncToCloud();
       }
-      unsubscribeCloud = HaingCloud.watchDoc(path, applyCloudCards);
+      unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
+        applyCloudCards(syncedChildId, data);
+      });
     });
   }
 

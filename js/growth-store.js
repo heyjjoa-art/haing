@@ -26,6 +26,14 @@ var GrowthStore = (function () {
     return "haingGamePlays_" + childId;
   }
 
+  function updatedAtKey(childId) {
+    return "haingGamePlaysUpdatedAt_" + childId;
+  }
+
+  function getUpdatedAt(childId) {
+    return parseInt(localStorage.getItem(updatedAtKey(childId)), 10) || 0;
+  }
+
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
@@ -58,6 +66,59 @@ var GrowthStore = (function () {
       localStorage.setItem(key, JSON.stringify({ date: today, count: count + 1 }));
     }
     localStorage.setItem(playsKey(childId), String(getTotalPlays(childId) + 1));
+    localStorage.setItem(updatedAtKey(childId), String(Date.now()));
+    syncToCloud(childId);
+  }
+
+  // ── 클라우드 동기화 - 게임 레벨은 아이가 자기 기기에서만 플레이하는 게
+  // 아니라 부모 폰/다른 기기에서도 볼 수 있어야 해서(child-badge.js 배지),
+  // word-game-store.js와 같은 방식으로 아이별 총 플레이 횟수를 클라우드에도
+  // 올려둔다. updatedAt이 더 최신인 쪽을 진짜 값으로 본다.
+  function cloudPath(childId) {
+    return childId ? "growthPlays/" + childId : null;
+  }
+
+  function syncToCloud(childId) {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPath(childId);
+    if (!path) return;
+    HaingCloud.writeDoc(path, { totalPlays: getTotalPlays(childId), updatedAt: getUpdatedAt(childId) });
+  }
+
+  function applyCloudState(childId, data) {
+    if (!data) return;
+    if ((data.updatedAt || 0) < getUpdatedAt(childId)) return;
+    localStorage.setItem(playsKey(childId), String(data.totalPlays || 0));
+    localStorage.setItem(updatedAtKey(childId), String(data.updatedAt || 0));
+    if (window.__haingRenderHome) window.__haingRenderHome();
+  }
+
+  var unsubscribeCloud = null;
+
+  function setupCloudSyncForActiveChild() {
+    if (unsubscribeCloud) {
+      unsubscribeCloud();
+      unsubscribeCloud = null;
+    }
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    var path = cloudPath(childId);
+    if (!path) return;
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      if (remote) {
+        applyCloudState(childId, remote);
+      } else {
+        syncToCloud(childId);
+      }
+      unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
+        applyCloudState(childId, data);
+      });
+    });
+  }
+
+  if (typeof ChildStore !== "undefined") {
+    setupCloudSyncForActiveChild();
+    if (ChildStore.onChange) ChildStore.onChange(setupCloudSyncForActiveChild);
   }
 
   function getXP(childId) {

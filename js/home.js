@@ -6,6 +6,21 @@
     return unit ? "?unit=" + encodeURIComponent(unit) : "";
   }
 
+  // TEST(단어 시험) 카드는 test.js가 거는 조건(그 유닛의 "4. 스펠링 게임"까지
+  // 끝났는지)과 똑같이, 주간 유닛이든 초등 단어장이든 하나라도 그 조건을
+  // 채운 유닛이 있을 때만 보여준다 - 아직 하나도 없으면 눌러도 시험 볼 유닛이
+  // 없다는 안내만 보게 되니, 카드 자체를 숨겨서 헷갈리지 않게 한다.
+  function anyUnitReadyForTest() {
+    if (typeof ProgressStore === "undefined" || !ProgressStore.isDoneForUnit) return false;
+    var weeklyReady = (DataStore.getAllUnits() || []).some(function (entry) {
+      return ProgressStore.isDoneForUnit("hangman", entry.unit);
+    });
+    if (weeklyReady) return true;
+    return (DataStore.getElementaryLevels() || []).some(function (entry) {
+      return ProgressStore.isDoneForUnit("hangman", entry.level);
+    });
+  }
+
   function renderCards() {
     var suffix = currentUnitParam();
     // 초등 단어장 단계(초등1, 초등2...)는 본문이 없어서 스토리북 카드 자체를 숨기고
@@ -66,6 +81,14 @@
         }
       }
     });
+
+    var testCard = document.querySelector(".home-card-test");
+    if (testCard) {
+      var testEligible = anyUnitReadyForTest();
+      // .home-card가 display:flex를 지정해서 hidden 속성만으로는 안 숨겨진다.
+      testCard.hidden = !testEligible;
+      testCard.style.display = testEligible ? "" : "none";
+    }
   }
 
   // "주간 유닛"(매주 올리는 본문+단어)과 "초등영단어"(본문 없는 고정 단어장)를
@@ -167,11 +190,9 @@
     numberSelect.addEventListener("change", function () {
       var chosen = numberSelect.value;
       if (!chosen) return;
-      // 복습(2~4번 반복)으로 받는 별 스티커는 단어마다 5개가 한도다. 이 유닛의
-      // 단어가 전부 5개씩 다 찼으면 더 복습해도 얻을 게 없으니 안내해준다.
-      if (typeof WordCardStore !== "undefined" && WordCardStore.isStarLimitReached(chosen)) {
-        alert("별 5개가 모두 지급되었어요\n\n다른 단어도 공부해보아요!");
-      }
+      // 별 5개(한도)를 다 채운 유닛도 계속 복습하거나 TEST를 보러 들어갈 수
+      // 있다 - 다른 단어로 유도하는 안내 없이 그대로 보내준다. 복습 자체는
+      // 계속 되지만 별은 그 이상 안 쌓일 뿐이다(word-card-store.js addStar 참고).
       DataStore.setCurrentUnit(chosen);
       if (window.__haingRenderHome) window.__haingRenderHome();
     });
