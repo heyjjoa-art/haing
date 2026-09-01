@@ -126,19 +126,35 @@ var ProgressStore = (function () {
     }
   }
 
+  function dayStrFromTimestamp(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
   // 관리자 달력용 - 로그인 중인 아이와 무관하게 특정 아이의 특정 날짜에 단어
   // 공부를 했는지. StampStore.isDayCompleteFor와 같은 자리에서 같이 쓴다.
   function isWordDoneForDay(childId, dateStr) {
     if (!childId) return false;
     ensureCloudSyncForChild(childId);
     var raw = localStorage.getItem("haingWordStudyDays_" + childId + "_");
-    if (!raw) return false;
-    try {
-      var arr = JSON.parse(raw);
-      return Array.isArray(arr) && arr.indexOf(dateStr) !== -1;
-    } catch (e) {
-      return false;
+    if (raw) {
+      try {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.indexOf(dateStr) !== -1) return true;
+      } catch (e) {
+        // no-op
+      }
     }
+    // haingWordStudyDays_는 이 기록을 두기 시작한 날부터만 쌓여서, 그 전 날짜는
+    // 대신 그날 실제로 모은 단어/트로피/무지개 카드가 있는지로 판단한다(카드마다
+    // collectedAt이 있어서 과거 활동을 그대로 되짚어볼 수 있다).
+    if (typeof WordCardStore !== "undefined" && WordCardStore.getCollectedForChild) {
+      var cards = WordCardStore.getCollectedForChild(childId);
+      return cards.some(function (r) {
+        return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === dateStr;
+      });
+    }
+    return false;
   }
 
   // 오늘 단어 공부를 한 세트라도 끝냈는지 - 게임 잠금 해제 조건에 쓴다.
