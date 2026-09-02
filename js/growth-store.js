@@ -105,7 +105,13 @@ var GrowthStore = (function () {
     var path = cloudPath(childId);
     if (!path) return;
     HaingCloud.getDocOnce(path).then(function (remote) {
-      if (remote) {
+      // recordPlay()는 크레딧 소비 직후 곧바로 게임 페이지로 이동하는데(wordcards.js
+      // startGame), 그 이동이 클라우드 저장 요청을 완료 전에 끊어버리는 일이 잦다 -
+      // 로컬 저장(동기)은 항상 성공하지만 클라우드는 그 값을 못 받는 채로 남는 것.
+      // 그래서 여기서 받아온 원격 값이 이 기기 로컬보다 더 최신일 때만 내려받고,
+      // 그렇지 않으면(원격이 없거나 뒤처져 있으면) 이 기기가 가진 값을 다시 올려서
+      // 스스로 복구한다.
+      if (remote && (remote.updatedAt || 0) >= getUpdatedAt(childId)) {
         applyCloudState(childId, remote);
       } else {
         syncToCloud(childId);

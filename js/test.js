@@ -200,8 +200,13 @@
         return (w.emoji ? w.emoji + "  " : "") + w.word.toUpperCase();
       },
       speak: null,
+      // meaningKo에 "냄새가 나다, 냄새를 맡다"처럼 콤마로 여러 뜻이 나열된 경우가
+      // 있다 - 그 중 하나만 맞혀도 정답으로 인정한다.
       check: function (input, w) {
-        return normalizeKo(input) === normalizeKo(w.meaningKo);
+        var normalizedInput = normalizeKo(input);
+        return String(w.meaningKo || "").split(",").some(function (opt) {
+          return normalizeKo(opt) === normalizedInput;
+        });
       },
       correctDisplay: function (w) {
         return w.meaningKo;
