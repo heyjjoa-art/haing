@@ -29,6 +29,21 @@ var StampStore = (function () {
     localStorage.setItem(key(childId), JSON.stringify(data));
   }
 
+  // 실제 도장 데이터(stamps/{아이})와 별도로, "이 기기가 마지막으로 언제 로컬을
+  // 바꿨는지"만 작은 문서(stampsMeta/{아이})에 따로 둔다. 도장 문서 자체의 모양은
+  // (유닛id → 날짜별 기록) 그대로 바뀌지 않아야 기존 클라우드 데이터와 계속 호환된다.
+  function updatedAtKey(childId) {
+    return "journeysStampsUpdatedAt_" + childId;
+  }
+
+  function getUpdatedAt(childId) {
+    return parseInt(localStorage.getItem(updatedAtKey(childId)), 10) || 0;
+  }
+
+  function touchUpdatedAt(childId) {
+    localStorage.setItem(updatedAtKey(childId), String(Date.now()));
+  }
+
   // 아이별 스탬프 기록을 클라우드 문서 하나(stamps/{아이})와 그대로 맞춘다. 이 스토어는
   // ChildStore를 직접 들여다보지 않고 호출하는 쪽이 넘겨주는 childId만 쓰므로, 어떤
   // 아이가 지금 활성인지는 신경 쓰지 않고 "이 childId는 한 번은 구독해봤는지"만 기억한다.
@@ -38,11 +53,17 @@ var StampStore = (function () {
     return childId ? "stamps/" + childId : null;
   }
 
+  function metaCloudPath(childId) {
+    return childId ? "stampsMeta/" + childId : null;
+  }
+
   function syncToCloud(childId) {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     var path = cloudPath(childId);
     if (!path) return;
     HaingCloud.writeDoc(path, loadAll(childId));
+    var metaPath = metaCloudPath(childId);
+    if (metaPath) HaingCloud.writeDoc(metaPath, { updatedAt: getUpdatedAt(childId) });
   }
 
   function ensureCloudSync(childId) {
@@ -50,9 +71,18 @@ var StampStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     watchedChildren[childId] = true;
     var path = cloudPath(childId);
-    HaingCloud.getDocOnce(path).then(function (remote) {
-      if (remote && Object.keys(remote).length > 0) {
+    var metaPath = metaCloudPath(childId);
+    Promise.all([HaingCloud.getDocOnce(path), HaingCloud.getDocOnce(metaPath)]).then(function (results) {
+      var remote = results[0];
+      var remoteUpdatedAt = (results[1] && results[1].updatedAt) || 0;
+      // 원격 문서가 있고(비어있어도 - 관리자 초기화 포함) 이 기기 로컬보다 최신이면
+      // 그대로 따른다. 원격이 없거나 이 기기 로컬보다 오래됐으면(막 찍은 도장의
+      // 클라우드 저장이 페이지 이동 등으로 끊긴 경우 포함) 로컬 값을 다시 올린다.
+      // stampsMeta 문서는 이 기능이 생기기 전엔 없었으므로, 둘 다 0(기록 없음)인
+      // 예전 데이터에서는 원래처럼 원격을 그대로 따른다.
+      if (remote && remoteUpdatedAt >= getUpdatedAt(childId)) {
         saveAll(childId, remote);
+        localStorage.setItem(updatedAtKey(childId), String(remoteUpdatedAt));
       } else {
         syncToCloud(childId);
       }
@@ -61,6 +91,9 @@ var StampStore = (function () {
         saveAll(childId, data);
         if (window.__journeysRenderStamps) window.__journeysRenderStamps();
         if (window.__journeysRenderHome) window.__journeysRenderHome();
+      });
+      HaingCloud.watchDoc(metaPath, function (data) {
+        if (data) localStorage.setItem(updatedAtKey(childId), String(data.updatedAt || 0));
       });
     });
   }
@@ -209,6 +242,7 @@ var StampStore = (function () {
 
     all[unitId] = unitRecords;
     saveAll(childId, all);
+    touchUpdatedAt(childId);
     syncToCloud(childId);
     return {
       stamps: { listen: !!entry.listen, follow: !!entry.follow, alone: !!entry.alone },

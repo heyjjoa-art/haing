@@ -360,13 +360,24 @@ var ProgressStore = (function () {
   // 진행 상황은 아이별로 하나의 클라우드 문서에 몰아 저장한다(유닛/종류별로 문서를
   // 쪼개지 않고, 이 아이의 haingProgress_/haingStepProgress_/haingCustom_ 키를 통째로).
   // 로그인 안 한(guest) 상태는 어느 아이 것인지 알 수 없어 동기화하지 않는다.
-  function cloudPath() {
-    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+  function cloudPathFor(childId) {
     return childId ? "progress/" + childId : null;
   }
 
-  function relevantLocalEntries() {
-    var prefix = childPrefix();
+  function cloudPath() {
+    return cloudPathFor(typeof ChildStore !== "undefined" && ChildStore.getActive());
+  }
+
+  function updatedAtKeyFor(childId) {
+    return "haingProgressUpdatedAt_" + (childId ? childId + "_" : "guest_");
+  }
+
+  function getUpdatedAtFor(childId) {
+    return parseInt(localStorage.getItem(updatedAtKeyFor(childId)), 10) || 0;
+  }
+
+  function relevantLocalEntriesFor(childId) {
+    var prefix = childId ? childId + "_" : "guest_";
     var entries = {};
     Object.keys(localStorage).forEach(function (key) {
       if (
@@ -384,11 +395,25 @@ var ProgressStore = (function () {
     return entries;
   }
 
-  function syncToCloud() {
+  function relevantLocalEntries() {
+    return relevantLocalEntriesFor(typeof ChildStore !== "undefined" && ChildStore.getActive());
+  }
+
+  // 로컬 쓰기 직후(대부분의 mark*/set* 함수가 곧바로 이 함수를 부른다) 항상
+  // updatedAt을 같이 갱신해서 저장한다 - 페이지가 막 로드되며 클라우드 값을
+  // 받아오는 그 짧은 순간에, 마침 이 기기에서 방금 쌓은 기록이 뒤늦게 도착한
+  // 예전 클라우드 값에 덮여 사라지는 걸 막기 위한 기준이 된다.
+  function syncToCloudFor(childId) {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
-    var path = cloudPath();
+    var path = cloudPathFor(childId);
     if (!path) return;
-    HaingCloud.writeDoc(path, { entries: relevantLocalEntries() });
+    var now = Date.now();
+    localStorage.setItem(updatedAtKeyFor(childId), String(now));
+    HaingCloud.writeDoc(path, { entries: relevantLocalEntriesFor(childId), updatedAt: now });
+  }
+
+  function syncToCloud() {
+    syncToCloudFor(typeof ChildStore !== "undefined" && ChildStore.getActive());
   }
 
   // 클라우드 entries를 그대로 반영한다 - 클라우드에 없는 키는 이 기기에서도 지운다.
@@ -419,6 +444,7 @@ var ProgressStore = (function () {
         localStorage.setItem(key, data.entries[key]);
       });
     }
+    localStorage.setItem(updatedAtKeyFor(childId), String((data && data.updatedAt) || 0));
     if (window.__haingRenderHome) window.__haingRenderHome();
   }
 
@@ -436,13 +462,16 @@ var ProgressStore = (function () {
     var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
       // 클라우드에 문서 자체가 없으면(이 아이가 클라우드에 처음 연결) 이 기기 값을
-      // 시작점으로 올린다. 문서가 있으면 entries가 비어있어도(=관리자가 초기화한
-      // 경우 포함) 클라우드를 그대로 따른다 - "비어있음"과 "아직 없음"을 구분해야
-      // 초기화가 이 기기에도 실제로 반영된다.
-      if (remote) {
+      // 시작점으로 올린다. 문서가 있고 이 기기 로컬보다 최신이면(entries가
+      // 비어있어도, 즉 관리자가 초기화한 경우 포함) 클라우드를 그대로 따른다.
+      // 반대로 원격이 이 기기 로컬보다 오래됐으면(예: 방금 막 쌓은 로컬 기록의
+      // 클라우드 저장이 페이지 이동 등으로 중간에 끊긴 경우) 로컬 값을 다시
+      // 올려서 스스로 맞춘다 - 그 뒤에 오는 watchDoc 실시간 갱신(관리자 초기화
+      // 등 진짜 새 원격 변경)은 지금처럼 항상 그대로 반영한다.
+      if (remote && (remote.updatedAt || 0) >= getUpdatedAtFor(syncedChildId)) {
         applyCloudEntries(remote, syncedChildId);
       } else {
-        syncToCloud();
+        syncToCloudFor(syncedChildId);
       }
       unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
         applyCloudEntries(data, syncedChildId);

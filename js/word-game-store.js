@@ -297,10 +297,15 @@ var WordGameStore = (function () {
     if (!path) return;
     var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
-      if (remote) {
+      // 기회를 쓰자마자(spendCredit) 곧바로 게임 페이지로 이동하는 흐름 때문에
+      // 그 클라우드 저장이 이동 중에 끊기는 일이 있다 - 로컬은 정확해도
+      // 클라우드만 뒤처진 채 굳어버리므로, 원격이 이 기기 로컬보다 오래됐으면
+      // (또는 아예 없으면) 로컬 값을 다시 올려서 스스로 맞춘다.
+      var local = getStateFor(syncedChildId);
+      if (remote && (remote.updatedAt || 0) >= (local.updatedAt || 0)) {
         applyCloudState(syncedChildId, remote);
       } else {
-        syncToCloud(getState());
+        syncToCloud(local);
       }
       unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
         applyCloudState(syncedChildId, data);

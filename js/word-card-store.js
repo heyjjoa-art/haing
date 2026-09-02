@@ -19,6 +19,14 @@ var WordCardStore = (function () {
     return "haingWordCards_" + childPrefix();
   }
 
+  function updatedAtKeyFor(childId) {
+    return "haingWordCardsUpdatedAt_" + (childId ? childId + "_" : "guest_");
+  }
+
+  function getUpdatedAtFor(childId) {
+    return parseInt(localStorage.getItem(updatedAtKeyFor(childId)), 10) || 0;
+  }
+
   function pendingKey() {
     return "haingPendingWordCard_" + childPrefix();
   }
@@ -39,6 +47,7 @@ var WordCardStore = (function () {
 
   function saveCollected(cards) {
     localStorage.setItem(collectionKey(), JSON.stringify(cards));
+    localStorage.setItem(updatedAtKeyFor(typeof ChildStore !== "undefined" && ChildStore.getActive()), String(Date.now()));
   }
 
   function getCount() {
@@ -403,9 +412,13 @@ var WordCardStore = (function () {
       });
       if (changed) {
         localStorage.setItem(key, JSON.stringify(cards));
-        if (prefix !== "guest_" && typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
+        if (prefix !== "guest_") {
           var childId = prefix.slice(0, -1);
-          HaingCloud.writeDoc("wordCards/" + childId, { cards: cards });
+          var now = Date.now();
+          localStorage.setItem(updatedAtKeyFor(childId), String(now));
+          if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
+            HaingCloud.writeDoc("wordCards/" + childId, { cards: cards, updatedAt: now });
+          }
         }
       }
     });
@@ -413,16 +426,12 @@ var WordCardStore = (function () {
 
   // 지금 로그인한 아이의 카드만 클라우드와 맞춘다(guest 상태는 어느 아이 것인지 알 수
   // 없어 동기화하지 않는다). 다른 아이로 로그인을 바꾸면 구독을 새로 건다.
-  function cloudPath() {
-    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+  function cloudPathFor(childId) {
     return childId ? "wordCards/" + childId : null;
   }
 
-  function syncToCloud() {
-    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
-    var path = cloudPath();
-    if (!path) return;
-    HaingCloud.writeDoc(path, { cards: getCollected() });
+  function cloudPath() {
+    return cloudPathFor(typeof ChildStore !== "undefined" && ChildStore.getActive());
   }
 
   // childId를 fetch 시작 시점 값 그대로 인자로 받는다 - saveCollected가 쓰는
@@ -434,9 +443,31 @@ var WordCardStore = (function () {
     localStorage.setItem(key, JSON.stringify(cards));
   }
 
+  function getCollectedFor(childId) {
+    var raw = localStorage.getItem("haingWordCards_" + (childId ? childId + "_" : "guest_"));
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function syncToCloudFor(childId) {
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    var path = cloudPathFor(childId);
+    if (!path) return;
+    HaingCloud.writeDoc(path, { cards: getCollectedFor(childId), updatedAt: getUpdatedAtFor(childId) });
+  }
+
+  function syncToCloud() {
+    syncToCloudFor(typeof ChildStore !== "undefined" && ChildStore.getActive());
+  }
+
   function applyCloudCards(childId, data) {
     if (!data || !data.cards) return;
     saveCollectedFor(childId, data.cards);
+    localStorage.setItem(updatedAtKeyFor(childId), String(data.updatedAt || 0));
     if (window.__haingRenderHome) window.__haingRenderHome();
     if (window.__haingRenderWordCards) window.__haingRenderWordCards();
   }
@@ -453,13 +484,15 @@ var WordCardStore = (function () {
     var syncedChildId = typeof ChildStore !== "undefined" && ChildStore.getActive();
     HaingCloud.getDocOnce(path).then(function (remote) {
       // 클라우드에 문서 자체가 없으면(이 아이가 클라우드에 처음 연결) 이 기기 카드를
-      // 시작점으로 올린다. 문서가 있으면 카드가 0장이어도(=관리자가 삭제한 경우 포함)
-      // 클라우드를 그대로 따른다 - "0장"과 "아직 연결 안 됨"을 구분해야 삭제가 이
-      // 기기에도 실제로 반영된다.
-      if (remote) {
+      // 시작점으로 올린다. 문서가 있고 이 기기 로컬보다 최신이면(카드가 0장이어도,
+      // 즉 관리자가 삭제한 경우 포함) 클라우드를 그대로 따른다 - "0장"과 "아직
+      // 연결 안 됨"을 구분해야 삭제가 이 기기에도 실제로 반영된다. 반대로 원격이
+      // 이 기기 로컬보다 오래됐으면(카드를 모으자마자 페이지 이동해 클라우드 저장이
+      // 끊긴 경우 등) 로컬 값을 다시 올려서 스스로 맞춘다.
+      if (remote && (remote.updatedAt || 0) >= getUpdatedAtFor(syncedChildId)) {
         applyCloudCards(syncedChildId, remote);
       } else {
-        syncToCloud();
+        syncToCloudFor(syncedChildId);
       }
       unsubscribeCloud = HaingCloud.watchDoc(path, function (data) {
         applyCloudCards(syncedChildId, data);
