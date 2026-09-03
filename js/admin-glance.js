@@ -119,11 +119,8 @@ var GlanceView = (function () {
           wordDone: ProgressStore.isWordDoneForDay(childId, d.date)
         };
       });
-      var considered = days.filter(function (d) {
-        return !d.isFuture;
-      });
-      var bothCount = considered.filter(function (d) {
-        return d.journeysDone && d.wordDone;
+      var bothCount = days.filter(function (d) {
+        return !d.isFuture && d.journeysDone && d.wordDone;
       }).length;
 
       var wrap = document.createElement("div");
@@ -169,7 +166,7 @@ var GlanceView = (function () {
 
       var summary = document.createElement("p");
       summary.className = "admin-glance-calendar-summary";
-      summary.textContent = "둘 다 완료한 날 " + bothCount + "/" + considered.length + "일";
+      summary.textContent = "둘 다 완료한 날 " + bothCount + "/" + days.length + "일";
       wrap.appendChild(summary);
 
       wrap.appendChild(document.createRange().createContextualFragment(
