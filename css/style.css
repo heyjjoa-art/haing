@@ -157,6 +157,15 @@ body {
   color: var(--color-text-muted);
 }
 
+/* 우측에 단어도감·성장레벨 아이콘이 절대좌표(px)로 고정돼 있어서, 화면이
+   좁은 휴대폰에서는 제목/부제목 텍스트가 그 자리까지 뻗어나가 아이콘과
+   겹쳐 보일 수 있다 - 아이콘 영역만큼 폭을 미리 비워 텍스트가 그 앞에서
+   줄바꿈되게 한다. */
+.app-header h1,
+.subtitle {
+  max-width: calc(100% - 180px);
+}
+
 main {
   max-width: 480px;
   margin: 0 auto;
