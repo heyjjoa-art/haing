@@ -301,51 +301,6 @@
   color: var(--color-text);
 }
 
-.admin-glance-week-row {
-  display: flex;
-  gap: 6px;
-}
-
-.admin-glance-day-cell {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border-soft);
-}
-
-.admin-glance-day-cell.stamped {
-  background: var(--color-success-bg);
-  border-color: var(--color-success-border);
-}
-
-.admin-glance-day-cell.today {
-  border-color: var(--color-accent);
-}
-
-.admin-glance-day-cell.future {
-  opacity: 0.5;
-}
-
-.admin-glance-day-label {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-}
-
-.admin-glance-day-mark {
-  font-size: 0.9rem;
-}
-
-.admin-glance-today-line {
-  margin: 4px 0;
-  font-size: 0.9rem;
-  color: var(--color-text);
-}
-
 .admin-glance-units {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
-// 아이 한 명의 학습 현황(이번주 저니스/오늘 단어 공부/트로피·별 스티커·무지개/
-// 이번 달 달력)을 그려주는 공용 렌더러(GlanceView)와, 그걸 써서 "관리자 > 학습"
+// 아이 한 명의 학습 현황(이번 달 달력/트로피·별 스티커·무지개)을 그려주는
+// 공용 렌더러(GlanceView)와, 그걸 써서 "관리자 > 학습"
 // 탭(아이 선택 탭 있음)을 그리는 코드. 같은 렌더러를 js/my-glance.js가 그대로
 // 재사용해서, 아이가 직접 로그인했을 때 보는 "학습" 탭(본인 것만)도 만든다.
 // 예전에는 유닛별 상세 진행률(Word 진행 관리)과 달력(Journeys 진행 관리)이
@@ -60,32 +60,6 @@ var GlanceView = (function () {
       .filter(function (u) {
         return u.hasTrophy || u.hasRainbow || u.wordCount > 0;
       });
-  }
-
-  function buildWeekRow(childId) {
-    var weeks = StampStore.getWeekGridAny(childId);
-    var thisWeek = weeks[weeks.length - 1];
-
-    var wrap = document.createElement("div");
-    wrap.className = "admin-glance-week";
-
-    var row = document.createElement("div");
-    row.className = "admin-glance-week-row";
-    if (thisWeek) {
-      thisWeek.days.forEach(function (day) {
-        var cell = document.createElement("div");
-        cell.className = "admin-glance-day-cell";
-        if (day.stamped) cell.classList.add("stamped");
-        if (day.isToday) cell.classList.add("today");
-        if (day.isFuture) cell.classList.add("future");
-        cell.innerHTML =
-          '<span class="admin-glance-day-label">' + day.label + "</span>" +
-          '<span class="admin-glance-day-mark">' + (day.stamped ? "✅" : day.isFuture ? "" : "・") + "</span>";
-        row.appendChild(cell);
-      });
-    }
-    wrap.appendChild(row);
-    return wrap;
   }
 
   function buildUnitList(childId) {
@@ -245,36 +219,16 @@ var GlanceView = (function () {
       bodyEl.innerHTML = "";
       if (!childId) return;
 
-      var studiedToday = ProgressStore.hasCompletedSetTodayForChild(childId);
+      var calendarSection = document.createElement("div");
+      calendarSection.className = "admin-glance-section";
+      calendarSection.appendChild(buildCalendar(childId));
+      bodyEl.appendChild(calendarSection);
 
-      var section1 = document.createElement("div");
-      section1.className = "admin-glance-section";
-      section1.innerHTML = "<h3>📅 이번주 저니스</h3>";
-      section1.appendChild(buildWeekRow(childId));
-      bodyEl.appendChild(section1);
-
-      var section2 = document.createElement("div");
-      section2.className = "admin-glance-section";
-      section2.innerHTML =
-        "<h3>✏️ 오늘 단어 공부</h3><p class=\"admin-glance-today-line\">" +
-        (studiedToday ? "✅ 오늘 단어 공부를 끝냈어요." : "❌ 아직 안 했어요.") +
-        "</p>";
-      bodyEl.appendChild(section2);
-
-      var section3 = document.createElement("div");
-      section3.className = "admin-glance-section";
-      section3.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
-      section3.appendChild(buildUnitList(childId));
-      bodyEl.appendChild(section3);
-
-      var section4 = document.createElement("div");
-      section4.className = "admin-glance-section";
-      section4.innerHTML = "<h3>📅 " + (function () {
-        var info = typeof ChildStore !== "undefined" && ChildStore.CHILDREN.find(function (c) { return c.id === childId; });
-        return info ? info.zodiacEmoji + " " + info.name : "";
-      })() + " 달력</h3>";
-      section4.appendChild(buildCalendar(childId));
-      bodyEl.appendChild(section4);
+      var trophySection = document.createElement("div");
+      trophySection.className = "admin-glance-section";
+      trophySection.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
+      trophySection.appendChild(buildUnitList(childId));
+      bodyEl.appendChild(trophySection);
     }
 
     return { render: render };
