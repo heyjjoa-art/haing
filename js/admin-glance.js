@@ -229,7 +229,7 @@ var GlanceView = (function () {
 
       var trophySection = document.createElement("div");
       trophySection.className = "admin-glance-section";
-      trophySection.innerHTML = "<h3>🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>";
+      trophySection.innerHTML = '<h3 class="admin-glance-trophy-title">🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>';
       trophySection.appendChild(buildUnitList(childId));
       bodyEl.appendChild(trophySection);
     }
