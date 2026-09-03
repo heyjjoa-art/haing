@@ -800,6 +800,9 @@
   // 오늘 이 단계를 끝까지 마쳤을 때 호출. 오늘 1·2·3번을 모두 마치면 도장판에 도장이
   // 찍히고, 처음 다 채운 순간에만 보상(오늘의 운세)을 보여준다.
   function onStageCompleted(stage) {
+    // 관리자가 종료시킨 유닛은 계속 읽을 수는 있지만(복습) 오늘의 미션(도장)에는
+    // 반영되지 않는다 - home.js의 "종료" 토글, unit.ended 참고.
+    if (unit.ended) return;
     if (!childId || typeof StampStore === "undefined") return;
     var result = StampStore.markStageDone(childId, unit.id, stage);
     renderStampButtons();

@@ -335,6 +335,16 @@ input[type="text"] {
   font-weight: bold;
 }
 
+.unit-card.ended {
+  background: #dcdcdc;
+}
+
+.unit-ended-badge {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  font-weight: bold;
+}
+
 .unit-manage-row {
   display: flex;
   gap: 6px;

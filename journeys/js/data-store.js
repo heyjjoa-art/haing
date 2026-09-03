@@ -54,6 +54,15 @@ var JourneysStore = (function () {
     return loadAll()[id] || null;
   }
 
+  // 관리자가 이 유닛을 "종료"하면 그 뒤로는 복습(다시 읽기)만 가능하고, 오늘의
+  // 미션(도장)에는 반영되지 않는다 - reader.js의 onStageCompleted가 unit.ended를
+  // 보고 막아준다. 다른 필드는 그대로 두고 ended만 바꿔서 saveUnit으로 저장한다.
+  function setEnded(id, ended) {
+    var unit = getUnit(id);
+    if (!unit) return null;
+    return saveUnit(Object.assign({}, unit, { ended: !!ended }));
+  }
+
   function deleteUnit(id) {
     var units = loadAll();
     delete units[id];
@@ -241,6 +250,7 @@ var JourneysStore = (function () {
     saveUnit: saveUnit,
     getUnit: getUnit,
     deleteUnit: deleteUnit,
+    setEnded: setEnded,
     getGroupedByLevel: getGroupedByLevel,
     hasAny: hasAny
   };

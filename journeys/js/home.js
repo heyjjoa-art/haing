@@ -217,11 +217,12 @@
         card.className = "unit-card-wrap";
 
         var link = document.createElement("a");
-        link.className = "unit-card";
+        link.className = "unit-card" + (unit.ended ? " ended" : "");
         link.href = "reader.html?id=" + encodeURIComponent(unit.id) + (window.JOURNEYS_ADMIN_MODE ? "&admin=1" : "");
         link.innerHTML =
           '<span class="unit-emoji">📘</span>' +
           '<span class="unit-title">' + escapeHtml(unit.title || "제목 없음") + "</span>" +
+          (unit.ended ? '<span class="unit-ended-badge">🔒 종료됨 (복습만)</span>' : "") +
           buildStampBadgeHtml(unit.id);
         card.appendChild(link);
 
@@ -248,6 +249,18 @@
             }
           });
           manageRow.appendChild(delBtn);
+
+          // 종료된 유닛은 복습(다시 읽기)만 가능하고 오늘의 미션(도장)엔 반영되지
+          // 않는다(reader.js의 onStageCompleted 참고) - 목록에서도 연회색으로 표시된다.
+          var endBtn = document.createElement("button");
+          endBtn.type = "button";
+          endBtn.className = "unit-manage-btn";
+          endBtn.textContent = unit.ended ? "🔓 종료 해제" : "🔒 종료";
+          endBtn.addEventListener("click", function () {
+            JourneysStore.setEnded(unit.id, !unit.ended);
+            render();
+          });
+          manageRow.appendChild(endBtn);
 
           card.appendChild(manageRow);
         }
