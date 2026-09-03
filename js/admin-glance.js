@@ -206,6 +206,9 @@ var GlanceView = (function () {
           if (d.journeysDone) cell.classList.add("journeys-done");
           if (d.wordDone) cell.classList.add("word-done");
         }
+        if (isCurrentMonthView() && d.day === today.getDate()) {
+          cell.classList.add("today");
+        }
         cell.textContent = String(d.day);
         grid.appendChild(cell);
       });

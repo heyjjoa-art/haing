@@ -330,6 +330,10 @@
   font-weight: bold;
 }
 
+.my-glance-title {
+  text-align: center;
+}
+
 /* ── 한눈에 보기: 아이별 달력(저니스·단어 완료 여부 같이 표기) ────────── */
 .admin-glance-calendar-nav {
   display: flex;
@@ -452,4 +456,9 @@
 
 .admin-glance-calendar-day.future {
   opacity: 0.4;
+}
+
+.admin-glance-calendar-day.today {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
 }
