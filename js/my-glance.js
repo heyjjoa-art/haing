@@ -21,7 +21,7 @@
     ) {
       return;
     }
-    if (!renderer) renderer = GlanceView.createRenderer(bodyEl);
+    if (!renderer) renderer = GlanceView.createRenderer(bodyEl, true);
     renderer.render(ChildStore.getActive());
   }
 

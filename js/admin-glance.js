@@ -49,6 +49,7 @@ var GlanceView = (function () {
       .map(function (u) {
         var m = map[String(u.key)] || { wordCount: 0, starSum: 0, hasTrophy: false, hasRainbow: false };
         return {
+          key: u.key,
           label: u.label,
           total: u.total,
           wordCount: m.wordCount,
@@ -62,7 +63,21 @@ var GlanceView = (function () {
       });
   }
 
-  function buildUnitList(childId) {
+  // 무지개까지 다 모으지 않은(=아직 더 모을 게 남은) 유닛 칩을 누르면 그
+  // 유닛으로 바로 이동해서 이어서 공부할 수 있게 한다. Word 탭의 진행률은
+  // ChildStore.getActive()에 묶여 있어서, 지금 그 아이로 실제 로그인해
+  // 있을 때(=아이 본인의 "학습" 탭)만 의미가 있다 - 관리자가 다른 아이를
+  // 골라 보는 화면에서는 이동시키지 않는다(canNavigate로 구분).
+  function goToUnitStudy(unitKey) {
+    if (typeof DataStore !== "undefined" && DataStore.setCurrentUnit) {
+      DataStore.setCurrentUnit(unitKey);
+    }
+    if (window.__haingRenderHome) window.__haingRenderHome();
+    var wordTabBtn = document.getElementById("tabBtnWord");
+    if (wordTabBtn) wordTabBtn.click();
+  }
+
+  function buildUnitList(childId, canNavigate) {
     var summaries = unitSummaries(childId);
     var wrap = document.createElement("div");
     wrap.className = "admin-glance-units";
@@ -76,7 +91,9 @@ var GlanceView = (function () {
     }
 
     summaries.forEach(function (u) {
-      var line = document.createElement("span");
+      var clickable = canNavigate && !u.hasRainbow;
+      var line = document.createElement(clickable ? "button" : "span");
+      if (clickable) line.type = "button";
       line.className = "admin-glance-unit-chip";
       if (u.hasTrophy) line.classList.add("trophy");
       if (u.hasRainbow) line.classList.add("rainbow");
@@ -87,6 +104,11 @@ var GlanceView = (function () {
       if (u.hasRainbow) parts.push("🌈");
       var suffix = parts.length > 0 ? " " + parts.join(" ") : " " + u.wordCount + "/" + u.total;
       line.textContent = u.label + suffix;
+      if (clickable) {
+        line.addEventListener("click", function () {
+          goToUnitStudy(u.key);
+        });
+      }
       wrap.appendChild(line);
     });
     return wrap;
@@ -94,7 +116,9 @@ var GlanceView = (function () {
 
   // 렌더러 하나를 만든다 - 달력 이동(연/월) 상태를 이 인스턴스가 따로 들고
   // 있어서, 관리자 쪽과 아이 본인 쪽이 서로 다른 달을 보고 있어도 안 꼬인다.
-  function createRenderer(bodyEl) {
+  // canNavigate: 유닛 칩을 눌러 그 유닛 공부로 이동할 수 있게 할지 - 아이 본인이
+  // 보는 화면(my-glance.js)에서만 true로 넘어온다.
+  function createRenderer(bodyEl, canNavigate) {
     var today = new Date();
     var viewYear = today.getFullYear();
     var viewMonth = today.getMonth() + 1; // 1~12
@@ -227,7 +251,7 @@ var GlanceView = (function () {
       var trophySection = document.createElement("div");
       trophySection.className = "admin-glance-section";
       trophySection.innerHTML = '<h3 class="admin-glance-trophy-title">🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>';
-      trophySection.appendChild(buildUnitList(childId));
+      trophySection.appendChild(buildUnitList(childId, canNavigate));
       bodyEl.appendChild(trophySection);
     }
 
