@@ -70,6 +70,10 @@
   margin-left: 32px;
 }
 
+.keyboard-row-symbols {
+  margin-top: 4px;
+}
+
 .key-btn {
   width: 34px;
   height: 38px;

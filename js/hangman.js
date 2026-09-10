@@ -29,6 +29,12 @@
 
   var KEYBOARD_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
 
+  // 알파벳이 아닌 글자(. , ' ! ? 등)는 키보드로 직접 맞히기 어려우니
+  // 항상 자동으로 미리 보여주고, 맞혀야 할 대상에서 제외한다.
+  function isLetter(ch) {
+    return /[a-z]/i.test(ch);
+  }
+
   var easyTab = document.getElementById("easyTab");
   var mediumTab = document.getElementById("mediumTab");
   var hardTab = document.getElementById("hardTab");
@@ -147,6 +153,9 @@
     // 아무리 쉬운 단계라도 최소 한 글자는 직접 맞혀야 한다.
     revealCount = Math.min(revealCount, wordLower.length - 1);
     revealedPositions = wordLower.split("").map(function (ch, i) {
+      // 알파벳이 아닌 글자(마침표 등)는 단계와 상관없이 항상 미리 보여줘서
+      // 직접 맞히지 않아도 완료할 수 있게 한다.
+      if (!isLetter(ch)) return true;
       return i < revealCount;
     });
 
@@ -201,6 +210,43 @@
 
       keyboardEl.appendChild(rowEl);
     });
+
+    // 단어에 알파벳이 아닌 글자(마침표 등)가 있으면, 원하면 눌러볼 수 있도록
+    // 별도 줄에 기호 키를 추가한다(맞히는 기준에서는 빠지므로 안 눌러도 통과한다).
+    var symbols = [];
+    currentWord.word
+      .toLowerCase()
+      .split("")
+      .forEach(function (ch) {
+        if (!isLetter(ch) && ch !== " " && symbols.indexOf(ch) === -1) {
+          symbols.push(ch);
+        }
+      });
+
+    if (symbols.length > 0) {
+      var symbolRowEl = document.createElement("div");
+      symbolRowEl.className = "keyboard-row keyboard-row-symbols";
+
+      symbols.forEach(function (symbol) {
+        var symbolBtn = document.createElement("button");
+        symbolBtn.type = "button";
+        symbolBtn.className = "key-btn";
+        symbolBtn.textContent = symbol;
+
+        if (guessedLetters.indexOf(symbol) !== -1) {
+          symbolBtn.disabled = true;
+          symbolBtn.classList.add("correct");
+        }
+
+        symbolBtn.addEventListener("click", function () {
+          onGuess(symbol, symbolBtn);
+        });
+
+        symbolRowEl.appendChild(symbolBtn);
+      });
+
+      keyboardEl.appendChild(symbolRowEl);
+    }
   }
 
   function onGuess(letter, btnEl) {
