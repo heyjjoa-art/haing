@@ -116,7 +116,10 @@
     });
   }
 
-  var GAME_LABELS = { tetris: "🧱 테트리스", sudoku: "🔢 스도쿠", crossword: "📝 가로세로 낱말" };
+  function gameLabel(game) {
+    var meta = WordGameStore.getGame(game);
+    return meta ? meta.emoji + " " + meta.label : game;
+  }
 
   function pad2(n) {
     return n < 10 ? "0" + n : String(n);
@@ -131,9 +134,23 @@
     var row = document.createElement("div");
     row.className = "admin-credits-game-row";
 
+    // 이 게임이 이 아이에게 열려 있는지 - 8일 평가처럼 "언제 몇 개를 열지"는
+    // 매번 기준이 달라질 수 있어 코드에 규칙을 넣지 않고, 여기서 관리자가
+    // 직접 켜고 끈다(js/admin-game-open.js의 일괄 열기 버튼도 같은 함수를 씀).
+    var openToggle = document.createElement("input");
+    openToggle.type = "checkbox";
+    openToggle.className = "admin-credits-game-open-toggle";
+    openToggle.checked = WordGameStore.isOpened(child.id, game);
+    openToggle.title = "이 게임 열기/닫기";
+    openToggle.addEventListener("change", function () {
+      WordGameStore.adminSetGameOpened(child.id, game, openToggle.checked);
+      renderCreditsList();
+    });
+    row.appendChild(openToggle);
+
     var label = document.createElement("span");
     label.className = "admin-credits-game-label";
-    label.textContent = GAME_LABELS[game];
+    label.textContent = gameLabel(game);
     row.appendChild(label);
 
     var minusBtn = document.createElement("button");
@@ -188,7 +205,7 @@
       log.forEach(function (entry) {
         var line = document.createElement("p");
         line.className = "admin-credits-history-line";
-        line.textContent = formatSpentAt(entry.spentAt) + " · " + (GAME_LABELS[entry.game] || entry.game);
+        line.textContent = formatSpentAt(entry.spentAt) + " · " + gameLabel(entry.game);
         list.appendChild(line);
       });
     }

@@ -32,8 +32,10 @@
   var overlayEl = document.getElementById("hanoiOverlay");
   var overlayTitleEl = document.getElementById("hanoiOverlayTitle");
   var overlayDescEl = document.getElementById("hanoiOverlayDesc");
+  var overlayNoteEl = document.getElementById("hanoiOverlayNote");
   var nextBtn = document.getElementById("hanoiNextBtn");
   var retryBtn = document.getElementById("hanoiRetryBtn");
+  var creditsEl = document.getElementById("hanoiCredits");
 
   var DEFAULT_HINT = "기둥을 눌러 원반을 고르고, 옮길 기둥을 다시 눌러보세요.";
 
@@ -228,6 +230,11 @@
       (justUnlockedNext ? " 다음 레벨이 열렸어요!" : "");
 
     nextBtn.hidden = isFinalLevel;
+
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("hanoi") : 0;
+    retryBtn.hidden = creditsLeft <= 0;
+    overlayNoteEl.hidden = creditsLeft > 0;
+
     overlayEl.hidden = false;
   }
 
@@ -250,11 +257,16 @@
     renderLevelChoice();
   }
 
+  // 퍼즐을 풀다 마는 중간 재시작은 아직 이번 판을 "완료"한 게 아니라서 기회를
+  // 안 쓴다(스도쿠의 레벨 변경과 같은 취급) - 완성 후 오버레이의 "같은 단계
+  // 다시"(retryBtn)만 새 판을 시작하는 것이므로 기회를 쓴다.
   restartBtn.addEventListener("click", function () {
     newGame(currentLevel);
   });
 
   retryBtn.addEventListener("click", function () {
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("hanoi")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("hanoi");
     newGame(currentLevel);
   });
 
@@ -266,6 +278,7 @@
     newGame(parseInt(levelSelectEl.value, 10));
   });
 
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("hanoi") : "0";
   levelTotalEl.textContent = String(LEVEL_COUNT);
   newGame(getUnlockedLevel());
 })();

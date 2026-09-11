@@ -1,9 +1,41 @@
-// 트로피 카드 1장을 새로 받거나, 별 스티커가 20개씩 쌓일 때마다 미니게임 기회를
-// 3회씩 준다(둘 다 계속 반복해서 쌓인다 - 트로피 2장이면 6회, 별 40개면 6회, 등).
-// 기회는 게임 하나에 몰아쓰지 못하게, 생길 때마다 3개 게임(테트리스/스도쿠/
-// 가로세로 낱말)에 1회씩 고르게 나눠 준다 - 게임별로 따로 쌓이고 따로 줄어든다.
+// 게임 기회 저장소. 게임은 총 12개(테트리스/스도쿠/가로세로 낱말 + 9개를 매달
+// 3개씩 순차 공개)이고, 아이별로 "열린 게임 목록"(opened)을 관리자가 켜고
+// 끈다 - "며칠 채우면 자동으로 열린다" 같은 규칙은 코드에 없다. 다음 공개
+// 기준이 매번 달라질 수 있어서, 관리자가 화면에서 숫자를 보고 직접 연다
+// (js/admin-game-open.js).
+//
+// 기회를 줄 때는 그 아이의 열린 게임을 섞은 주머니(bag)에서 하나씩 뽑아
+// 준다 - 트로피 1장이나 별 20개마다 3회, 저니스 한 주 개근에 3회, 그리고
+// 오늘 두 트랙(저니스+단어)을 모두 끝낸 날 1회. 주머니 방식이라 한 바퀴
+// (열린 게임 수만큼) 안에는 모든 게임이 정확히 1번씩 나오고, 다 뽑히면
+// 다시 섞어서 새 바퀴가 시작된다 - 특정 게임에만 기회가 몰리지 않는다.
 var WordGameStore = (function () {
-  var GAMES = ["tetris", "sudoku", "crossword"];
+  var GAME_REGISTRY = [
+    { key: "tetris", emoji: "🧱", label: "테트리스", url: "tetris.html", defaultOpen: true },
+    { key: "sudoku", emoji: "🔢", label: "스도쿠", url: "sudoku.html", defaultOpen: true },
+    { key: "crossword", emoji: "📝", label: "가로세로 낱말", url: "crossword.html", defaultOpen: true },
+    { key: "smileyfind", emoji: "🙂", label: "해피피 찾기", url: "smileyfind.html", defaultOpen: false },
+    { key: "hanoi", emoji: "🗼", label: "하노이의 탑", url: "hanoi.html", defaultOpen: false },
+    { key: "snake", emoji: "🐍", label: "스네이크", url: "snake.html", defaultOpen: false },
+    { key: "breakout", emoji: "🏓", label: "벽돌깨기", url: "breakout.html", defaultOpen: false },
+    { key: "maze", emoji: "🌀", label: "미로찾기", url: "maze.html", defaultOpen: false },
+    { key: "pacman", emoji: "👻", label: "팩맨", url: "pacman.html", defaultOpen: false },
+    { key: "blocks", emoji: "🧊", label: "쌓기나무", url: "blocks.html", defaultOpen: false },
+    { key: "power", emoji: "✖️", label: "구구단 스네이크", url: "power.html", defaultOpen: false },
+    { key: "flag", emoji: "🚩", label: "청기백기", url: "flag.html", defaultOpen: false }
+  ];
+  var GAMES = GAME_REGISTRY.map(function (g) { return g.key; });
+
+  function getGame(key) {
+    for (var i = 0; i < GAME_REGISTRY.length; i++) {
+      if (GAME_REGISTRY[i].key === key) return GAME_REGISTRY[i];
+    }
+    return null;
+  }
+
+  function defaultOpenedGames() {
+    return GAME_REGISTRY.filter(function (g) { return g.defaultOpen; }).map(function (g) { return g.key; });
+  }
 
   // 임시로 아이별 기회를 고정해두고 싶을 때 여기에 넣는다({ hajung: 3 } 처럼).
   // 하정은 실제로 완전정복 골드 카드를 받아서 고정을 풀고 이제부터는 실제로
@@ -25,11 +57,15 @@ var WordGameStore = (function () {
   }
 
   function emptyCredits() {
-    return { tetris: 0, sudoku: 0, crossword: 0 };
+    var credits = {};
+    GAMES.forEach(function (game) {
+      credits[game] = 0;
+    });
+    return credits;
   }
 
   // 예전에는 기회를 숫자 하나(공용 주머니)로 저장했다. 그 값이 남아있는
-  // 기기/클라우드 데이터를 만나면, 게임 3개에 고르게 나눠서 새 형식으로 바꿔준다.
+  // 기기/클라우드 데이터를 만나면, 게임들에 고르게 나눠서 새 형식으로 바꿔준다.
   function normalizeCredits(raw) {
     var credits = emptyCredits();
     if (raw && typeof raw === "object") {
@@ -44,6 +80,44 @@ var WordGameStore = (function () {
     return credits;
   }
 
+  // opened 필드가 아예 없는(예전 데이터) 아이는 기존에 이미 열려 있던 3개
+  // (테트리스/스도쿠/가로세로 낱말)만 연 상태로 취급한다 - 마이그레이션이
+  // 저절로 된다. 필드가 있으면(빈 배열이라도) 관리자가 직접 정한 값이라
+  // 그대로 존중한다.
+  function normalizeOpened(raw) {
+    if (!Array.isArray(raw)) return defaultOpenedGames();
+    return raw.filter(function (g) { return GAMES.indexOf(g) !== -1; });
+  }
+
+  function normalizeBag(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(function (g) { return GAMES.indexOf(g) !== -1; });
+  }
+
+  var MAX_DAILY_GRANTED_ENTRIES = 60;
+
+  function normalizeDailyGranted(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(function (d) { return typeof d === "string"; }).slice(-MAX_DAILY_GRANTED_ENTRIES);
+  }
+
+  function normalizeDex(raw) {
+    var dex = {};
+    if (raw && typeof raw === "object") {
+      GAMES.forEach(function (game) {
+        if (raw[game]) dex[game] = raw[game];
+      });
+    }
+    return dex;
+  }
+
+  var MAX_PENDING_ENTRIES = 10;
+
+  function normalizePending(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(-MAX_PENDING_ENTRIES);
+  }
+
   // "어디에 썼는지" 확인용 - 실제로 기회를 하나 쓸 때마다 {game, spentAt}을 남긴다.
   // 문서가 한없이 커지지 않게 최근 것만 남긴다(오래된 기록은 그냥 잘려나감).
   var MAX_LOG_ENTRIES = 30;
@@ -54,21 +128,46 @@ var WordGameStore = (function () {
   }
 
   function defaultState() {
-    return { credits: emptyCredits(), trophiesCounted: 0, starBlocksCounted: 0, updatedAt: 0, log: [] };
+    return {
+      credits: emptyCredits(),
+      opened: defaultOpenedGames(),
+      bag: [],
+      dailyGranted: [],
+      dex: {},
+      dexBonusAt: 0,
+      pendingAnnounce: [],
+      trophiesCounted: 0,
+      starBlocksCounted: 0,
+      updatedAt: 0,
+      log: []
+    };
+  }
+
+  // getState/getStateFor/applyCloudState가 각자 필드를 골라 담다가 하나라도
+  // 빠뜨리면(특히 새 필드 추가할 때) 그 경로에서만 조용히 값이 사라지는
+  // 사고가 난다 - 파싱을 한 곳으로 모아서 그 위험을 없앤다.
+  function parseStateData(parsed) {
+    parsed = parsed || {};
+    return {
+      credits: normalizeCredits(parsed.credits),
+      opened: normalizeOpened(parsed.opened),
+      bag: normalizeBag(parsed.bag),
+      dailyGranted: normalizeDailyGranted(parsed.dailyGranted),
+      dex: normalizeDex(parsed.dex),
+      dexBonusAt: parsed.dexBonusAt || 0,
+      pendingAnnounce: normalizePending(parsed.pendingAnnounce),
+      trophiesCounted: parsed.trophiesCounted || 0,
+      starBlocksCounted: parsed.starBlocksCounted || 0,
+      updatedAt: parsed.updatedAt || 0,
+      log: normalizeLog(parsed.log)
+    };
   }
 
   function getState() {
     var raw = localStorage.getItem(stateKey());
     if (!raw) return defaultState();
     try {
-      var parsed = JSON.parse(raw);
-      return {
-        credits: normalizeCredits(parsed.credits),
-        trophiesCounted: parsed.trophiesCounted || 0,
-        starBlocksCounted: parsed.starBlocksCounted || 0,
-        updatedAt: parsed.updatedAt || 0,
-        log: normalizeLog(parsed.log)
-      };
+      return parseStateData(JSON.parse(raw));
     } catch (e) {
       return defaultState();
     }
@@ -80,6 +179,42 @@ var WordGameStore = (function () {
     syncToCloud(state);
   }
 
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  }
+
+  // 열린 게임을 섞어 주머니에 담아두고 하나씩 꺼낸다. 한 바퀴(열린 게임 수만큼)
+  // 안에서는 같은 게임이 두 번 안 나오고, 바퀴가 바뀔 때마다 순서가 달라진다.
+  // 닫힌 게임은 매번 걸러내므로, 관리자가 방금 게임을 닫았어도 안전하다.
+  function drawFromBag(state, n) {
+    var picked = [];
+    for (var i = 0; i < n; i++) {
+      state.bag = state.bag.filter(function (g) { return state.opened.indexOf(g) !== -1; });
+      if (state.bag.length === 0) {
+        if (state.opened.length === 0) break;
+        state.bag = shuffle(state.opened.slice());
+      }
+      picked.push(state.bag.pop());
+    }
+    return picked;
+  }
+
   function totalStars() {
     if (typeof WordCardStore === "undefined") return 0;
     return WordCardStore.getCollected().reduce(function (sum, r) {
@@ -87,20 +222,46 @@ var WordGameStore = (function () {
     }, 0);
   }
 
-  // n회를 게임 3개에 1회씩 돌아가며 나눠 담는다(3의 배수면 정확히 균등하게 나뉜다).
-  function addCreditsRoundRobin(state, n) {
-    for (var i = 0; i < n; i++) {
-      var game = GAMES[i % GAMES.length];
-      state.credits[game] += 1;
-    }
+  // 오늘 저니스 + 단어를 둘 다 끝냈으면 하루 1번만 게임 1개를 지급한다(그날
+  // 다시 열어도 재지급 안 함). 별 20개/트로피 마일스톤이 이미 3회씩 주므로,
+  // 매일 보너스는 일부러 1개로 작게 유지해서 마일스톤 보상이 묻히지 않게
+  // 한다. 주말 예외 없이 학습달력(js/admin-glance.js)과 같은 기준(둘 다 완료)
+  // 을 쓴다 - "게임을 할 수 있는지"(hasStudiedTodayForGames, 주말엔 단어만
+  // 요구)와는 별개의, 더 엄격한 판정이다.
+  function applyDailyBothTracksCredit(state) {
+    if (isAdminActive()) return false;
+    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
+    if (!childId) return false;
+    var today = todayStr();
+    if (state.dailyGranted.indexOf(today) !== -1) return false;
+
+    var wordDone = typeof ProgressStore !== "undefined" && ProgressStore.isWordDoneForDay &&
+      ProgressStore.isWordDoneForDay(childId, today);
+    var journeyDone = typeof StampStore !== "undefined" && StampStore.isDayCompleteFor &&
+      StampStore.isDayCompleteFor(childId, today);
+    if (!wordDone || !journeyDone) return false;
+
+    var games = drawFromBag(state, 1);
+    if (games.length === 0) return false; // 열린 게임이 하나도 없으면 지급할 게 없다.
+
+    games.forEach(function (g) { state.credits[g] += 1; });
+    state.dailyGranted = state.dailyGranted.concat([today]).slice(-MAX_DAILY_GRANTED_ENTRIES);
+    state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
+      { kind: "daily", games: games, at: Date.now() }
+    ]));
+    return true;
   }
 
   // 트로피/별 상태가 바뀔 때마다(카드 저장소 쪽에서) 불러주면, 지난번에 이미 센
   // 트로피 수·별 20개 단위 수보다 늘어난 만큼만 3회씩 새로 얹는다. 여러 번 불러도
-  // 안전(늘어난 만큼만 계산하므로 중복 지급 없음).
+  // 안전(늘어난 만큼만 계산하므로 중복 지급 없음). 매일 지급도 여기서 같이 본다 -
+  // 이 함수가 단어 세트 완료/게임 탭 진입 등 여러 곳에서 이미 불리고 있어서,
+  // 어느 페이지를 열든 오늘 몫이 자연스럽게 지급된다.
   function syncCredits() {
     if (typeof WordCardStore === "undefined") return getTotalCredits();
     var state = getState();
+    var changed = applyDailyBothTracksCredit(state);
+
     // Journeys 주간 트로피는 여기서 안 센다 - 그건 받는 순간 grantCredits로 직접
     // 기회를 주므로, 여기서도 같이 세면 두 번 주는 셈이 된다.
     var trophyCount = WordCardStore.getTrophyCards().filter(function (r) {
@@ -112,11 +273,19 @@ var WordGameStore = (function () {
     var newStarMilestones = Math.max(0, starBlocks - state.starBlocksCounted);
 
     if (newTrophyMilestones > 0 || newStarMilestones > 0) {
-      addCreditsRoundRobin(state, (newTrophyMilestones + newStarMilestones) * 3);
+      var games = drawFromBag(state, (newTrophyMilestones + newStarMilestones) * 3);
+      games.forEach(function (g) { state.credits[g] += 1; });
       state.trophiesCounted = trophyCount;
       state.starBlocksCounted = starBlocks;
-      saveState(state);
+      if (games.length > 0) {
+        state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
+          { kind: "milestone", games: games, at: Date.now() }
+        ]));
+      }
+      changed = true;
     }
+
+    if (changed) saveState(state);
     return getTotalCredits();
   }
 
@@ -125,7 +294,7 @@ var WordGameStore = (function () {
     return typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
   }
 
-  // 게임 하나(tetris/sudoku/crossword)에 남은 기회.
+  // 게임 하나에 남은 기회.
   function getCredits(game) {
     if (isAdminActive()) return Infinity;
     var pinned = pinnedCreditsForActiveChild();
@@ -133,14 +302,15 @@ var WordGameStore = (function () {
     return getState().credits[game] || 0;
   }
 
-  // 3개 게임을 합친 전체 남은 기회(게임 탭 상단 표시, 잠금 여부 판단용).
+  // 열린 게임들을 합친 전체 남은 기회(게임 탭 상단 표시, 잠금 여부 판단용).
+  // 안 열린 게임에 남은 크레딧은 세지 않는다(잠금 해제 판정에 끼면 안 되므로).
   function getTotalCredits() {
     if (isAdminActive()) return Infinity;
     var pinned = pinnedCreditsForActiveChild();
     if (pinned !== null) return pinned;
-    var credits = getState().credits;
-    return GAMES.reduce(function (sum, game) {
-      return sum + (credits[game] || 0);
+    var state = getState();
+    return state.opened.reduce(function (sum, game) {
+      return sum + (state.credits[game] || 0);
     }, 0);
   }
 
@@ -173,16 +343,39 @@ var WordGameStore = (function () {
     return !!journeyDone && !!wordDone;
   }
 
-  // 게임을 하나 시작할 때 그 게임 몫의 기회를 1회 쓴다. 오늘 공부를 안 했거나
-  // 그 게임에 남은 기회가 없으면 false(다른 게임에 기회가 남아 있어도 안 됨).
+  // 게임을 하나 시작할 때 그 게임 몫의 기회를 1회 쓴다. 오늘 공부를 안 했거나,
+  // 그 게임이 아직 안 열렸거나, 그 게임에 남은 기회가 없으면 false(다른 게임에
+  // 기회가 남아 있어도 안 됨). 실제로 쓴 순간이 곧 "플레이 시작"이므로 게임
+  // 도감(dex)도 여기서 같이 채운다.
   function spendCredit(game) {
     if (isAdminActive()) return true;
     if (!hasStudiedTodayForGames()) return false;
     if (pinnedCreditsForActiveChild() !== null) return true;
     var state = getState();
+    if (state.opened.indexOf(game) === -1) return false;
     if (!state.credits[game] || state.credits[game] <= 0) return false;
     state.credits[game] -= 1;
     state.log = normalizeLog(state.log.concat([{ game: game, spentAt: Date.now() }]));
+    state.dex[game] = (state.dex[game] || 0) + 1;
+
+    // 게임 도감 완성 보너스 - 지금 열린 게임을 전부 한 번 이상 해봤고, 그
+    // 완성이 "이번이 처음"이면(그 뒤로 게임이 더 열리지 않았다면) 기회 3회를
+    // 더 준다. 게임이 새로 열리면 dexBonusAt보다 opened가 커지므로 다시
+    // 도전 대상이 된다. 도감 자체(dex)는 초기화하지 않는다.
+    var allPlayed = state.opened.length > 0 && state.opened.every(function (g) {
+      return (state.dex[g] || 0) > 0;
+    });
+    if (allPlayed && state.opened.length > state.dexBonusAt) {
+      var bonusGames = drawFromBag(state, 3);
+      bonusGames.forEach(function (g) { state.credits[g] += 1; });
+      state.dexBonusAt = state.opened.length;
+      if (bonusGames.length > 0) {
+        state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
+          { kind: "dex", games: bonusGames, at: Date.now() }
+        ]));
+      }
+    }
+
     saveState(state);
     return true;
   }
@@ -191,9 +384,35 @@ var WordGameStore = (function () {
   // 고정된 아이라도 실제 쌓이는 값은 뒤에서 그대로 늘어난다(화면 표시만 고정).
   function grantCredits(n) {
     var state = getState();
-    addCreditsRoundRobin(state, n);
+    var games = drawFromBag(state, n);
+    games.forEach(function (g) { state.credits[g] += 1; });
+    if (games.length > 0) {
+      state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
+        { kind: "milestone", games: games, at: Date.now() }
+      ]));
+    }
     saveState(state);
     return getTotalCredits();
+  }
+
+  // 지급 알림은 쌓아뒀다가(pendingAnnounce), 다음에 어떤 페이지가 열리든
+  // 그때 꺼내서 보여주고 비운다 - 지급 순간 다른 팝업(단어카드 등)과 겹쳐
+  // 가려지는 걸 막고, 어느 페이지에서 조건이 충족되든 안내를 놓치지 않는다.
+  function consumePendingAnnouncements() {
+    var state = getState();
+    if (state.pendingAnnounce.length === 0) return [];
+    var pending = state.pendingAnnounce;
+    state.pendingAnnounce = [];
+    saveState(state);
+    return pending;
+  }
+
+  function getOpenedGames() {
+    return getState().opened;
+  }
+
+  function getDex() {
+    return getState().dex;
   }
 
   // 관리자 탭에서 "지금 로그인한 아이"와 무관하게 특정 아이의 기회를 직접
@@ -206,27 +425,20 @@ var WordGameStore = (function () {
     var raw = localStorage.getItem(stateKeyFor(childId));
     if (!raw) return defaultState();
     try {
-      var parsed = JSON.parse(raw);
-      return {
-        credits: normalizeCredits(parsed.credits),
-        trophiesCounted: parsed.trophiesCounted || 0,
-        starBlocksCounted: parsed.starBlocksCounted || 0,
-        updatedAt: parsed.updatedAt || 0,
-        log: normalizeLog(parsed.log)
-      };
+      return parseStateData(JSON.parse(raw));
     } catch (e) {
       return defaultState();
     }
   }
 
   function getCreditsForChild(childId) {
-    var credits = getStateFor(childId).credits;
-    return GAMES.reduce(function (sum, game) {
-      return sum + (credits[game] || 0);
+    var state = getStateFor(childId);
+    return state.opened.reduce(function (sum, game) {
+      return sum + (state.credits[game] || 0);
     }, 0);
   }
 
-  // 게임 하나(tetris/sudoku/crossword)에 남은 그 아이의 기회.
+  // 게임 하나에 남은 그 아이의 기회.
   function getCreditsForChildByGame(childId, game) {
     return getStateFor(childId).credits[game] || 0;
   }
@@ -234,6 +446,14 @@ var WordGameStore = (function () {
   // 최근에 쓴 기회 기록 - {game, spentAt}, 오래된 순(가장 최근이 배열 맨 뒤).
   function getSpendLogForChild(childId) {
     return getStateFor(childId).log;
+  }
+
+  function getOpenedGamesForChild(childId) {
+    return getStateFor(childId).opened;
+  }
+
+  function isOpened(childId, game) {
+    return getOpenedGamesForChild(childId).indexOf(game) !== -1;
   }
 
   // 게임 하나의 기회를 1개 단위로 더하거나 뺀다(복구용으로는 양수, 되돌릴 땐
@@ -250,6 +470,34 @@ var WordGameStore = (function () {
     }
     if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
     return state.credits[game];
+  }
+
+  // 관리자가 아이별로 게임을 열고 닫는다. "8일 채우면 자동으로 열린다" 같은
+  // 규칙은 없다 - js/admin-game-open.js가 화면에 숫자를 보여주면 관리자가
+  // 직접 이 함수를 부른다. 새로 여는 순간 주머니를 비워서, 다음 지급부터
+  // 새 게임이 포함된 전체를 다시 섞게 한다(안 그러면 방금 연 게임이 한
+  // 바퀴가 끝날 때까지, 최대 열린 게임 수만큼 뒤로 밀려서야 처음 나온다).
+  function adminSetGameOpened(childId, game, on) {
+    if (!childId || GAMES.indexOf(game) === -1) return null;
+    var state = getStateFor(childId);
+    var idx = state.opened.indexOf(game);
+    if (on && idx === -1) {
+      state.opened = state.opened.concat([game]);
+      state.bag = [];
+    } else if (!on && idx !== -1) {
+      state.opened = state.opened.filter(function (g) { return g !== game; });
+      state.bag = [];
+    } else {
+      return state.opened;
+    }
+    state.updatedAt = Date.now();
+    localStorage.setItem(stateKeyFor(childId), JSON.stringify(state));
+    if (typeof HaingCloud !== "undefined" && HaingCloud.enabled) {
+      HaingCloud.writeDoc("wordGameCredits/" + childId, state);
+    }
+    if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
+    if (window.__haingRenderAdminGameOpen) window.__haingRenderAdminGameOpen();
+    return state.opened;
   }
 
   function cloudPath() {
@@ -276,13 +524,7 @@ var WordGameStore = (function () {
     if (!data) return;
     var local = getStateFor(childId);
     if ((data.updatedAt || 0) < (local.updatedAt || 0)) return;
-    localStorage.setItem(stateKeyFor(childId), JSON.stringify({
-      credits: normalizeCredits(data.credits),
-      trophiesCounted: data.trophiesCounted || 0,
-      starBlocksCounted: data.starBlocksCounted || 0,
-      updatedAt: data.updatedAt || 0,
-      log: normalizeLog(data.log)
-    }));
+    localStorage.setItem(stateKeyFor(childId), JSON.stringify(parseStateData(data)));
     if (window.__haingRenderWordCards) window.__haingRenderWordCards();
   }
 
@@ -320,6 +562,8 @@ var WordGameStore = (function () {
 
   return {
     GAMES: GAMES,
+    GAME_REGISTRY: GAME_REGISTRY,
+    getGame: getGame,
     syncCredits: syncCredits,
     getCredits: getCredits,
     getTotalCredits: getTotalCredits,
@@ -329,9 +573,15 @@ var WordGameStore = (function () {
     hasStudiedTodayForGames: hasStudiedTodayForGames,
     isWeekendToday: isWeekendToday,
     grantCredits: grantCredits,
+    consumePendingAnnouncements: consumePendingAnnouncements,
+    getOpenedGames: getOpenedGames,
+    getDex: getDex,
     getCreditsForChild: getCreditsForChild,
     getCreditsForChildByGame: getCreditsForChildByGame,
     getSpendLogForChild: getSpendLogForChild,
-    adminAdjustGameCredit: adminAdjustGameCredit
+    getOpenedGamesForChild: getOpenedGamesForChild,
+    isOpened: isOpened,
+    adminAdjustGameCredit: adminAdjustGameCredit,
+    adminSetGameOpened: adminSetGameOpened
   };
 })();

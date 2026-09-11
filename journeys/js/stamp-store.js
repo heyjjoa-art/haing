@@ -413,6 +413,7 @@ var StampStore = (function () {
     weekLabel: weekLabel,
     getTotalStampedDays: getTotalStampedDays,
     hasCompletedAnyToday: hasCompletedAnyToday,
+    isDayCompleteFor: isDayCompleteFor,
     getMonthDays: getMonthDays
   };
 })();

@@ -367,6 +367,13 @@
   border-color: var(--color-accent);
 }
 
+/* .wc-game-card가 display:flex를 갖고 있으면 브라우저 기본 [hidden] 규칙
+   (display:none)보다 이 author 규칙이 우선해서, hidden 속성을 켜도 실제로는
+   계속 보이는 문제가 있었다(테스트 중 실제로 확인됨) - 명시적으로 덮어쓴다. */
+.wc-game-card[hidden] {
+  display: none;
+}
+
 .wc-game-dev {
   border-style: dashed;
 }
@@ -394,6 +401,84 @@
 .wc-game-card:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.wc-gamedex-title {
+  margin: 22px 0 4px;
+  font-weight: bold;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.wc-gamedex-hint {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.wc-gamedex {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.wc-gamedex-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 10px 4px;
+}
+
+.wc-gamedex-icon {
+  font-size: 1.3rem;
+}
+
+.wc-gamedex-label {
+  font-size: 0.7rem;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.wc-gamedex-slot--locked {
+  opacity: 0.5;
+}
+
+.wc-gamedex-slot--locked .wc-gamedex-label {
+  color: var(--color-text-faint);
+}
+
+.wc-gamedex-slot--unplayed {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.wc-gamedex-slot--played {
+  border-color: var(--color-accent);
+}
+
+.wc-popup-games {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.wc-popup-game-chip {
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-accent);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--color-text);
 }
 
 .wc-lightbox {

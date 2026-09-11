@@ -19,21 +19,16 @@
   var gamesLockedTitleEl = document.getElementById("wcGamesLockedTitle");
   var gamesLockedHintEl = document.getElementById("wcGamesLockedHint");
   var gamesGridEl = document.getElementById("wcGamesGrid");
-  var gameTetrisBtn = document.getElementById("wcGameTetris");
-  var gameSudokuBtn = document.getElementById("wcGameSudoku");
-  var gameCrosswordBtn = document.getElementById("wcGameCrossword");
-  var gameSmileyfindBtn = document.getElementById("wcGameSmileyfind");
-  var gameHanoiBtn = document.getElementById("wcGameHanoi");
-  var gameSnakeBtn = document.getElementById("wcGameSnake");
+  var wcGamedexEl = document.getElementById("wcGamedex");
+  // 아직 게임 기회 시스템에 연결되지 않은 개발 중 게임 6개 - 관리자로
+  // 로그인했을 때만 보여준다(정식 오픈되면 다른 게임들처럼 data-game 속성을
+  // 붙이고 이 목록에서 뺀다).
   var gameBreakoutBtn = document.getElementById("wcGameBreakout");
   var gameMazeBtn = document.getElementById("wcGameMaze");
   var gamePacmanBtn = document.getElementById("wcGamePacman");
   var gameBlocksBtn = document.getElementById("wcGameBlocks");
   var gamePowerBtn = document.getElementById("wcGamePower");
   var gameFlagBtn = document.getElementById("wcGameFlag");
-  var gameTetrisCreditsEl = document.getElementById("wcGameTetrisCredits");
-  var gameSudokuCreditsEl = document.getElementById("wcGameSudokuCredits");
-  var gameCrosswordCreditsEl = document.getElementById("wcGameCrosswordCredits");
 
   var lightboxEl = document.getElementById("wcLightbox");
   var lightboxBodyEl = document.getElementById("wcLightboxBody");
@@ -145,34 +140,83 @@
     } else {
       // 게임별로 남은 기회를 따로 보여주고, 그 게임 몫이 0이면 버튼을 눌러도
       // 못 들어가게 막는다(다른 게임에 기회가 남아있어도 이 게임엔 못 씀).
-      [
-        { btn: gameTetrisBtn, badge: gameTetrisCreditsEl, game: "tetris" },
-        { btn: gameSudokuBtn, badge: gameSudokuCreditsEl, game: "sudoku" },
-        { btn: gameCrosswordBtn, badge: gameCrosswordCreditsEl, game: "crossword" }
-      ].forEach(function (entry) {
-        var left = WordGameStore.getCredits(entry.game);
-        var label = WordGameStore.getCreditsLabel(entry.game);
-        entry.badge.textContent = label + "회";
-        entry.btn.disabled = left !== Infinity && left <= 0;
+      // data-game이 붙은 타일(테트리스/스도쿠/가로세로 낱말 + 새로 정식
+      // 오픈된 게임들)은 이 아이에게 "열린 게임"일 때만 보여준다 - 다음에
+      // 게임을 더 열 때도 이 로직과 HTML은 그대로 두고 관리자 화면에서
+      // opened 목록만 늘리면 된다.
+      var opened = WordGameStore.getOpenedGames();
+      gamesGridEl.querySelectorAll("[data-game]").forEach(function (tile) {
+        var game = tile.getAttribute("data-game");
+        var isOpen = opened.indexOf(game) !== -1;
+        tile.hidden = !isOpen;
+        if (!isOpen) return;
+        var badge = tile.querySelector(".wc-game-credits");
+        if (badge) badge.textContent = WordGameStore.getCreditsLabel(game) + "회";
+        var left = WordGameStore.getCredits(game);
+        tile.disabled = left !== Infinity && left <= 0;
       });
     }
 
-    // 해피피 찾기 / 하노이의 탑 / 스네이크 / 벽돌깨기 / 미로찾기 / 팩맨 / 쌓기나무 /
-    // 구구단 스네이크 / 청기백기는 아직 개발 중 - 게임 기회 시스템과 무관하게,
-    // 관리자로 로그인했을 때만 카드 자체를 보여준다(아이 계정에는 항상 숨김).
+    // 벽돌깨기 / 미로찾기 / 팩맨 / 쌓기나무 / 구구단 스네이크 / 청기백기는
+    // 아직 게임 기회 시스템에 연결 안 된 개발 중 게임 - 관리자로 로그인했을
+    // 때만 카드 자체를 보여준다(아이 계정에는 항상 숨김).
     var isAdmin = typeof AdminAuthStore !== "undefined" && AdminAuthStore.isActive();
-    gameSmileyfindBtn.hidden = !isAdmin;
-    gameHanoiBtn.hidden = !isAdmin;
-    gameSnakeBtn.hidden = !isAdmin;
     gameBreakoutBtn.hidden = !isAdmin;
     gameMazeBtn.hidden = !isAdmin;
     gamePacmanBtn.hidden = !isAdmin;
     gameBlocksBtn.hidden = !isAdmin;
     gamePowerBtn.hidden = !isAdmin;
     gameFlagBtn.hidden = !isAdmin;
+
+    renderGameDex();
+  }
+
+  // 게임 도감 - 오픈된 게임을 1판이라도 하면 칸이 컬러로 채워진다. 이 아이가
+  // 실제로 크레딧을 소비(spendCredit)할 때마다 WordGameStore가 dex를 채우므로
+  // 여기서는 그 값을 그대로 그리기만 한다.
+  function renderGameDex() {
+    if (!wcGamedexEl || typeof WordGameStore === "undefined") return;
+    var opened = WordGameStore.getOpenedGames();
+    var dex = WordGameStore.getDex();
+    wcGamedexEl.innerHTML = "";
+    WordGameStore.GAME_REGISTRY.forEach(function (meta) {
+      var isOpen = opened.indexOf(meta.key) !== -1;
+      var plays = dex[meta.key] || 0;
+
+      var slot = document.createElement("div");
+      slot.className = "wc-gamedex-slot";
+      slot.classList.add(!isOpen ? "wc-gamedex-slot--locked" : plays > 0 ? "wc-gamedex-slot--played" : "wc-gamedex-slot--unplayed");
+
+      var icon = document.createElement("span");
+      icon.className = "wc-gamedex-icon";
+      icon.textContent = isOpen ? meta.emoji : "🔒";
+      slot.appendChild(icon);
+
+      var label = document.createElement("span");
+      label.className = "wc-gamedex-label";
+      label.textContent = isOpen && plays > 0 ? plays + "판" : meta.label;
+      slot.appendChild(label);
+
+      wcGamedexEl.appendChild(slot);
+    });
+  }
+
+  // 게임 기회를 받은 순간 바로 팝업을 못 띄울 수 있어(다른 팝업과 겹치는
+  // 경로) WordGameStore에 쌓아뒀던 알림을 꺼내 보여준다. 어느 탭에서 이
+  // 함수가 불리든(단어/트로피/게임) 밀린 알림이 있으면 그때 보여준다.
+  function showPendingGameAnnouncements() {
+    if (typeof WordGameStore === "undefined" || typeof GameGrantPopup === "undefined") return;
+    var pending = WordGameStore.consumePendingAnnouncements();
+    pending.forEach(function (entry) {
+      GameGrantPopup.show(entry.games, entry.kind);
+    });
   }
 
   function render() {
+    // 어느 탭을 보고 있든, 밀려있는 게임 지급 알림(칭찬+오늘의 게임 등)이
+    // 있으면 여기서 한 번 보여준다 - 단어 카드 탭을 먼저 열어도 놓치지 않는다.
+    showPendingGameAnnouncements();
+
     if (currentTab === "games") {
       statLineEl.hidden = true;
       emptyEl.hidden = true;
@@ -252,24 +296,18 @@
     window.location.href = url;
   }
 
-  gameTetrisBtn.addEventListener("click", function () {
-    startGame("tetris.html", "tetris");
+  // 게임 기회 시스템에 연결된 타일(data-game 속성이 붙은 것)은 한 핸들러로
+  // 처리한다 - 새 게임이 더 열려도 여기는 그대로 두고 HTML에 data-game만
+  // 붙이면 된다.
+  gamesGridEl.addEventListener("click", function (e) {
+    var tile = e.target.closest("[data-game]");
+    if (!tile || tile.disabled) return;
+    var game = tile.getAttribute("data-game");
+    var meta = typeof WordGameStore !== "undefined" ? WordGameStore.getGame(game) : null;
+    if (!meta) return;
+    startGame(meta.url, game);
   });
-  gameSudokuBtn.addEventListener("click", function () {
-    startGame("sudoku.html", "sudoku");
-  });
-  gameCrosswordBtn.addEventListener("click", function () {
-    startGame("crossword.html", "crossword");
-  });
-  gameSmileyfindBtn.addEventListener("click", function () {
-    window.location.href = "smileyfind.html";
-  });
-  gameHanoiBtn.addEventListener("click", function () {
-    window.location.href = "hanoi.html";
-  });
-  gameSnakeBtn.addEventListener("click", function () {
-    window.location.href = "snake.html";
-  });
+
   gameBreakoutBtn.addEventListener("click", function () {
     window.location.href = "breakout.html";
   });

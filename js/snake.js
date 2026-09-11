@@ -1,5 +1,4 @@
-// 도감 게임칸에서 들어오는 클래식 스네이크. 관리자 계정에서만 테스트하는
-// 개발 중 게임이라 WordGameStore(게임 기회) 연동은 아직 하지 않는다.
+// 도감 게임칸에서 들어오는 클래식 스네이크.
 (function () {
   "use strict";
 
@@ -29,7 +28,9 @@
 
   var overlayEl = document.getElementById("snakeOverlay");
   var overlayScoreEl = document.getElementById("snakeOverlayScore");
+  var overlayNoteEl = document.getElementById("snakeOverlayNote");
   var retryBtn = document.getElementById("snakeRetryBtn");
+  var creditsEl = document.getElementById("snakeCredits");
 
   var upBtn = document.getElementById("snakeUpBtn");
   var downBtn = document.getElementById("snakeDownBtn");
@@ -113,6 +114,11 @@
     var isNewBest = score > 0 && score >= bestScore;
     overlayScoreEl.textContent =
       DIFFICULTIES[currentDifficulty].label + " · 점수 " + score + (isNewBest ? " 🎉 신기록!" : "");
+
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("snake") : 0;
+    retryBtn.hidden = creditsLeft <= 0;
+    overlayNoteEl.hidden = creditsLeft > 0;
+
     overlayEl.hidden = false;
   }
 
@@ -309,8 +315,13 @@
     if (document.hidden) setPaused(true);
   });
 
-  retryBtn.addEventListener("click", resetGame);
+  retryBtn.addEventListener("click", function () {
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("snake")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("snake");
+    resetGame();
+  });
 
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("snake") : "0";
   setDifficulty("easy");
   requestAnimationFrame(tick);
 })();

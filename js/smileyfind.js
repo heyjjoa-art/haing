@@ -1,6 +1,5 @@
 // "해피피 찾기" - 지뢰찾기 규칙을 그대로 쓰되, 지뢰 대신 스마일 아이콘을 숨겨서
-// 아이들에게 무섭지 않은 테마로 바꾼 버전이다. 관리자 계정에서만 테스트하는
-// 개발 중 게임이라 WordGameStore(게임 기회) 연동은 아직 하지 않는다.
+// 아이들에게 무섭지 않은 테마로 바꾼 버전이다.
 (function () {
   "use strict";
 
@@ -23,8 +22,10 @@
   var overlayEl = document.getElementById("sfOverlay");
   var overlayTitleEl = document.getElementById("sfOverlayTitle");
   var overlayDescEl = document.getElementById("sfOverlayDesc");
+  var overlayNoteEl = document.getElementById("sfOverlayNote");
   var nextBtn = document.getElementById("sfNextBtn");
   var retryBtn = document.getElementById("sfRetryBtn");
+  var creditsEl = document.getElementById("sfCredits");
   var revealModeBtn = document.getElementById("sfRevealModeBtn");
   var flagModeBtn = document.getElementById("sfFlagModeBtn");
 
@@ -269,6 +270,11 @@
       overlayDescEl.textContent = LEVELS[currentLevel - 1].label + " · 시간 " + formatTime(elapsed);
     }
     nextBtn.hidden = !(won && !isFinalLevel);
+
+    var creditsLeft = typeof WordGameStore !== "undefined" ? WordGameStore.getCredits("smileyfind") : 0;
+    retryBtn.hidden = creditsLeft <= 0;
+    overlayNoteEl.hidden = creditsLeft > 0;
+
     overlayEl.hidden = false;
   }
 
@@ -387,6 +393,8 @@
   });
 
   retryBtn.addEventListener("click", function () {
+    if (typeof WordGameStore === "undefined" || !WordGameStore.spendCredit("smileyfind")) return;
+    creditsEl.textContent = WordGameStore.getCreditsLabel("smileyfind");
     newGame(currentLevel);
   });
   nextBtn.addEventListener("click", function () {
@@ -398,6 +406,7 @@
     else if (!document.hidden && started && !over) startTimer();
   });
 
+  creditsEl.textContent = typeof WordGameStore !== "undefined" ? WordGameStore.getCreditsLabel("smileyfind") : "0";
   levelTotalEl.textContent = String(LEVEL_COUNT);
   newGame(getUnlockedLevel());
 })();

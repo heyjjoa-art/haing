@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>단어 도감 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202609031352">
-<link rel="stylesheet" href="css/word-card.css?v=202609031352">
+<link rel="stylesheet" href="css/style.css?v=202609111051">
+<link rel="stylesheet" href="css/word-card.css?v=202609111051">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
 
   <div class="wc-games-panel" id="wcGamesPanel" hidden>
     <p class="wc-stat">🎮 남은 게임 기회 <strong id="wcGameCredits">0</strong>회</p>
-    <p class="wc-games-rule">트로피 카드 1장, 또는 별 스티커 20개를 모을 때마다<br>게임 기회가 3개 게임에 1회씩 생겨요!</p>
+    <p class="wc-games-rule">트로피 카드 1장, 또는 별 스티커 20개를 모을 때마다<br>게임 기회 3회가, 오늘 할 일을 다 끝낸 날엔 1회가 생겨요!</p>
 
     <div class="wc-games-locked" id="wcGamesLocked" hidden>
       <p id="wcGamesLockedTitle">🔒 아직 게임 기회가 없어요.</p>
@@ -44,7 +44,7 @@
     </div>
 
     <div class="wc-games-grid" id="wcGamesGrid" hidden>
-      <button type="button" class="wc-game-card" id="wcGameTetris">
+      <button type="button" class="wc-game-card" id="wcGameTetris" data-game="tetris">
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <rect x="2" y="2" width="17" height="17" rx="2" fill="#ffd93d"/>
           <rect x="2" y="2" width="17" height="3" rx="1.5" fill="rgba(255,255,255,0.35)"/>
@@ -62,7 +62,7 @@
         <span class="wc-game-title">테트리스</span>
         <span class="wc-game-credits" id="wcGameTetrisCredits">0회</span>
       </button>
-      <button type="button" class="wc-game-card" id="wcGameSudoku">
+      <button type="button" class="wc-game-card" id="wcGameSudoku" data-game="sudoku">
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <rect x="2" y="2" width="36" height="36" rx="4" fill="#e4d6c3"/>
           <rect x="2" y="2" width="36" height="36" rx="4" fill="none" stroke="#3a2e26" stroke-width="2"/>
@@ -82,7 +82,7 @@
         <span class="wc-game-title">스도쿠</span>
         <span class="wc-game-credits" id="wcGameSudokuCredits">0회</span>
       </button>
-      <button type="button" class="wc-game-card" id="wcGameCrossword">
+      <button type="button" class="wc-game-card" id="wcGameCrossword" data-game="crossword">
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <rect x="2" y="2" width="36" height="36" rx="4" fill="#e4d6c3"/>
           <rect x="2" y="2" width="36" height="36" rx="4" fill="none" stroke="#3a2e26" stroke-width="2"/>
@@ -106,8 +106,7 @@
         <span class="wc-game-title">가로세로 낱말</span>
         <span class="wc-game-credits" id="wcGameCrosswordCredits">0회</span>
       </button>
-      <!-- 개발 중 - 관리자로 로그인했을 때만 js/wordcards.js가 hidden을 풀어준다. -->
-      <button type="button" class="wc-game-card wc-game-dev" id="wcGameSmileyfind" hidden>
+      <button type="button" class="wc-game-card" id="wcGameSmileyfind" data-game="smileyfind" hidden>
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <circle cx="20" cy="20" r="17" fill="#ffd93d" stroke="#e0a72f" stroke-width="1.5"/>
           <circle cx="14" cy="17" r="2.2" fill="#3a2e26"/>
@@ -115,9 +114,9 @@
           <path d="M12 24 Q20 31 28 24" stroke="#3a2e26" stroke-width="2.2" fill="none" stroke-linecap="round"/>
         </svg>
         <span class="wc-game-title">해피피 찾기</span>
-        <span class="wc-game-credits">🛠️ 개발중</span>
+        <span class="wc-game-credits" id="wcGameSmileyfindCredits">0회</span>
       </button>
-      <button type="button" class="wc-game-card wc-game-dev" id="wcGameHanoi" hidden>
+      <button type="button" class="wc-game-card" id="wcGameHanoi" data-game="hanoi" hidden>
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <rect x="8" y="34" width="24" height="5" rx="2.5" fill="#b7a893"/>
           <rect x="18.5" y="6" width="3" height="29" rx="1.5" fill="#b7a893"/>
@@ -126,9 +125,9 @@
           <rect x="15" y="13" width="10" height="7" rx="3" fill="#ff8fa3"/>
         </svg>
         <span class="wc-game-title">하노이의 탑</span>
-        <span class="wc-game-credits">🛠️ 개발중</span>
+        <span class="wc-game-credits" id="wcGameHanoiCredits">0회</span>
       </button>
-      <button type="button" class="wc-game-card wc-game-dev" id="wcGameSnake" hidden>
+      <button type="button" class="wc-game-card" id="wcGameSnake" data-game="snake" hidden>
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
           <rect x="2" y="2" width="36" height="36" rx="6" fill="#2f3d2a"/>
           <rect x="8" y="8" width="7" height="7" rx="1.5" fill="#6bcb77"/>
@@ -138,7 +137,7 @@
           <circle cx="11.5" cy="28" r="3.5" fill="#ff6b6b"/>
         </svg>
         <span class="wc-game-title">스네이크</span>
-        <span class="wc-game-credits">🛠️ 개발중</span>
+        <span class="wc-game-credits" id="wcGameSnakeCredits">0회</span>
       </button>
       <button type="button" class="wc-game-card wc-game-dev" id="wcGameBreakout" hidden>
         <svg class="wc-game-icon" viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
@@ -224,6 +223,10 @@
         <span class="wc-game-credits">🛠️ 개발중</span>
       </button>
     </div>
+
+    <p class="wc-gamedex-title">🎮 게임 도감</p>
+    <p class="wc-gamedex-hint">열린 게임을 한 판이라도 하면 칸이 채워져요.<br>다 채우면 보너스 기회를 받아요!</p>
+    <div class="wc-gamedex" id="wcGamedex"></div>
   </div>
 
   <p class="back-link"><a href="index.html">← 홈으로</a></p>
@@ -245,17 +248,18 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202609031352"></script>
-<script src="js/child-store.js?v=202609031352"></script>
-<script src="js/admin-auth-store.js?v=202609031352"></script>
-<script src="js/growth-store.js?v=202609031352"></script>
-<script src="js/child-badge.js?v=202609031352"></script>
-<script src="js/word-card-store.js?v=202609031352"></script>
-<script src="js/word-card-view.js?v=202609031352"></script>
-<script src="js/progress-store.js?v=202609031352"></script>
-<script src="journeys/js/stamp-store.js?v=202609031352"></script>
-<script src="js/word-game-store.js?v=202609031352"></script>
-<script src="js/tts.js?v=202609031352"></script>
-<script src="js/wordcards.js?v=202609031352"></script>
+<script src="js/firebase-init.js?v=202609111051"></script>
+<script src="js/child-store.js?v=202609111051"></script>
+<script src="js/admin-auth-store.js?v=202609111051"></script>
+<script src="js/growth-store.js?v=202609111051"></script>
+<script src="js/child-badge.js?v=202609111051"></script>
+<script src="js/word-card-store.js?v=202609111051"></script>
+<script src="js/word-card-view.js?v=202609111051"></script>
+<script src="js/progress-store.js?v=202609111051"></script>
+<script src="journeys/js/stamp-store.js?v=202609111051"></script>
+<script src="js/word-game-store.js?v=202609111051"></script>
+<script src="js/game-grant-popup.js?v=202609111051"></script>
+<script src="js/tts.js?v=202609111051"></script>
+<script src="js/wordcards.js?v=202609111051"></script>
 </body>
 </html>
