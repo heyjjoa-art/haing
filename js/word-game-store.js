@@ -1,8 +1,8 @@
 // 게임 기회 저장소. 게임은 총 12개(테트리스/스도쿠/가로세로 낱말 + 9개를 매달
-// 3개씩 순차 공개)이고, 아이별로 "열린 게임 목록"(opened)을 관리자가 켜고
-// 끈다 - "며칠 채우면 자동으로 열린다" 같은 규칙은 코드에 없다. 다음 공개
-// 기준이 매번 달라질 수 있어서, 관리자가 화면에서 숫자를 보고 직접 연다
-// (js/admin-game-open.js).
+// 3개씩 순차 공개)이고, 아이별로 "열린 게임 목록"(opened)을 관리자가
+// 관리자 탭 > 게임 기회 관리의 체크박스로 직접 켜고 끈다 - "며칠 채우면
+// 자동으로 열린다" 같은 규칙은 코드에 없다. 다음 공개 기준이 매번 달라질
+// 수 있어서다.
 //
 // 기회를 줄 때는 그 아이의 열린 게임을 섞은 주머니(bag)에서 하나씩 뽑아
 // 준다 - 트로피 1장이나 별 20개마다 3회, 저니스 한 주 개근에 3회, 그리고
@@ -472,11 +472,12 @@ var WordGameStore = (function () {
     return state.credits[game];
   }
 
-  // 관리자가 아이별로 게임을 열고 닫는다. "8일 채우면 자동으로 열린다" 같은
-  // 규칙은 없다 - js/admin-game-open.js가 화면에 숫자를 보여주면 관리자가
-  // 직접 이 함수를 부른다. 새로 여는 순간 주머니를 비워서, 다음 지급부터
-  // 새 게임이 포함된 전체를 다시 섞게 한다(안 그러면 방금 연 게임이 한
-  // 바퀴가 끝날 때까지, 최대 열린 게임 수만큼 뒤로 밀려서야 처음 나온다).
+  // 관리자가 아이별로 게임을 열고 닫는다(관리자 탭 > 게임 기회 관리의
+  // 체크박스에서 호출). "며칠 채우면 자동으로 열린다" 같은 규칙은 없다 -
+  // 관리자가 직접 판단해서 이 함수를 부른다. 새로 여는 순간 주머니를 비워서,
+  // 다음 지급부터 새 게임이 포함된 전체를 다시 섞게 한다(안 그러면 방금 연
+  // 게임이 한 바퀴가 끝날 때까지, 최대 열린 게임 수만큼 뒤로 밀려서야
+  // 처음 나온다).
   function adminSetGameOpened(childId, game, on) {
     if (!childId || GAMES.indexOf(game) === -1) return null;
     var state = getStateFor(childId);
@@ -496,7 +497,6 @@ var WordGameStore = (function () {
       HaingCloud.writeDoc("wordGameCredits/" + childId, state);
     }
     if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
-    if (window.__haingRenderAdminGameOpen) window.__haingRenderAdminGameOpen();
     return state.opened;
   }
 

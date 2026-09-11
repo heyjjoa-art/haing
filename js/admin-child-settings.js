@@ -134,9 +134,8 @@
     var row = document.createElement("div");
     row.className = "admin-credits-game-row";
 
-    // 이 게임이 이 아이에게 열려 있는지 - 8일 평가처럼 "언제 몇 개를 열지"는
-    // 매번 기준이 달라질 수 있어 코드에 규칙을 넣지 않고, 여기서 관리자가
-    // 직접 켜고 끈다(js/admin-game-open.js의 일괄 열기 버튼도 같은 함수를 씀).
+    // 이 게임이 이 아이에게 열려 있는지 - "언제 몇 개를 열지"는 매번 기준이
+    // 달라질 수 있어 코드에 규칙을 넣지 않고, 여기서 관리자가 직접 켜고 끈다.
     var openToggle = document.createElement("input");
     openToggle.type = "checkbox";
     openToggle.className = "admin-credits-game-open-toggle";

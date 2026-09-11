@@ -206,28 +206,6 @@
   margin-top: 8px;
 }
 
-.admin-game-open-dates {
-  font-size: 0.75rem;
-  color: var(--color-text-faint);
-  word-break: break-all;
-  margin: 0 0 8px;
-}
-
-.admin-game-open-toggles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 4px 12px;
-  margin-top: 4px;
-}
-
-.admin-game-open-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
 .admin-credits-history-toggle {
   margin-top: 0;
   font-size: 0.8rem;
@@ -373,6 +351,18 @@ button.admin-glance-unit-chip:hover {
 
 .admin-glance-trophy-title {
   text-align: center;
+}
+
+.admin-glance-today-list {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.admin-glance-today-list li {
+  margin-bottom: 2px;
 }
 
 /* ── 한눈에 보기: 아이별 달력(저니스·단어 완료 여부 같이 표기) ────────── */

@@ -10,6 +10,20 @@ var GlanceView = (function () {
 
   var WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function todayDateStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
+  function dayStrFromTimestamp(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+
   // admin-word-progress.js의 getAllTrackedUnits()와 같은 목록 - 유닛번호별로
   // 트로피/별 스티커를 보여주려면 등록된 유닛 전체 목록이 먼저 있어야 한다.
   function getAllTrackedUnits() {
@@ -111,6 +125,93 @@ var GlanceView = (function () {
       }
       wrap.appendChild(line);
     });
+    return wrap;
+  }
+
+  // 오늘 단어 쪽에서 뭘 했는지 - 카드가 새로 생긴 순간(collectedAt)이 곧 그
+  // 유닛을 공부한 순간이라, 오늘 날짜로 필터링하면 "오늘 한 일"이 된다.
+  // 트로피/무지개/저니스 주간 트로피는 각각 한 줄로, 나머지 일반 단어
+  // 카드는 유닛별로 묶어서 "3장: cat, dog, apple" 식으로 보여준다.
+  function todayWordSummary(childId) {
+    var today = todayDateStr();
+    var cards = WordCardStore.getCollectedForChild(childId).filter(function (r) {
+      return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === today;
+    });
+    if (cards.length === 0) return [];
+
+    var unitLabels = {};
+    getAllTrackedUnits().forEach(function (u) {
+      unitLabels[String(u.key)] = u.label;
+    });
+    function unitLabel(key) {
+      return unitLabels[String(key)] || String(key);
+    }
+
+    var lines = [];
+    var wordsByUnit = {};
+    cards.forEach(function (r) {
+      if (r.rainbowCard) {
+        lines.push("🌈 " + unitLabel(r.unit) + " 무지개 카드 획득!");
+      } else if (r.journeysTrophy) {
+        lines.push("🏆 저니스 " + (r.unitLabel || "") + " 주간 트로피 획득!");
+      } else if (r.isTrophy) {
+        lines.push("🏆 " + unitLabel(r.unit) + " 완전정복!");
+      } else {
+        var key = String(r.unit);
+        (wordsByUnit[key] = wordsByUnit[key] || []).push(r.word);
+      }
+    });
+    Object.keys(wordsByUnit).forEach(function (key) {
+      var words = wordsByUnit[key];
+      lines.push("🐣 " + unitLabel(key) + " 단어 카드 " + words.length + "장: " + words.join(", "));
+    });
+    return lines;
+  }
+
+  // 저니스 유닛 제목은 journeys/js/data-store.js(JourneysStore)가 관리하지만,
+  // 그 모듈을 여기서도 로드하면 클라우드 구독이 하나 더 생겨서(이미 저니스
+  // iframe이 따로 갖고 있음) 중복이 된다 - 같은 origin의 localStorage를 직접
+  // 읽기만 한다(제목이 아직 없으면 유닛 id를 그대로 보여준다).
+  function journeysUnitLabel(unitId) {
+    var units = {};
+    try {
+      units = JSON.parse(localStorage.getItem("journeysUnits") || "{}") || {};
+    } catch (e) {
+      units = {};
+    }
+    var unit = units[unitId];
+    if (!unit) return unitId;
+    return unit.level ? unit.level + " · " + unit.title : unit.title || unitId;
+  }
+
+  function todayJourneysSummary(childId) {
+    if (typeof StampStore === "undefined" || !StampStore.getUnitsCompletedOnDate) return [];
+    var unitIds = StampStore.getUnitsCompletedOnDate(childId, todayDateStr());
+    return unitIds.map(function (id) {
+      return "📘 " + journeysUnitLabel(id) + " 도장 획득";
+    });
+  }
+
+  function buildTodaySummary(childId) {
+    var wrap = document.createElement("div");
+    var lines = todayWordSummary(childId).concat(todayJourneysSummary(childId));
+
+    if (lines.length === 0) {
+      var empty = document.createElement("p");
+      empty.className = "hint";
+      empty.textContent = "오늘은 아직 학습 기록이 없어요.";
+      wrap.appendChild(empty);
+      return wrap;
+    }
+
+    var list = document.createElement("ul");
+    list.className = "admin-glance-today-list";
+    lines.forEach(function (line) {
+      var li = document.createElement("li");
+      li.textContent = line;
+      list.appendChild(li);
+    });
+    wrap.appendChild(list);
     return wrap;
   }
 
@@ -253,6 +354,12 @@ var GlanceView = (function () {
       trophySection.innerHTML = '<h3 class="admin-glance-trophy-title">🏆 트로피 · ⭐ 별 스티커 · 🌈 무지개</h3>';
       trophySection.appendChild(buildUnitList(childId, canNavigate));
       bodyEl.appendChild(trophySection);
+
+      var todaySection = document.createElement("div");
+      todaySection.className = "admin-glance-section";
+      todaySection.innerHTML = "<h3>📅 오늘 한 학습</h3>";
+      todaySection.appendChild(buildTodaySummary(childId));
+      bodyEl.appendChild(todaySection);
     }
 
     return { render: render };

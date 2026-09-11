@@ -383,6 +383,19 @@ var StampStore = (function () {
     });
   }
 
+  // 관리자 "오늘의 학습" 요약용 - isDayCompleteFor와 같은 조건이지만, true/false
+  // 대신 그 날짜에 도장을 받은 유닛 id들을 그대로 돌려준다.
+  function getUnitsCompletedOnDate(childId, dateStr) {
+    if (!childId) return [];
+    ensureCloudSync(childId);
+    var all = loadAll(childId);
+    return Object.keys(all).filter(function (unitId) {
+      var unitRecords = all[unitId] || {};
+      ensureStampsMigrated(unitRecords);
+      return (unitRecords._stamps || []).indexOf(dateStr) !== -1;
+    });
+  }
+
   // 관리자 진행 달력에 그대로 그릴 수 있게, year-month(1~12) 한 달치 날짜를
   // 하루씩 돌려준다. 유닛과 무관하게 그날 어느 유닛이든 미션을 끝냈으면 completed.
   function getMonthDays(childId, year, month) {
@@ -414,6 +427,7 @@ var StampStore = (function () {
     getTotalStampedDays: getTotalStampedDays,
     hasCompletedAnyToday: hasCompletedAnyToday,
     isDayCompleteFor: isDayCompleteFor,
+    getUnitsCompletedOnDate: getUnitsCompletedOnDate,
     getMonthDays: getMonthDays
   };
 })();
