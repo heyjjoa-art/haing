@@ -166,21 +166,22 @@ var GlanceView = (function () {
       lines.push("🐣 " + unitLabel(key) + " 단어 카드 " + words.length + "장: " + words.join(", "));
     });
 
-    // 이미 다 모은(트로피 받은) 유닛을 복습해서 새 카드 없이 별만 붙은 날도
-    // 놓치지 않는다 - 그날 별이 붙은 단어를 유닛별로 묶어서 보여준다
-    // (word-card-store.js addStar가 남기는 starDates 기준).
-    var starWordsByUnit = {};
+    // 이미 다 모은(트로피 받은) 유닛을 복습한 날도 놓치지 않는다 - 새 카드가
+    // 안 생기고 별이 이미 5개(한도) 꽉 차 더 안 붙어도, 그날 복습에서 맞힌
+    // 단어를 유닛별로 묶어서 보여준다(word-card-store.js addStar가 남기는
+    // reviewDates 기준 - 별 개수와 달리 맞힐 때마다 매번 쌓인다).
+    var reviewWordsByUnit = {};
     allCards.forEach(function (r) {
-      if (!r.starDates) return;
-      var hits = r.starDates.filter(function (ts) {
+      if (!r.reviewDates) return;
+      var hits = r.reviewDates.filter(function (ts) {
         return dayStrFromTimestamp(ts) === dateStr;
       }).length;
       if (hits === 0) return;
       var key = String(r.unit);
-      (starWordsByUnit[key] = starWordsByUnit[key] || []).push(hits > 1 ? r.word + " x" + hits : r.word);
+      (reviewWordsByUnit[key] = reviewWordsByUnit[key] || []).push(hits > 1 ? r.word + " x" + hits : r.word);
     });
-    Object.keys(starWordsByUnit).forEach(function (key) {
-      var words = starWordsByUnit[key];
+    Object.keys(reviewWordsByUnit).forEach(function (key) {
+      var words = reviewWordsByUnit[key];
       lines.push("⭐ " + unitLabel(key) + " 복습: " + words.join(", "));
     });
 
@@ -214,12 +215,12 @@ var GlanceView = (function () {
   function buildDaySummary(childId, dateStr) {
     var wrap = document.createElement("div");
     var wordLines = wordSummaryForDate(childId, dateStr);
-    // 이미 별 5개(한도)까지 다 찬 유닛만 복습한 날은 새 카드도, 새 별도 안 남아서
-    // wordSummaryForDate가 완전히 비게 된다 - 그래도 그날 단어 공부 자체는 했으니
-    // (ProgressStore가 세트 완료 기준으로 따로 기록) 안내 문구라도 보여준다.
+    // 하루 보상 한도(3세트)를 넘겨서 공부한 날은 addStar 자체가 일찍 멈춰
+    // reviewDates도 안 쌓인다 - 그래도 그날 단어 공부 자체는 했으니(ProgressStore가
+    // 세트 완료 기준으로 따로 기록) 안내 문구라도 보여준다.
     if (wordLines.length === 0 && typeof ProgressStore !== "undefined" && ProgressStore.isWordDoneForDay &&
       ProgressStore.isWordDoneForDay(childId, dateStr)) {
-      wordLines = ["🔁 단어 복습을 했어요(이미 다 모은 유닛이라 새로 늘어난 카드·별은 없어요)"];
+      wordLines = ["🔁 단어 복습을 했어요(하루 보상 한도를 넘겨서 자세한 기록은 없어요)"];
     }
     var lines = wordLines.concat(journeysSummaryForDate(childId, dateStr));
 
