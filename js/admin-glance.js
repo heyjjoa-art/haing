@@ -128,14 +128,14 @@ var GlanceView = (function () {
     return wrap;
   }
 
-  // 오늘 단어 쪽에서 뭘 했는지 - 카드가 새로 생긴 순간(collectedAt)이 곧 그
-  // 유닛을 공부한 순간이라, 오늘 날짜로 필터링하면 "오늘 한 일"이 된다.
-  // 트로피/무지개/저니스 주간 트로피는 각각 한 줄로, 나머지 일반 단어
-  // 카드는 유닛별로 묶어서 "3장: cat, dog, apple" 식으로 보여준다.
-  function todayWordSummary(childId) {
-    var today = todayDateStr();
+  // 특정 날짜(dateStr, YYYY-MM-DD)에 단어 쪽에서 뭘 했는지 - 카드가 새로 생긴
+  // 순간(collectedAt)이 곧 그 유닛을 공부한 순간이라, 그 날짜로 필터링하면
+  // "그날 한 일"이 된다(오늘 날짜를 넘기면 오늘 한 일). 트로피/무지개/저니스
+  // 주간 트로피는 각각 한 줄로, 나머지 일반 단어 카드는 유닛별로 묶어서
+  // "3장: cat, dog, apple" 식으로 보여준다.
+  function wordSummaryForDate(childId, dateStr) {
     var cards = WordCardStore.getCollectedForChild(childId).filter(function (r) {
-      return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === today;
+      return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === dateStr;
     });
     if (cards.length === 0) return [];
 
@@ -184,22 +184,22 @@ var GlanceView = (function () {
     return unit.level ? unit.level + " · " + unit.title : unit.title || unitId;
   }
 
-  function todayJourneysSummary(childId) {
+  function journeysSummaryForDate(childId, dateStr) {
     if (typeof StampStore === "undefined" || !StampStore.getUnitsCompletedOnDate) return [];
-    var unitIds = StampStore.getUnitsCompletedOnDate(childId, todayDateStr());
+    var unitIds = StampStore.getUnitsCompletedOnDate(childId, dateStr);
     return unitIds.map(function (id) {
       return "📘 " + journeysUnitLabel(id) + " 도장 획득";
     });
   }
 
-  function buildTodaySummary(childId) {
+  function buildDaySummary(childId, dateStr) {
     var wrap = document.createElement("div");
-    var lines = todayWordSummary(childId).concat(todayJourneysSummary(childId));
+    var lines = wordSummaryForDate(childId, dateStr).concat(journeysSummaryForDate(childId, dateStr));
 
     if (lines.length === 0) {
       var empty = document.createElement("p");
       empty.className = "hint";
-      empty.textContent = "오늘은 아직 학습 기록이 없어요.";
+      empty.textContent = dateStr === todayDateStr() ? "오늘은 아직 학습 기록이 없어요." : "이 날은 학습 기록이 없어요.";
       wrap.appendChild(empty);
       return wrap;
     }
@@ -224,6 +224,9 @@ var GlanceView = (function () {
     var viewYear = today.getFullYear();
     var viewMonth = today.getMonth() + 1; // 1~12
     var currentChildId = null;
+    // 달력에서 눌러서 본 날짜 - 기본은 오늘. 아이를 바꾸면 오늘로 되돌아간다.
+    var selectedDate = todayDateStr();
+    var daySectionEl = null;
 
     function isCurrentMonthView() {
       return viewYear === today.getFullYear() && viewMonth === today.getMonth() + 1;
@@ -327,9 +330,22 @@ var GlanceView = (function () {
         } else {
           if (d.journeysDone) cell.classList.add("journeys-done");
           if (d.wordDone) cell.classList.add("word-done");
+          // 지난 날짜를 눌러서 그날 무슨 단어/도장을 했는지 볼 수 있게 한다.
+          cell.classList.add("clickable");
+          cell.addEventListener("click", function () {
+            if (selectedDate === d.date) return;
+            var prevSelected = grid.querySelector(".admin-glance-calendar-day.selected");
+            if (prevSelected) prevSelected.classList.remove("selected");
+            selectedDate = d.date;
+            cell.classList.add("selected");
+            renderDaySection(childId);
+          });
         }
         if (isCurrentMonthView() && d.day === today.getDate()) {
           cell.classList.add("today");
+        }
+        if (d.date === selectedDate) {
+          cell.classList.add("selected");
         }
         cell.textContent = String(d.day);
         grid.appendChild(cell);
@@ -339,7 +355,36 @@ var GlanceView = (function () {
       return wrap;
     }
 
+    function daySectionTitle(dateStr) {
+      if (dateStr === todayDateStr()) return "📅 오늘 한 학습";
+      var parts = dateStr.split("-");
+      return "📅 " + parseInt(parts[1], 10) + "월 " + parseInt(parts[2], 10) + "일 한 학습";
+    }
+
+    function renderDaySection(childId) {
+      if (!daySectionEl) return;
+      daySectionEl.innerHTML = "";
+      var h3 = document.createElement("h3");
+      h3.textContent = daySectionTitle(selectedDate);
+      daySectionEl.appendChild(h3);
+      if (selectedDate !== todayDateStr()) {
+        var backBtn = document.createElement("button");
+        backBtn.type = "button";
+        backBtn.className = "secondary-btn admin-glance-today-back";
+        backBtn.textContent = "오늘로";
+        backBtn.addEventListener("click", function () {
+          selectedDate = todayDateStr();
+          render(childId);
+        });
+        daySectionEl.appendChild(backBtn);
+      }
+      daySectionEl.appendChild(buildDaySummary(childId, selectedDate));
+    }
+
     function render(childId) {
+      if (childId !== currentChildId) {
+        selectedDate = todayDateStr();
+      }
       currentChildId = childId;
       bodyEl.innerHTML = "";
       if (!childId) return;
@@ -355,11 +400,10 @@ var GlanceView = (function () {
       trophySection.appendChild(buildUnitList(childId, canNavigate));
       bodyEl.appendChild(trophySection);
 
-      var todaySection = document.createElement("div");
-      todaySection.className = "admin-glance-section";
-      todaySection.innerHTML = "<h3>📅 오늘 한 학습</h3>";
-      todaySection.appendChild(buildTodaySummary(childId));
-      bodyEl.appendChild(todaySection);
+      daySectionEl = document.createElement("div");
+      daySectionEl.className = "admin-glance-section";
+      bodyEl.appendChild(daySectionEl);
+      renderDaySection(childId);
     }
 
     return { render: render };

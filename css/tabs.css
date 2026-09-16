@@ -493,3 +493,16 @@ button.admin-glance-unit-chip:hover {
   outline: 2px dashed var(--color-accent);
   outline-offset: -2px;
 }
+
+.admin-glance-calendar-day.clickable {
+  cursor: pointer;
+}
+
+.admin-glance-calendar-day.selected {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.admin-glance-today-back {
+  margin: 4px 0 8px;
+}

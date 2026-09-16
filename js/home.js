@@ -197,25 +197,14 @@
     });
   })();
 
-  // 오늘 저니스+단어를 둘 다 끝냈으면 게임 기회를 지급하고(WordGameStore가
-  // 알아서 중복 지급을 막는다), 밀려있던 지급 알림(칭찬+오늘의 게임 등)이
-  // 있으면 홈 화면에서도 보여준다 - wordcards.html을 안 열어도 놓치지 않는다.
-  function announcePendingGames() {
-    if (typeof WordGameStore === "undefined") return;
-    WordGameStore.syncCredits();
-    if (typeof GameGrantPopup === "undefined") return;
-    WordGameStore.consumePendingAnnouncements().forEach(function (entry) {
-      GameGrantPopup.show(entry.games, entry.kind);
-    });
-  }
-
+  // 게임 기회 지급 알림(칭찬+오늘의 게임 등) 팝업은 여기(단어/학습 탭)에서는
+  // 더 이상 안 띄운다 - 공부 흐름을 막지 않고, 밀린 알림은 wordcards.js가
+  // 단어 카드 도감(게임 화면)을 열 때 그대로 보여준다.
   renderCards();
   renderUnitHistory();
-  announcePendingGames();
 
   window.__haingRenderHome = function () {
     renderCards();
     renderUnitHistory();
-    announcePendingGames();
   };
 })();

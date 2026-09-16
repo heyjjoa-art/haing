@@ -171,9 +171,10 @@
     renderGameDex();
   }
 
-  // 게임 도감 - 오픈된 게임을 1판이라도 하면 칸이 컬러로 채워진다. 이 아이가
-  // 실제로 크레딧을 소비(spendCredit)할 때마다 WordGameStore가 dex를 채우므로
-  // 여기서는 그 값을 그대로 그리기만 한다.
+  // 게임 도감 - "게임을 열었는지"가 아니라 "그 게임을 몇 번 했는지"로 칸을
+  // 채운다. 이 아이가 실제로 크레딧을 소비(spendCredit)할 때마다
+  // WordGameStore가 그 게임의 판 수(dex)를 늘리고, 그 판 수로 레벨을 매긴다
+  // (WordGameStore.getDexLevel) - 게임마다 따로 레벨이 쌓인다.
   function renderGameDex() {
     if (!wcGamedexEl || typeof WordGameStore === "undefined") return;
     var opened = WordGameStore.getOpenedGames();
@@ -182,6 +183,7 @@
     WordGameStore.GAME_REGISTRY.forEach(function (meta) {
       var isOpen = opened.indexOf(meta.key) !== -1;
       var plays = dex[meta.key] || 0;
+      var level = WordGameStore.getDexLevel(meta.key);
 
       var slot = document.createElement("div");
       slot.className = "wc-gamedex-slot";
@@ -194,7 +196,7 @@
 
       var label = document.createElement("span");
       label.className = "wc-gamedex-label";
-      label.textContent = isOpen && plays > 0 ? plays + "판" : meta.label;
+      label.textContent = isOpen && level > 0 ? "Lv." + level + " · " + plays + "판" : meta.label;
       slot.appendChild(label);
 
       wcGamedexEl.appendChild(slot);
@@ -208,12 +210,12 @@
     if (typeof WordGameStore === "undefined" || typeof GameGrantPopup === "undefined") return;
     var pending = WordGameStore.consumePendingAnnouncements();
     pending.forEach(function (entry) {
-      GameGrantPopup.show(entry.games, entry.kind);
+      GameGrantPopup.show(entry.games);
     });
   }
 
   function render() {
-    // 어느 탭을 보고 있든, 밀려있는 게임 지급 알림(칭찬+오늘의 게임 등)이
+    // 어느 탭을 보고 있든, 밀려있는 게임 지급 알림(트로피/별 마일스톤)이
     // 있으면 여기서 한 번 보여준다 - 단어 카드 탭을 먼저 열어도 놓치지 않는다.
     showPendingGameAnnouncements();
 

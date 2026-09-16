@@ -5,10 +5,11 @@
 // 수 있어서다.
 //
 // 기회를 줄 때는 그 아이의 열린 게임을 섞은 주머니(bag)에서 하나씩 뽑아
-// 준다 - 트로피 1장이나 별 20개마다 3회, 저니스 한 주 개근에 3회, 그리고
-// 오늘 두 트랙(저니스+단어)을 모두 끝낸 날 1회. 주머니 방식이라 한 바퀴
-// (열린 게임 수만큼) 안에는 모든 게임이 정확히 1번씩 나오고, 다 뽑히면
-// 다시 섞어서 새 바퀴가 시작된다 - 특정 게임에만 기회가 몰리지 않는다.
+// 준다 - 트로피 1장이나 별 20개마다 3회뿐이다(저니스 주간 개근 트로피,
+// 오늘 두 트랙 완료는 공부 자체가 보상이라 게임 기회를 별도로 주지 않는다).
+// 주머니 방식이라 한 바퀴(열린 게임 수만큼) 안에는 모든 게임이 정확히
+// 1번씩 나오고, 다 뽑히면 다시 섞어서 새 바퀴가 시작된다 - 특정 게임에만
+// 기회가 몰리지 않는다.
 var WordGameStore = (function () {
   var GAME_REGISTRY = [
     { key: "tetris", emoji: "🧱", label: "테트리스", url: "tetris.html", defaultOpen: true },
@@ -94,13 +95,6 @@ var WordGameStore = (function () {
     return raw.filter(function (g) { return GAMES.indexOf(g) !== -1; });
   }
 
-  var MAX_DAILY_GRANTED_ENTRIES = 60;
-
-  function normalizeDailyGranted(raw) {
-    if (!Array.isArray(raw)) return [];
-    return raw.filter(function (d) { return typeof d === "string"; }).slice(-MAX_DAILY_GRANTED_ENTRIES);
-  }
-
   function normalizeDex(raw) {
     var dex = {};
     if (raw && typeof raw === "object") {
@@ -132,9 +126,7 @@ var WordGameStore = (function () {
       credits: emptyCredits(),
       opened: defaultOpenedGames(),
       bag: [],
-      dailyGranted: [],
       dex: {},
-      dexBonusAt: 0,
       pendingAnnounce: [],
       trophiesCounted: 0,
       starBlocksCounted: 0,
@@ -152,9 +144,7 @@ var WordGameStore = (function () {
       credits: normalizeCredits(parsed.credits),
       opened: normalizeOpened(parsed.opened),
       bag: normalizeBag(parsed.bag),
-      dailyGranted: normalizeDailyGranted(parsed.dailyGranted),
       dex: normalizeDex(parsed.dex),
-      dexBonusAt: parsed.dexBonusAt || 0,
       pendingAnnounce: normalizePending(parsed.pendingAnnounce),
       trophiesCounted: parsed.trophiesCounted || 0,
       starBlocksCounted: parsed.starBlocksCounted || 0,
@@ -222,48 +212,16 @@ var WordGameStore = (function () {
     }, 0);
   }
 
-  // 오늘 저니스 + 단어를 둘 다 끝냈으면 하루 1번만 게임 1개를 지급한다(그날
-  // 다시 열어도 재지급 안 함). 별 20개/트로피 마일스톤이 이미 3회씩 주므로,
-  // 매일 보너스는 일부러 1개로 작게 유지해서 마일스톤 보상이 묻히지 않게
-  // 한다. 주말 예외 없이 학습달력(js/admin-glance.js)과 같은 기준(둘 다 완료)
-  // 을 쓴다 - "게임을 할 수 있는지"(hasStudiedTodayForGames, 주말엔 단어만
-  // 요구)와는 별개의, 더 엄격한 판정이다.
-  function applyDailyBothTracksCredit(state) {
-    if (isAdminActive()) return false;
-    var childId = typeof ChildStore !== "undefined" && ChildStore.getActive();
-    if (!childId) return false;
-    var today = todayStr();
-    if (state.dailyGranted.indexOf(today) !== -1) return false;
-
-    var wordDone = typeof ProgressStore !== "undefined" && ProgressStore.isWordDoneForDay &&
-      ProgressStore.isWordDoneForDay(childId, today);
-    var journeyDone = typeof StampStore !== "undefined" && StampStore.isDayCompleteFor &&
-      StampStore.isDayCompleteFor(childId, today);
-    if (!wordDone || !journeyDone) return false;
-
-    var games = drawFromBag(state, 1);
-    if (games.length === 0) return false; // 열린 게임이 하나도 없으면 지급할 게 없다.
-
-    games.forEach(function (g) { state.credits[g] += 1; });
-    state.dailyGranted = state.dailyGranted.concat([today]).slice(-MAX_DAILY_GRANTED_ENTRIES);
-    state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
-      { kind: "daily", games: games, at: Date.now() }
-    ]));
-    return true;
-  }
-
   // 트로피/별 상태가 바뀔 때마다(카드 저장소 쪽에서) 불러주면, 지난번에 이미 센
   // 트로피 수·별 20개 단위 수보다 늘어난 만큼만 3회씩 새로 얹는다. 여러 번 불러도
-  // 안전(늘어난 만큼만 계산하므로 중복 지급 없음). 매일 지급도 여기서 같이 본다 -
-  // 이 함수가 단어 세트 완료/게임 탭 진입 등 여러 곳에서 이미 불리고 있어서,
-  // 어느 페이지를 열든 오늘 몫이 자연스럽게 지급된다.
+  // 안전(늘어난 만큼만 계산하므로 중복 지급 없음).
   function syncCredits() {
     if (typeof WordCardStore === "undefined") return getTotalCredits();
     var state = getState();
-    var changed = applyDailyBothTracksCredit(state);
+    var changed = false;
 
-    // Journeys 주간 트로피는 여기서 안 센다 - 그건 받는 순간 grantCredits로 직접
-    // 기회를 주므로, 여기서도 같이 세면 두 번 주는 셈이 된다.
+    // Journeys 주간 트로피는 여기서 안 센다 - 그 자체가 보상이라 게임 기회를
+    // 따로 주지 않는다(있었다면 여기서도 같이 세면 두 번 주는 셈이 된다).
     var trophyCount = WordCardStore.getTrophyCards().filter(function (r) {
       return !r.journeysTrophy;
     }).length;
@@ -346,7 +304,7 @@ var WordGameStore = (function () {
   // 게임을 하나 시작할 때 그 게임 몫의 기회를 1회 쓴다. 오늘 공부를 안 했거나,
   // 그 게임이 아직 안 열렸거나, 그 게임에 남은 기회가 없으면 false(다른 게임에
   // 기회가 남아 있어도 안 됨). 실제로 쓴 순간이 곧 "플레이 시작"이므로 게임
-  // 도감(dex)도 여기서 같이 채운다.
+  // 도감(dex)의 그 게임 플레이 횟수도 여기서 같이 늘린다.
   function spendCredit(game) {
     if (isAdminActive()) return true;
     if (!hasStudiedTodayForGames()) return false;
@@ -357,31 +315,31 @@ var WordGameStore = (function () {
     state.credits[game] -= 1;
     state.log = normalizeLog(state.log.concat([{ game: game, spentAt: Date.now() }]));
     state.dex[game] = (state.dex[game] || 0) + 1;
-
-    // 게임 도감 완성 보너스 - 지금 열린 게임을 전부 한 번 이상 해봤고, 그
-    // 완성이 "이번이 처음"이면(그 뒤로 게임이 더 열리지 않았다면) 기회 3회를
-    // 더 준다. 게임이 새로 열리면 dexBonusAt보다 opened가 커지므로 다시
-    // 도전 대상이 된다. 도감 자체(dex)는 초기화하지 않는다.
-    var allPlayed = state.opened.length > 0 && state.opened.every(function (g) {
-      return (state.dex[g] || 0) > 0;
-    });
-    if (allPlayed && state.opened.length > state.dexBonusAt) {
-      var bonusGames = drawFromBag(state, 3);
-      bonusGames.forEach(function (g) { state.credits[g] += 1; });
-      state.dexBonusAt = state.opened.length;
-      if (bonusGames.length > 0) {
-        state.pendingAnnounce = normalizePending(state.pendingAnnounce.concat([
-          { kind: "dex", games: bonusGames, at: Date.now() }
-        ]));
-      }
-    }
-
     saveState(state);
     return true;
   }
 
-  // 트로피/별 말고 다른 곳(예: 저니스 한 주 개근)에서도 게임 기회를 줄 때 쓴다.
-  // 고정된 아이라도 실제 쌓이는 값은 뒤에서 그대로 늘어난다(화면 표시만 고정).
+  // 게임 도감의 "레벨" - 게임을 열었는지와 무관하게, 그 게임을 몇 번
+  // 플레이했는지(dex의 판 수)만으로 매긴다. 문턱값은 대략 두 배씩 늘려서
+  // 뒤로 갈수록 다음 레벨까지 더 오래 걸리게 했다.
+  var DEX_LEVEL_THRESHOLDS = [1, 3, 6, 10, 15, 25, 40, 60, 90];
+
+  function levelForPlays(plays) {
+    var level = 0;
+    for (var i = 0; i < DEX_LEVEL_THRESHOLDS.length; i++) {
+      if (plays >= DEX_LEVEL_THRESHOLDS[i]) level = i + 1;
+      else break;
+    }
+    return level;
+  }
+
+  function getDexLevel(game) {
+    return levelForPlays(getState().dex[game] || 0);
+  }
+
+  // syncCredits(트로피/별 마일스톤)이 쓰는 공용 지급 함수 - 다른 계기로 기회를
+  // 줘야 할 일이 생기면 여기를 그대로 재사용한다. 고정된 아이라도 실제 쌓이는
+  // 값은 뒤에서 그대로 늘어난다(화면 표시만 고정).
   function grantCredits(n) {
     var state = getState();
     var games = drawFromBag(state, n);
@@ -576,6 +534,7 @@ var WordGameStore = (function () {
     consumePendingAnnouncements: consumePendingAnnouncements,
     getOpenedGames: getOpenedGames,
     getDex: getDex,
+    getDexLevel: getDexLevel,
     getCreditsForChild: getCreditsForChild,
     getCreditsForChildByGame: getCreditsForChildByGame,
     getSpendLogForChild: getSpendLogForChild,
