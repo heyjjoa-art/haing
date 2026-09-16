@@ -145,7 +145,14 @@ var WordCardStore = (function () {
       return !r.isTrophy && normalize(r.word) === key;
     })[0];
     if (!record) return null;
-    record.stars = Math.min(5, (record.stars || 0) + 1);
+    var before = record.stars || 0;
+    record.stars = Math.min(5, before + 1);
+    // 새 카드가 안 생기는 복습(별만 붙는 날)도 관리자 학습달력의 "그날 한 학습"에
+    // 남게, 별이 실제로 늘어난 순간마다 날짜를 하나씩 쌓아둔다(최대 5개 - 별
+    // 한도와 같다). admin-glance.js의 wordSummaryForDate가 이 날짜들도 훑는다.
+    if (record.stars > before) {
+      record.starDates = (record.starDates || []).concat([Date.now()]).slice(-5);
+    }
     saveCollected(collected);
     syncToCloud();
     if (typeof WordGameStore !== "undefined") WordGameStore.syncCredits();

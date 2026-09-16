@@ -134,10 +134,10 @@ var GlanceView = (function () {
   // 주간 트로피는 각각 한 줄로, 나머지 일반 단어 카드는 유닛별로 묶어서
   // "3장: cat, dog, apple" 식으로 보여준다.
   function wordSummaryForDate(childId, dateStr) {
-    var cards = WordCardStore.getCollectedForChild(childId).filter(function (r) {
+    var allCards = WordCardStore.getCollectedForChild(childId);
+    var newCards = allCards.filter(function (r) {
       return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === dateStr;
     });
-    if (cards.length === 0) return [];
 
     var unitLabels = {};
     getAllTrackedUnits().forEach(function (u) {
@@ -149,7 +149,7 @@ var GlanceView = (function () {
 
     var lines = [];
     var wordsByUnit = {};
-    cards.forEach(function (r) {
+    newCards.forEach(function (r) {
       if (r.rainbowCard) {
         lines.push("🌈 " + unitLabel(r.unit) + " 무지개 카드 획득!");
       } else if (r.journeysTrophy) {
@@ -165,6 +165,25 @@ var GlanceView = (function () {
       var words = wordsByUnit[key];
       lines.push("🐣 " + unitLabel(key) + " 단어 카드 " + words.length + "장: " + words.join(", "));
     });
+
+    // 이미 다 모은(트로피 받은) 유닛을 복습해서 새 카드 없이 별만 붙은 날도
+    // 놓치지 않는다 - 그날 별이 붙은 단어를 유닛별로 묶어서 보여준다
+    // (word-card-store.js addStar가 남기는 starDates 기준).
+    var starWordsByUnit = {};
+    allCards.forEach(function (r) {
+      if (!r.starDates) return;
+      var hits = r.starDates.filter(function (ts) {
+        return dayStrFromTimestamp(ts) === dateStr;
+      }).length;
+      if (hits === 0) return;
+      var key = String(r.unit);
+      (starWordsByUnit[key] = starWordsByUnit[key] || []).push(hits > 1 ? r.word + " x" + hits : r.word);
+    });
+    Object.keys(starWordsByUnit).forEach(function (key) {
+      var words = starWordsByUnit[key];
+      lines.push("⭐ " + unitLabel(key) + " 복습: " + words.join(", "));
+    });
+
     return lines;
   }
 
@@ -194,7 +213,15 @@ var GlanceView = (function () {
 
   function buildDaySummary(childId, dateStr) {
     var wrap = document.createElement("div");
-    var lines = wordSummaryForDate(childId, dateStr).concat(journeysSummaryForDate(childId, dateStr));
+    var wordLines = wordSummaryForDate(childId, dateStr);
+    // 이미 별 5개(한도)까지 다 찬 유닛만 복습한 날은 새 카드도, 새 별도 안 남아서
+    // wordSummaryForDate가 완전히 비게 된다 - 그래도 그날 단어 공부 자체는 했으니
+    // (ProgressStore가 세트 완료 기준으로 따로 기록) 안내 문구라도 보여준다.
+    if (wordLines.length === 0 && typeof ProgressStore !== "undefined" && ProgressStore.isWordDoneForDay &&
+      ProgressStore.isWordDoneForDay(childId, dateStr)) {
+      wordLines = ["🔁 단어 복습을 했어요(이미 다 모은 유닛이라 새로 늘어난 카드·별은 없어요)"];
+    }
+    var lines = wordLines.concat(journeysSummaryForDate(childId, dateStr));
 
     if (lines.length === 0) {
       var empty = document.createElement("p");
@@ -367,17 +394,6 @@ var GlanceView = (function () {
       var h3 = document.createElement("h3");
       h3.textContent = daySectionTitle(selectedDate);
       daySectionEl.appendChild(h3);
-      if (selectedDate !== todayDateStr()) {
-        var backBtn = document.createElement("button");
-        backBtn.type = "button";
-        backBtn.className = "secondary-btn admin-glance-today-back";
-        backBtn.textContent = "오늘로";
-        backBtn.addEventListener("click", function () {
-          selectedDate = todayDateStr();
-          render(childId);
-        });
-        daySectionEl.appendChild(backBtn);
-      }
       daySectionEl.appendChild(buildDaySummary(childId, selectedDate));
     }
 

@@ -379,7 +379,36 @@ var WordGameStore = (function () {
     return "haingGameCredits_" + (childId ? childId + "_" : "guest_");
   }
 
+  // 관리자가 보는 아이가 이 기기에서 로그인한 적이 없으면(부모 기기와 아이
+  // 기기가 다른 경우) 이 기기 localStorage엔 그 아이의 게임 기회/사용 기록이
+  // 한 번도 안 내려온 적이 없어서, 실제로는 최근에도 게임을 했는데 관리자
+  // 화면엔 옛날 값(심하면 빈 값)만 보였다. word-card-store.js/progress-store.js의
+  // ensureCloudSyncForChild와 같은 방식으로, 지금 로그인한 아이와 무관하게
+  // 그 아이 몫을 클라우드에서 따로 받아와 이 기기에도 채워 넣는다.
+  var watchedChildrenForAdmin = {};
+
+  function ensureCloudSyncForChild(childId) {
+    if (!childId) return;
+    if (typeof ChildStore !== "undefined" && ChildStore.getActive() === childId) return;
+    if (watchedChildrenForAdmin[childId]) return;
+    if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
+    watchedChildrenForAdmin[childId] = true;
+
+    var path = "wordGameCredits/" + childId;
+    function applyRemote(data) {
+      if (!data) return;
+      localStorage.setItem(stateKeyFor(childId), JSON.stringify(parseStateData(data)));
+      if (window.__haingRenderAdminChildSettings) window.__haingRenderAdminChildSettings();
+      if (window.__haingRenderAdminGlance) window.__haingRenderAdminGlance();
+    }
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      applyRemote(remote);
+      HaingCloud.watchDoc(path, applyRemote);
+    });
+  }
+
   function getStateFor(childId) {
+    ensureCloudSyncForChild(childId);
     var raw = localStorage.getItem(stateKeyFor(childId));
     if (!raw) return defaultState();
     try {
