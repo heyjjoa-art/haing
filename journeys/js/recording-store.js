@@ -27,6 +27,16 @@ var RecordingStore = (function () {
     if (!AudioContextClass) return null;
     try {
       var audioContext = new AudioContextClass();
+      // getUserMedia는 비동기라(startCapture의 .then 안에서 이 함수가 불림), 이 시점엔
+      // 브라우저가 더 이상 "사용자가 방금 직접 눌렀다"고 안 쳐줄 수 있다 - 특히
+      // 사파리/아이폰은 이런 경우 AudioContext를 처음부터 "suspended" 상태로 만들어서,
+      // analyser가 마이크 소리를 전혀 못 읽고 계속 무음(RMS 0)만 돌려준다. 그러면
+      // 아이가 실제로 소리 내어 읽어도 hadVoiceActivity가 절대 true가 안 돼서
+      // 따라읽기/혼자읽기가 매번 "녹음 안 됨"으로 조용히 실패한다 - resume()으로
+      // 명시적으로 깨워야 한다(이미 실행 중이면 그냥 아무 효과 없이 넘어간다).
+      if (audioContext.state === "suspended" && audioContext.resume) {
+        audioContext.resume().catch(function () {});
+      }
       var source = audioContext.createMediaStreamSource(stream);
       var analyser = audioContext.createAnalyser();
       analyser.fftSize = 512;
