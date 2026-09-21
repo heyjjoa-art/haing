@@ -145,13 +145,19 @@ var ProgressStore = (function () {
         // no-op
       }
     }
-    // haingWordStudyDays_는 이 기록을 두기 시작한 날부터만 쌓여서, 그 전 날짜는
-    // 대신 그날 실제로 모은 단어/트로피/무지개 카드가 있는지로 판단한다(카드마다
-    // collectedAt이 있어서 과거 활동을 그대로 되짚어볼 수 있다).
+    // haingWordStudyDays_는 1~4번(또는 2~4번)을 그날 안에 끝까지 다 마쳐야만 쌓인다 -
+    // 예를 들어 플래시카드·메모리는 다 끝내고 스펠링만 못 끝낸 날은 여기 안 남는다.
+    // 그런 날도 실제로 공부는 한 거라, 그날 실제로 새로 모은 카드(collectedAt)나
+    // 복습에서 맞힌 단어(reviewDates - 트로피 받은 유닛을 복습할 때마다 쌓임)가
+    // 있으면 그것도 "공부한 날"로 쳐준다. haingWordStudyDays_가 생기기 전의 옛
+    // 날짜를 되짚어보는 데도 그대로 쓰인다.
     if (typeof WordCardStore !== "undefined" && WordCardStore.getCollectedForChild) {
       var cards = WordCardStore.getCollectedForChild(childId);
       return cards.some(function (r) {
-        return r.collectedAt && dayStrFromTimestamp(r.collectedAt) === dateStr;
+        if (r.collectedAt && dayStrFromTimestamp(r.collectedAt) === dateStr) return true;
+        return (r.reviewDates || []).some(function (ts) {
+          return dayStrFromTimestamp(ts) === dateStr;
+        });
       });
     }
     return false;

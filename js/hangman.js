@@ -92,22 +92,70 @@
     return a;
   }
 
+  // 어려운 단계는 20개를 한 번에 안 끊기고 다 풀어야 그날 학습 완료로 잡히는데,
+  // completedCount/queue가 이 변수(메모리)에만 있어서 중간에 나갔다 들어오면 0부터
+  // 다시 시작해야 했다(실제로 아이 둘 다 이 단계에서 막혀 "20개 공부했는데도
+  // 완료 표시가 안 된다"는 문제로 이어짐). 남은 단어 목록과 완료 개수를
+  // ProgressStore 커스텀 상태(단계별로 따로)에 저장해서, 페이지를 다시 열면
+  // 이어서 풀 수 있게 한다.
+  var STAGE_PROGRESS_KEY = "hangmanStageProgress";
+
+  function loadAllStageProgress() {
+    return ProgressStore.getCustomState(STAGE_PROGRESS_KEY) || {};
+  }
+
+  function saveStageProgress(stageKey, wordQueue, count) {
+    var all = loadAllStageProgress();
+    all[stageKey] = {
+      remaining: wordQueue.map(function (w) {
+        return w.word;
+      }),
+      completedCount: count
+    };
+    ProgressStore.setCustomState(STAGE_PROGRESS_KEY, all);
+  }
+
   function switchStage(stageKey) {
     currentStageKey = stageKey;
     ProgressStore.setCustomState("hangmanStage", stageKey);
     Object.keys(tabs).forEach(function (key) {
       tabs[key].classList.toggle("active", key === stageKey);
     });
-    queue = shuffle(STAGES[stageKey].words);
-    completedCount = 0;
+
+    var wordsForStage = STAGES[stageKey].words;
+    var saved = loadAllStageProgress()[stageKey];
+    var resumedQueue = null;
+    if (saved && Array.isArray(saved.remaining)) {
+      var byWord = {};
+      wordsForStage.forEach(function (w) {
+        byWord[w.word] = w;
+      });
+      resumedQueue = saved.remaining
+        .map(function (w) {
+          return byWord[w];
+        })
+        .filter(Boolean);
+    }
+
+    // 이어갈 게 있으면(전에 하다 만 게 있으면) 그대로 이어가고, 아니면(처음이거나
+    // 지난번에 한 바퀴 다 돌았으면) 새로 섞어서 시작한다.
+    if (resumedQueue && resumedQueue.length > 0 && resumedQueue.length <= wordsForStage.length) {
+      queue = resumedQueue;
+      completedCount = wordsForStage.length - queue.length;
+    } else {
+      queue = shuffle(wordsForStage);
+      completedCount = 0;
+    }
+    saveStageProgress(stageKey, queue, completedCount);
+
     if (stageKey === "hard") {
       hardStageWins = 0;
       hardStageTotal = 0;
     }
-    stageTotalEl.textContent = String(STAGES[stageKey].words.length);
+    stageTotalEl.textContent = String(wordsForStage.length);
     updateProgress();
 
-    if (STAGES[stageKey].words.length === 0) {
+    if (wordsForStage.length === 0) {
       hintTextEl.textContent = "이 단계에 해당하는 단어가 없어요. 단어를 더 추가해 주세요.";
       wordBlanksEl.textContent = "";
       keyboardEl.innerHTML = "";
@@ -289,6 +337,7 @@
     completedCount++;
     overallCompleted++;
     updateProgress();
+    saveStageProgress(currentStageKey, queue, completedCount);
     ProgressStore.setStepProgress("hangman", Math.min(overallCompleted, TOTAL_ALL_WORDS), TOTAL_ALL_WORDS);
 
     // 이 유닛 트로피를 이미 받은 뒤(=복습 중)라면, 새로 줄 카드는 없으니(이미 다 모음)
