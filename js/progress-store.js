@@ -151,6 +151,13 @@ var ProgressStore = (function () {
     // 복습에서 맞힌 단어(reviewDates - 트로피 받은 유닛을 복습할 때마다 쌓임)가
     // 있으면 그것도 "공부한 날"로 쳐준다. haingWordStudyDays_가 생기기 전의 옛
     // 날짜를 되짚어보는 데도 그대로 쓰인다.
+    //
+    // 단, 오늘 날짜는 이 느슨한 판정을 쓰지 않는다 - 게임 잠금 해제 조건
+    // (hasCompletedSetToday, 스펠링까지 한 바퀴를 다 돌아야 함)과 기준이 달라서,
+    // 스펠링을 안 끝냈는데도 학습달력이 먼저 "완료"로 표시돼 버리면 아이/부모가
+    // "공부 다 했는데 왜 게임이 안 열리냐"고 헷갈리게 된다(2026-09-24 하진 사례).
+    // 오늘만큼은 haingWordStudyDays_(=완주)와 똑같은 기준으로 맞춘다.
+    if (dateStr === todayStr()) return false;
     if (typeof WordCardStore !== "undefined" && WordCardStore.getCollectedForChild) {
       var cards = WordCardStore.getCollectedForChild(childId);
       return cards.some(function (r) {
