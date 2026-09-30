@@ -26,6 +26,8 @@
   function completeStorybook() {
     var firstTime = ProgressStore.markDone("storybook");
     ProgressStore.markReviewStep("storybook");
+    var nextStageLink = document.getElementById("nextStageLink");
+    if (nextStageLink) nextStageLink.hidden = false;
     if (firstTime) {
       PraisePopup.show("flashcards.html", "다음 단계로 ▶");
     }
