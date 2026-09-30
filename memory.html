@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>단어 매칭 게임 - Haing</title>
-<link rel="stylesheet" href="css/style.css?v=202609242024">
-<link rel="stylesheet" href="css/game-ui.css?v=202609242024">
-<link rel="stylesheet" href="css/memory.css?v=202609242024">
-<link rel="stylesheet" href="css/word-card.css?v=202609242024">
+<link rel="stylesheet" href="css/style.css?v=202609301421">
+<link rel="stylesheet" href="css/game-ui.css?v=202609301421">
+<link rel="stylesheet" href="css/memory.css?v=202609301421">
+<link rel="stylesheet" href="css/word-card.css?v=202609301421">
 </head>
 <body>
 
@@ -40,6 +40,7 @@
   <div class="win-banner" id="winBanner" hidden>
     <p id="roundWinText"></p>
     <button type="button" id="nextRoundBtn" class="secondary-btn">다음 세트 ▶</button>
+    <a id="nextStageLink" class="secondary-btn" href="hangman.html" hidden>다음 단계로 ▶</a>
   </div>
 
   <p class="back-link"><a href="index.html">← 홈으로</a></p>
@@ -57,17 +58,17 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="js/firebase-init.js?v=202609242024"></script>
-<script src="js/child-store.js?v=202609242024"></script>
-<script src="js/growth-store.js?v=202609242024"></script>
-<script src="js/child-badge.js?v=202609242024"></script>
-<script src="js/words-data.js?v=202609242024"></script>
-<script src="js/elementary-words-data.js?v=202609242024"></script>
-<script src="js/data-store.js?v=202609242024"></script>
-<script src="js/progress-store.js?v=202609242024"></script>
-<script src="js/word-card-store.js?v=202609242024"></script>
-<script src="js/word-game-store.js?v=202609242024"></script>
-<script src="js/praise-popup.js?v=202609242024"></script>
-<script src="js/memory.js?v=202609242024"></script>
+<script src="js/firebase-init.js?v=202609301421"></script>
+<script src="js/child-store.js?v=202609301421"></script>
+<script src="js/growth-store.js?v=202609301421"></script>
+<script src="js/child-badge.js?v=202609301421"></script>
+<script src="js/words-data.js?v=202609301421"></script>
+<script src="js/elementary-words-data.js?v=202609301421"></script>
+<script src="js/data-store.js?v=202609301421"></script>
+<script src="js/progress-store.js?v=202609301421"></script>
+<script src="js/word-card-store.js?v=202609301421"></script>
+<script src="js/word-game-store.js?v=202609301421"></script>
+<script src="js/praise-popup.js?v=202609301421"></script>
+<script src="js/memory.js?v=202609301421"></script>
 </body>
 </html>

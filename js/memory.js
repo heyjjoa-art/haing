@@ -201,6 +201,8 @@
         "🎉 20개 단어를 모두 익혔어요! 처음부터 다시 해볼까요?";
       nextRoundBtn.textContent = "처음부터 다시";
       nextRoundBtn.onclick = startNewCycle;
+      var nextStageLink = document.getElementById("nextStageLink");
+      if (nextStageLink) nextStageLink.hidden = false;
       var firstTime = ProgressStore.markDone("memory");
       ProgressStore.markReviewStep("memory");
       if (firstTime) {
@@ -211,6 +213,8 @@
         "🎉 이번 세트 완료! (" + completedWords + " / " + TOTAL_WORDS + ")";
       nextRoundBtn.textContent = "다음 세트 ▶";
       nextRoundBtn.onclick = startRound;
+      var stageLink = document.getElementById("nextStageLink");
+      if (stageLink) stageLink.hidden = true;
     }
     winBannerEl.hidden = false;
   }
