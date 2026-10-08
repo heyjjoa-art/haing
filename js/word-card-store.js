@@ -211,7 +211,9 @@ var WordCardStore = (function () {
     var words = DataStore.getWords(unitKey);
     if (!isUnitComplete(words)) return null;
     if (hasTrophy(resolvedUnit)) return null;
-    if (dailyWordCapReached()) return null;
+    // 하루 보상 한도(dailyWordCapReached)는 일부러 검사하지 않는다 - 트로피는 이미 모은
+    // 20장에 대한 마무리라서, 그날 3번째 세트의 마지막 판이 한도를 채운 직후에도
+    // (hangman이 markDone 뒤에 이 함수를 부르므로) 막히면 영영 못 받게 된다.
 
     var record = {
       word: trophyWordKey(resolvedUnit),
