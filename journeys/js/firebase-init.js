@@ -110,6 +110,49 @@ var HaingCloud = (function () {
       });
   }
 
+  // JSON 왕복(stripUndefined) 대신 쓰는 안전한 버전. arrayUnion()처럼 Firestore가 주는
+  // 특수 값(센티넬)은 JSON 왕복을 거치면 그냥 빈 객체가 돼버려서, 평범한 객체/배열만
+  // 복사하고 그 밖의 값은 그대로 넘긴다.
+  function stripUndefinedKeepSentinels(value) {
+    if (Array.isArray(value)) return value.map(stripUndefinedKeepSentinels);
+    var isPlain =
+      value !== null &&
+      typeof value === "object" &&
+      Object.prototype.toString.call(value) === "[object Object]" &&
+      (value.constructor === Object || typeof value.constructor === "undefined");
+    if (!isPlain) return value;
+    var out = {};
+    Object.keys(value).forEach(function (k) {
+      if (value[k] === undefined) return;
+      out[k] = stripUndefinedKeepSentinels(value[k]);
+    });
+    return out;
+  }
+
+  // 여러 기기가 같은 문서(아이별 도장 등)를 쓸 때 writeDoc(set)은 문서를 통째로
+  // 덮어써서, 다른 기기가 먼저 올려둔 기록을 지워버린다. 이 함수는 넘긴 필드만
+  // 병합(merge)해서 쓰므로 안 넘긴 필드(다른 날짜 기록 등)는 서버에 그대로 남는다.
+  // 단, 배열 필드는 병합해도 통째로 교체되므로 쌓아야 하는 배열은 arrayUnion()으로 넘긴다.
+  function writeDocMerge(path, data) {
+    if (!enabled) return Promise.resolve();
+    return db
+      .doc(path)
+      .set(stripUndefinedKeepSentinels(data), { merge: true })
+      .catch(function (err) {
+        console.warn("[HaingCloud] writeDocMerge 실패", path, err);
+      });
+  }
+
+  // 배열에 "이 값들을 더해라"를 서버에서 처리하게 하는 값. 이미 있는 값은 그대로 두고
+  // 없는 값만 붙어서, 두 기기가 각각 더한 값이 둘 다 남는다. 클라우드가 꺼져 있거나
+  // 값이 없으면 평범한 배열을 그대로 돌려준다(로컬 저장만 쓰는 경우).
+  function arrayUnion(values) {
+    var list = values || [];
+    if (!enabled || typeof firebase === "undefined" || !list.length) return list;
+    var FieldValue = firebase.firestore.FieldValue;
+    return FieldValue.arrayUnion.apply(FieldValue, list);
+  }
+
   function deleteDoc(path) {
     if (!enabled) return Promise.resolve();
     return db
@@ -127,6 +170,8 @@ var HaingCloud = (function () {
     getDocOnce: getDocOnce,
     getCollectionOnce: getCollectionOnce,
     writeDoc: writeDoc,
+    writeDocMerge: writeDocMerge,
+    arrayUnion: arrayUnion,
     deleteDoc: deleteDoc
   };
 })();

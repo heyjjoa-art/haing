@@ -3,7 +3,7 @@
 // 모두 끝내면 도장을 하나 받고, 도장은 월~금 도장 모음판에 쌓인다.
 // 하루에 여러 번 다 끝낼 수도 있다: 평일에 처음 끝내면 오늘 칸에 도장이 찍히고,
 // 같은 날 또 다 끝내거나 오늘이 주말이면(도장판엔 월~금 칸밖에 없어서 주말은
-// "오늘 칸" 자체가 없다) 가장 앞선(오래된) 빈 칸부터 채워진다.
+// "오늘 칸" 자체가 없다) 그 주(월~금)의 빈 칸 중 가장 이른 날에 찍힌다.
 // 세 단계 체크(1·2·3번 버튼)는 도장을 하나 받을 때마다 다시 빈 상태로 돌아가서
 // 바로 다음 번 도장을 향해 새로 시작할 수 있다.
 // 아이(child id)별로 따로 저장해서 하정이와 하진이의 기록이 섞이지 않게 한다.
@@ -57,13 +57,140 @@ var StampStore = (function () {
     return childId ? "stampsMeta/" + childId : null;
   }
 
+  // 도장 문서는 기기 두 대가 같이 쓰기 때문에 통째로 덮어쓰면(set) 안 된다 - 로컬이
+  // 조금이라도 오래된 기기가 쓰는 순간 다른 기기가 먼저 올린 도장이 사라진다(2026-11-15
+  // 하진 사례: 일요일에 받은 도장과 지난주 기록이 이렇게 날아갔다). 그래서 날짜별
+  // 기록은 merge로 넘겨 안 넘긴 날짜는 서버에 그대로 두고, 도장 날짜 배열은
+  // arrayUnion으로 "더하기"만 해서 양쪽 도장이 둘 다 남게 한다.
+  function cloudPayload(childId) {
+    var all = loadAll(childId);
+    var payload = {};
+    Object.keys(all).forEach(function (unitId) {
+      var rec = all[unitId] || {};
+      var out = {};
+      Object.keys(rec).forEach(function (k) {
+        if (k !== "_stamps") out[k] = rec[k];
+      });
+      var stamps = rec._stamps || [];
+      // 도장이 하나도 없으면 _stamps는 아예 넘기지 않는다 - 빈 배열을 넘기면 merge가
+      // 서버에 있던 도장 목록을 빈 배열로 갈아버린다(더할 게 없으면 안 건드리는 게 맞다).
+      if (stamps.length) {
+        out._stamps = HaingCloud.arrayUnion ? HaingCloud.arrayUnion(stamps) : stamps;
+      }
+      payload[unitId] = out;
+    });
+    return payload;
+  }
+
   function syncToCloud(childId) {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     var path = cloudPath(childId);
     if (!path) return;
-    HaingCloud.writeDoc(path, loadAll(childId));
+    var write = HaingCloud.writeDocMerge || HaingCloud.writeDoc;
+    write(path, cloudPayload(childId));
+    // stampsMeta는 이제 합치기 판단에 쓰지 않지만(아래 applyRemote가 합집합으로
+    // 처리한다), 예전 코드가 캐시된 기기는 아직 이 값으로 "내 로컬이 더 최신인가"를
+    // 따진다 - 계속 갱신해줘야 그 기기가 자기 옛 기록을 통째로 올려 덮어쓰지 않는다.
     var metaPath = metaCloudPath(childId);
     if (metaPath) HaingCloud.writeDoc(metaPath, { updatedAt: getUpdatedAt(childId) });
+  }
+
+  // 같은 아이 기록을 기기 두 대가 번갈아 쓸 때를 위한 합치기 규칙. 어느 쪽이 "더
+  // 최신"인지 시계로 따지지 않고 합집합으로 합친다 - 순서나 횟수에 상관없이 늘 같은
+  // 결과가 나와야, 두 기기가 서로의 변경을 받아 다시 올려도 한 값으로 모이고 끝없이
+  // 번갈아 쓰지 않는다.
+  // - 유닛과 날짜는 합집합: 한쪽에만 있는 기록은 절대 지우지 않는다.
+  // - 도장(_stamps)도 합집합: 한 번 받은 도장은 사라지지 않는 기록이다.
+  // - 같은 날짜의 1·2·3번 체크는 둘 다 true일 때만 true: 도장을 받는 순간 체크는 전부
+  //   false로 초기화되므로, 한쪽이 false면 그쪽이 더 나중 상태로 보는 게 맞다.
+  function cloneRecords(rec) {
+    return JSON.parse(JSON.stringify(rec || {}));
+  }
+
+  function mergeUnitRecords(a, b) {
+    var ra = cloneRecords(a);
+    var rb = cloneRecords(b);
+    // 예전(도장 배열이 없던) 기록이 섞여 있어도 양쪽 다 같은 기준으로 맞춘 뒤 합친다.
+    ensureStampsMigrated(ra);
+    ensureStampsMigrated(rb);
+    var out = {};
+    Object.keys(ra)
+      .concat(Object.keys(rb))
+      .forEach(function (k) {
+        if (k === "_stamps" || Object.prototype.hasOwnProperty.call(out, k)) return;
+        var ea = ra[k];
+        var eb = rb[k];
+        if (!ea || !eb) {
+          out[k] = ea || eb;
+          return;
+        }
+        var entry = {};
+        STAGES.forEach(function (stage) {
+          entry[stage] = !!ea[stage] && !!eb[stage];
+        });
+        out[k] = entry;
+      });
+    var stamps = (ra._stamps || []).slice();
+    (rb._stamps || []).forEach(function (d) {
+      if (stamps.indexOf(d) === -1) stamps.push(d);
+    });
+    out._stamps = stamps.sort();
+    return out;
+  }
+
+  function mergeAllRecords(localAll, remoteAll) {
+    var a = localAll || {};
+    var b = remoteAll || {};
+    var out = {};
+    Object.keys(a)
+      .concat(Object.keys(b))
+      .forEach(function (unitId) {
+        if (Object.prototype.hasOwnProperty.call(out, unitId)) return;
+        out[unitId] = mergeUnitRecords(a[unitId], b[unitId]);
+      });
+    return out;
+  }
+
+  // 두 기록이 내용상 같은지(키 순서·배열 순서 무시) 비교한다. 합친 결과가 클라우드에
+  // 있는 것과 같으면 다시 올릴 필요가 없다 - 이 비교가 기기 사이 무한 되쓰기를 막는다.
+  function canonicalRecords(all) {
+    var data = all || {};
+    return JSON.stringify(
+      Object.keys(data)
+        .sort()
+        .map(function (unitId) {
+          var rec = data[unitId] || {};
+          var dates = Object.keys(rec)
+            .filter(function (k) {
+              return k !== "_stamps";
+            })
+            .sort();
+          return [
+            unitId,
+            (rec._stamps || []).slice().sort(),
+            dates.map(function (d) {
+              var e = rec[d] || {};
+              return [d].concat(
+                STAGES.map(function (stage) {
+                  return !!e[stage];
+                })
+              );
+            })
+          ];
+        })
+    );
+  }
+
+  // 클라우드(최초 1회 읽기 또는 다른 기기의 변경)에서 온 기록을 이 기기 기록과 합쳐
+  // 저장한다. 합친 결과가 클라우드에 있는 것과 다르면(이 기기에만 있던 도장이 있었다는
+  // 뜻 - 저장이 페이지 이동으로 끊긴 경우 포함) 바로 다시 올려 양쪽을 맞춘다.
+  function applyRemote(childId, remote) {
+    var merged = mergeAllRecords(loadAll(childId), remote);
+    saveAll(childId, merged);
+    if (canonicalRecords(merged) !== canonicalRecords(remote)) {
+      touchUpdatedAt(childId);
+      syncToCloud(childId);
+    }
   }
 
   function ensureCloudSync(childId) {
@@ -71,29 +198,13 @@ var StampStore = (function () {
     if (typeof HaingCloud === "undefined" || !HaingCloud.enabled) return;
     watchedChildren[childId] = true;
     var path = cloudPath(childId);
-    var metaPath = metaCloudPath(childId);
-    Promise.all([HaingCloud.getDocOnce(path), HaingCloud.getDocOnce(metaPath)]).then(function (results) {
-      var remote = results[0];
-      var remoteUpdatedAt = (results[1] && results[1].updatedAt) || 0;
-      // 원격 문서가 있고(비어있어도 - 관리자 초기화 포함) 이 기기 로컬보다 최신이면
-      // 그대로 따른다. 원격이 없거나 이 기기 로컬보다 오래됐으면(막 찍은 도장의
-      // 클라우드 저장이 페이지 이동 등으로 끊긴 경우 포함) 로컬 값을 다시 올린다.
-      // stampsMeta 문서는 이 기능이 생기기 전엔 없었으므로, 둘 다 0(기록 없음)인
-      // 예전 데이터에서는 원래처럼 원격을 그대로 따른다.
-      if (remote && remoteUpdatedAt >= getUpdatedAt(childId)) {
-        saveAll(childId, remote);
-        localStorage.setItem(updatedAtKey(childId), String(remoteUpdatedAt));
-      } else {
-        syncToCloud(childId);
-      }
+    HaingCloud.getDocOnce(path).then(function (remote) {
+      applyRemote(childId, remote);
       HaingCloud.watchDoc(path, function (data) {
         if (!data) return;
-        saveAll(childId, data);
+        applyRemote(childId, data);
         if (window.__journeysRenderStamps) window.__journeysRenderStamps();
         if (window.__journeysRenderHome) window.__journeysRenderHome();
-      });
-      HaingCloud.watchDoc(metaPath, function (data) {
-        if (data) localStorage.setItem(updatedAtKey(childId), String(data.updatedAt || 0));
       });
     });
   }
@@ -155,33 +266,28 @@ var StampStore = (function () {
     weekendStamps.sort().forEach(function (d) {
       var idx = stamps.indexOf(d);
       if (idx !== -1) stamps.splice(idx, 1);
-      var earliest = findEarliestMissingWeekday(stamps, d);
+      var earliest = findMissingWeekdayInWeek(stamps, d);
       if (earliest) stamps.push(earliest);
     });
   }
 
-  // 실제로 도장을 받은 가장 이른 날짜의 그 주 월요일부터 오늘까지, 아직 도장이 안
-  // 찍힌 월~금 중 가장 이른 날을 찾는다 - "또 하면 앞에서부터 채워지게" 하는 부분.
-  // unitRecords의 날짜별 원본 진행 기록(1·2·3번 체크, unitRecords 자체의 키)은 여기
-  // 기준에서 뺀다 - 끝까지 못 끝내고 만 날(예: 듣기만 하고 만 날)까지 "그 주부터
-  // 밀렸다"고 잡으면, 아주 예전에 어쩌다 한 번 건드리기만 한 날 때문에 그 뒤로 계속
-  // 그 오래된 주로 채워져서 정작 이번 주가 언제까지고 안 채워지는 문제가 생긴다.
-  function findEarliestMissingWeekday(stamps, todayKey) {
-    var earliestKey = stamps.concat([todayKey]).reduce(function (min, s) {
-      return s < min ? s : min;
-    }, todayKey);
-
-    var cursor = mondayOf(new Date(earliestKey + "T00:00:00"));
+  // 주말에 다 끝냈거나(도장판엔 월~금 칸만 있다) 같은 날 두 번째로 다 끝냈을 때 채울
+  // 칸을 찾는다: 그 날이 속한 주(월~금)에서 아직 도장이 없고 오늘을 넘지 않은 가장
+  // 이른 평일. 주말(토·일)은 mondayOf가 그 주 월요일을 돌려주므로 같은 주로 들어간다.
+  // 예전에는 기록이 있는 가장 이른 주부터 거슬러 올라가 빈 칸을 찾았는데, 그 때문에
+  // 2026-11-15(일) 하진이가 끝낸 공부가 한 달 전인 10/14 칸으로 밀려 들어가 그 주
+  // 도장판에도, 학습달력에도 아무 표시가 안 남는 일이 있었다. 지난 주 도장판을 뒤늦게
+  // 채우는 건(그 주 개근 트로피까지 소급되는 일) 의도한 동작이 아니라서, 채울 칸은
+  // 그 주 안에서만 찾고 그 주가 이미 다 찼으면 아무 데도 찍지 않는다.
+  function findMissingWeekdayInWeek(stamps, dateKey) {
+    var monday = mondayOf(new Date(dateKey + "T00:00:00"));
     var today = todayDate();
-    while (cursor <= today) {
-      for (var i = 0; i < 5; i++) {
-        var d = new Date(cursor);
-        d.setDate(cursor.getDate() + i);
-        if (d > today) return null;
-        var dStr = toDateStr(d);
-        if (dStr !== todayKey && stamps.indexOf(dStr) === -1) return dStr;
-      }
-      cursor.setDate(cursor.getDate() + 7);
+    for (var i = 0; i < 5; i++) {
+      var d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      if (d > today) return null;
+      var dStr = toDateStr(d);
+      if (dStr !== dateKey && stamps.indexOf(dStr) === -1) return dStr;
     }
     return null;
   }
@@ -193,15 +299,15 @@ var StampStore = (function () {
 
   // 오늘이 평일(월~금)이고 오늘 도장이 아직 없으면 오늘 칸에 찍는다. 오늘이 주말이거나
   // (도장판엔 월~금 칸밖에 없어서 주말 날짜로 찍으면 어디에도 표시가 안 된다), 오늘
-  // 이미 찍혀 있으면(같은 날 두 번째 이상 다 끝낸 것) 가장 앞선 빈 칸을 찾아 채운다.
-  // 채울 칸이 없으면(이미 오늘까지 다 채워진 상태) 아무것도 안 하고 null을 돌려준다.
+  // 이미 찍혀 있으면(같은 날 두 번째 이상 다 끝낸 것) 그 주의 빈 칸을 찾아 채운다.
+  // 채울 칸이 없으면(그 주가 오늘까지 이미 다 찬 상태) 아무것도 안 하고 null을 돌려준다.
   function creditStamp(unitRecords, todayKey) {
     var stamps = unitRecords._stamps;
     if (isWeekday(todayKey) && stamps.indexOf(todayKey) === -1) {
       stamps.push(todayKey);
       return todayKey;
     }
-    var earliest = findEarliestMissingWeekday(stamps, todayKey);
+    var earliest = findMissingWeekdayInWeek(stamps, todayKey);
     if (earliest) {
       stamps.push(earliest);
       return earliest;
